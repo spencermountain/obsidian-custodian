@@ -52,10 +52,10 @@ I'm going spec-safe with [remark plugins](https://github.com/remarkjs/remark/blo
 ## Usage
 
 ```js
-import reluctantParser from 'reluctant-obsidian'
+import reluctant from 'reluctant-obsidian'
 
 const str = `hello [[world]]`
-const page = reluctantParser(str)
+const page = reluctant(str)
 
 // clean plaintext
 console.log(page.text()) // 'hello world'
@@ -84,12 +84,12 @@ console.log(page.html())
 npx reluctant-md path/to/file.md # JSON output
 
 # non-json outputs
-npx reluctant-md --text path/to/file.md
-npx reluctant-md --html path/to/file.md
+npx reluctant-obsidian --text path/to/file.md
+npx reluctant-obsidian --html path/to/file.md
 
 # common transforms
-npx reluctant-md --lint path/to/file.md
-npx reluctant-md --normalize path/to/file.md
+npx reluctant-obsidian --lint path/to/file.md
+npx reluctant-obsidian --normalize path/to/file.md
 ```
 
 ### API

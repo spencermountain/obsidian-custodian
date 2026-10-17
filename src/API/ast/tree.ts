@@ -1,4 +1,4 @@
-import { definitions } from './references.ts'
+import type Page from '../Page.ts'
 import type {
   MarkdownNode,
   DocumentNode,
@@ -8,7 +8,8 @@ import type {
   Collection
 } from '../../types/types.ts'
 import { walk } from '../../parse/syntax/_lib.ts'
-import { groups, json } from '../json.ts'
+import createSection from '../Section/index.ts'
+import groups from '../Section/groups.ts'
 import text from '../text.ts'
 
 const clearPositions = (tree: MarkdownNode) => {
@@ -44,19 +45,18 @@ const select = (tree: MarkdownNode, predicate: Predicate) => {
 }
 
 // Build flat collections from an already-filtered tree in one traversal.
-const treeJson = (tree: DocumentNode, options: OutputOptions): PageJSON => {
-  const references = definitions(tree)
+const treeJson = (tree: DocumentNode, options: OutputOptions, page: Page): PageJSON => {
   const result = { text: text(tree, options), blocks: [] } as unknown as PageJSON
   Object.keys(groups).forEach((key) => {
     result[key as Collection] = []
   })
   walk(tree, (node, parent) => {
     if (parent === tree || node.blockId) {
-      result.blocks.push(json(node, options, references))
+      result.blocks.push(createSection(node, { page }).json(options))
     }
     Object.entries(groups).forEach(([key, matches]) => {
       if (matches(node, null)) {
-        result[key as Collection].push(json(node, options, references))
+        result[key as Collection].push(createSection(node, { page }).json(options))
       }
     })
   })

@@ -1,17 +1,17 @@
-import type { DocumentNode } from '../../types/types.ts'
+import type { OutputOptions } from '../../types/types.ts'
 import Section from './Section.ts'
 
-// a [[!image.jpg]]
 class Embed extends Section {
-  #node: DocumentNode
-  constructor(node: DocumentNode) {
-    super(node)
+  text(options: OutputOptions = {}): string {
+    const node = this.ast(options)
+    if (!node) {
+      return ''
+    }
+    if (node.type === 'embed') {
+      return node.alias ?? node.target
+    }
+    return node.alt || ''
   }
-  json() {}
-  text() {
-    return '' //dont show anything for images, etc
-  }
-  html() {}
 }
 
 export default Embed

@@ -1,18 +1,19 @@
-import type { DocumentNode } from '../../types/types.ts'
+import type { OutputOptions } from '../../types/types.ts'
 import Section from './Section.ts'
 
-// a [[link]]
 class Link extends Section {
-  #node: DocumentNode
-  constructor(node: DocumentNode) {
-    super(node)
+  target(): string {
+    const node = this.json()
+    return node.target ?? node.url ?? ''
   }
-  json() {}
-  text() {
-    return this.#node.text
-  }
-  html() {
-    return `<a href="${this.#node.url}">${this.#node.text}</a>`
+
+  text(options: OutputOptions = {}): string {
+    const node = this.ast(options)
+    if (!node) { return '' }
+    if (node.type !== 'wikiLink') { return super.text(options) }
+    if (node.alias != null) { return node.alias }
+    const fragment = node.heading ?? (node.block ? '^' + node.block : '')
+    return node.target + (node.target && fragment ? '#' : '') + fragment
   }
 }
 

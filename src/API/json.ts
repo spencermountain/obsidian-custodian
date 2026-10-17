@@ -1,35 +1,15 @@
+import text from './text.ts'
 import properties from './properties.ts'
 import { normalize } from './ast/references.ts'
 import type {
   MarkdownNode,
   NodeJSON,
-  OutputOptions,
-  Collection,
-  Predicate
+  OutputOptions
 } from '../types/types.ts'
-import text from './text.ts'
 import { dimensions } from '../parse/syntax/_lib.ts'
 
-// Shared category names for selectors, JSON collections, and output exclusions.
-const groups: Record<Collection, Predicate> = {
-  headings: (node) => node.type === 'heading',
-  paragraphs: (node) => node.type === 'paragraph',
-  links: (node) => ['wikiLink', 'link', 'linkReference'].includes(node.type),
-  embeds: (node) => ['embed', 'image', 'imageReference'].includes(node.type),
-  tasks: (node) => node.type === 'listItem' && typeof node.checked === 'boolean',
-  lists: (node) => node.type === 'list',
-  callouts: (node) => node.type === 'callout',
-  highlights: (node) => node.type === 'highlight',
-  comments: (node) => node.type === 'comment',
-  code: (node) => node.type === 'code',
-  math: (node) => ['math', 'inlineMath'].includes(node.type),
-  tables: (node) => node.type === 'table',
-  frontmatter: (node) => node.type === 'yaml',
-  tags: (node) => node.type === 'tag',
-  footnotes: (node) => ['footnoteDefinition', 'inlineFootnote'].includes(node.type)
-}
-
-const json = (node: MarkdownNode, options: OutputOptions = {}, definitions = new Map<string, any>()): NodeJSON => {
+// Common metadata; specialized sections can extend this output.
+const serialize = (node: MarkdownNode, options: OutputOptions = {}, definitions: Map<string, any> = new Map()): NodeJSON => {
   const result: NodeJSON = { type: node.type, text: text(node, options) }
   if (node.type === 'yaml') { Object.assign(result, properties(node.value)) }
   if (['linkReference', 'imageReference'].includes(node.type)) {
@@ -75,9 +55,6 @@ const json = (node: MarkdownNode, options: OutputOptions = {}, definitions = new
   if (node.type === 'comment') {
     result.text = node.value!
   }
-  if (node.type === 'callout') {
-    result.title = text({ type: 'paragraph', children: node.title as MarkdownNode[] }, options)
-  }
   // Size hints occupy the alias in embeds and the final alt-text segment in images.
   if (node.type === 'embed') {
     Object.assign(result, dimensions(node.alias ?? ''))
@@ -107,4 +84,4 @@ const json = (node: MarkdownNode, options: OutputOptions = {}, definitions = new
   return result
 }
 
-export { groups, json }
+export default serialize

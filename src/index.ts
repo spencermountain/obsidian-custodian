@@ -17,6 +17,9 @@ export type {
   NodeJSON,
   PageJSON
 } from './types/types.ts'
-export type { ItemHandle } from './API/handle.ts'
+export type { default as ItemHandle, default as Section } from './API/Section/Section.ts'
+export type { default as Link } from './API/Section/Link.ts'
+export type { default as Embed } from './API/Section/Embed.ts'
+export type { default as Callout } from './API/Section/Callout.ts'
 export type { default as Page } from './API/Page.ts'
 export default parsePage

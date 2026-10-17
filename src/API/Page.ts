@@ -10,8 +10,11 @@ import stringifyMd from '../parse/stringify.ts'
 import outputTree from './ast/output.ts'
 import text from './text.ts'
 import { clearPositions, locate, select, treeJson } from './ast/tree.ts'
-import { groups } from './json.ts'
-import createHandle from './handle.ts'
+import groups from './Section/groups.ts'
+import createSection from './Section/index.ts'
+import type Link from './Section/Link.ts'
+import type Embed from './Section/Embed.ts'
+import type Callout from './Section/Callout.ts'
 
 // Owns document state; parsing and serialization are stateless operations.
 class Page {
@@ -44,7 +47,7 @@ class Page {
   // Handles reference live nodes; output methods return detached views.
   #select(predicate: Predicate) {
     return select(this.#tree, predicate).map((node) =>
-      createHandle(node, {
+      createSection(node, {
         locate: (target) => locate(this.#tree, target),
         changed: () => this.#changed(),
         page: this
@@ -75,7 +78,7 @@ class Page {
   }
 
   json(options: OutputOptions = {}): PageJSON {
-    return treeJson(outputTree(this.#tree, options) as DocumentNode, options)
+    return treeJson(outputTree(this.#tree, options) as DocumentNode, options, this)
   }
 
   // Parse before insertion so malformed input cannot partially change the tree.
@@ -99,10 +102,10 @@ class Page {
     return this.#select(groups.paragraphs)
   }
   links() {
-    return this.#select(groups.links)
+    return this.#select(groups.links) as Link[]
   }
   embeds() {
-    return this.#select(groups.embeds)
+    return this.#select(groups.embeds) as Embed[]
   }
   tasks() {
     return this.#select(groups.tasks)
@@ -111,7 +114,7 @@ class Page {
     return this.#select(groups.lists)
   }
   callouts() {
-    return this.#select(groups.callouts)
+    return this.#select(groups.callouts) as Callout[]
   }
   highlights() {
     return this.#select(groups.highlights)

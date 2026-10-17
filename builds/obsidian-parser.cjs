@@ -1,4 +1,4 @@
-/* spencermountain/reluctant-obsidian 0.0.1 MIT */
+/* spencermountain/reluctant-obsidian-parser 0.0.1 MIT */
 'use strict';
 
 /**
@@ -16724,7 +16724,7 @@ function markdownTable(table, options) {
     }
 
     while (++columnIndex < table[rowIndex].length) {
-      const cell = serialize$1(table[rowIndex][columnIndex]);
+      const cell = serialize$2(table[rowIndex][columnIndex]);
 
       if (settings.alignDelimiters !== false) {
         const size = stringLength(cell);
@@ -16897,7 +16897,7 @@ function markdownTable(table, options) {
  * @returns {string}
  *   Result.
  */
-function serialize$1(value) {
+function serialize$2(value) {
   return value === null || value === undefined ? '' : String(value)
 }
 
@@ -19719,7 +19719,7 @@ function check(tokens, before, after) {
  *   Serialized result.
  */
 function containerPhrasing(parent, state, info) {
-  return serialize(phrasing(parent, state, info), info.before, info.after)
+  return serialize$1(phrasing(parent, state, info), info.before, info.after)
 }
 
 /**
@@ -20017,7 +20017,7 @@ function phrasing(parent, state, info) {
 
       // To do: does this work to reset tracker?
       tracker = state.createTracker(info);
-      tracker.move(serialize(results, info.before, info.after));
+      tracker.move(serialize$1(results, info.before, info.after));
     }
 
     /** @type {(Handle & {attention?: Attention | undefined}) | undefined} */
@@ -20035,7 +20035,7 @@ function phrasing(parent, state, info) {
         before: sequence,
         after: sequence
       });
-      tracker.move(serialize(inside, sequence, sequence));
+      tracker.move(serialize$1(inside, sequence, sequence));
       tracker.move(sequence);
       exit();
       results.push({children: inside, sequences});
@@ -20162,7 +20162,7 @@ function render(items, chosen, before, after) {
  * @returns {string}
  *   Serialized markdown.
  */
-function serialize(items, before, after) {
+function serialize$1(items, before, after) {
   /** @type {Map<AttentionResult, string>} */
   let chosen = new Map();
   const initial = render(items, chosen, before, after);
@@ -26627,6 +26627,298 @@ const stringifyMd = (tree, options = {}) => {
     return processor.stringify(tree);
 };
 
+// Shared category names for selectors, JSON collections, and output exclusions.
+const groups = {
+    headings: (node) => node.type === 'heading',
+    paragraphs: (node) => node.type === 'paragraph',
+    links: (node) => ['wikiLink', 'link', 'linkReference'].includes(node.type),
+    embeds: (node) => ['embed', 'image', 'imageReference'].includes(node.type),
+    tasks: (node) => node.type === 'listItem' && typeof node.checked === 'boolean',
+    lists: (node) => node.type === 'list',
+    callouts: (node) => node.type === 'callout',
+    highlights: (node) => node.type === 'highlight',
+    comments: (node) => node.type === 'comment',
+    code: (node) => node.type === 'code',
+    math: (node) => ['math', 'inlineMath'].includes(node.type),
+    tables: (node) => node.type === 'table',
+    frontmatter: (node) => node.type === 'yaml',
+    tags: (node) => node.type === 'tag',
+    footnotes: (node) => ['footnoteDefinition', 'inlineFootnote'].includes(node.type)
+};
+
+// The same inclusion flags apply to every output format.
+const includes = (node, options) => {
+    if (options.blockIds === false && node.type === 'blockId') {
+        return false;
+    }
+    if (options.html === false && node.type === 'html') {
+        return false;
+    }
+    return !Object.entries(groups).some(([key, matches]) => options[key] === false && matches(node, null));
+};
+const outputTree = (tree, options = {}) => {
+    const copy = (node) => {
+        // Excluding a container also excludes everything nested inside it.
+        if (!includes(node, options)) {
+            return null;
+        }
+        const result = { ...node };
+        if (node.children) {
+            result.children = node.children
+                .map(copy)
+                .filter((child) => child !== null);
+        }
+        if (Array.isArray(node.title)) {
+            result.title =
+                options.calloutTitles === false
+                    ? []
+                    : node.title.map(copy).filter((child) => child !== null);
+        }
+        // Block IDs also appear as metadata on the block they identify.
+        if (options.blockIds === false) {
+            delete result.blockId;
+        }
+        return result;
+    };
+    // Detach metadata too, so AST consumers cannot mutate the page through a view.
+    return structuredClone(copy(tree));
+};
+
+const text$1 = (value, key) => {
+    if (typeof value !== 'string') {
+        throw new TypeError(`${key} must be a string`);
+    }
+};
+// Only expose semantic fields; callers cannot replace node types or child arrays.
+const fields = {
+    heading: ['text', 'depth'],
+    paragraph: ['text'],
+    wikiLink: ['target', 'alias', 'heading', 'block'],
+    embed: ['target', 'alias', 'heading', 'block'],
+    link: ['url', 'text', 'title'],
+    image: ['url', 'alt', 'title'],
+    listItem: ['checked'],
+    callout: ['title', 'calloutType', 'fold'],
+    code: ['value', 'lang', 'meta'],
+    math: ['value'],
+    inlineMath: ['value'],
+    comment: ['value'],
+    highlight: ['text'],
+    yaml: ['value']
+};
+const edit = (node, changes) => {
+    if (!changes || typeof changes !== 'object' || Array.isArray(changes)) {
+        throw new TypeError('Expected an update object');
+    }
+    // Validate the complete patch before the handle commits it to the live node.
+    const next = structuredClone(node);
+    Object.entries(changes).forEach(([key, value]) => {
+        if (!fields[node.type]?.includes(key)) {
+            throw new TypeError(`Cannot update ${key} on ${node.type}`);
+        }
+        if (key === 'depth') {
+            if (typeof value !== 'number' || !Number.isInteger(value) || value < 1 || value > 6) {
+                throw new RangeError('Heading depth must be 1–6');
+            }
+        }
+        else if (key === 'checked') {
+            if (typeof value !== 'boolean' || typeof node.checked !== 'boolean') {
+                throw new TypeError('checked requires a task and a boolean');
+            }
+            // Explicit checkbox changes reset custom markers such as [?] to standard ones.
+            delete next.taskMarker;
+        }
+        else if (key === 'fold') {
+            if (![null, 'expanded', 'collapsed'].includes(value)) {
+                throw new TypeError('Invalid callout fold');
+            }
+        }
+        else if (value !== null ||
+            !['alias', 'heading', 'block', 'title', 'lang', 'meta'].includes(key)) {
+            text$1(value, key);
+        }
+        if (typeof value === 'string' &&
+            node.type === 'heading' &&
+            key === 'text' &&
+            /[\r\n]/.test(value)) {
+            throw new TypeError('Heading text must be one line');
+        }
+        // Reject punctuation that could escape the serialized wikilink.
+        if (['wikiLink', 'embed'].includes(node.type) && typeof value === 'string') {
+            if (/[\[\]\r\n|\\]/.test(value) ||
+                value.includes('%%') ||
+                (key === 'target' && /[#^]/.test(value))) {
+                throw new TypeError(`Invalid ${key}`);
+            }
+            if (key === 'block' && !/^[A-Za-z0-9-]+$/.test(value)) {
+                throw new TypeError('Invalid block identifier');
+            }
+        }
+        if (key === 'calloutType' && typeof value === 'string' && !/^[\w-]+$/.test(value)) {
+            throw new TypeError('Invalid calloutType');
+        }
+        if (node.type === 'comment' && typeof value === 'string' && value.includes('%%')) {
+            throw new TypeError('Comment value cannot contain %%');
+        }
+        if (node.type === 'callout' && key === 'title') {
+            if (typeof value !== 'string' || /[\r\n]/.test(value)) {
+                throw new TypeError('Callout title must be one line');
+            }
+            next.title = [{ type: 'text', value }];
+        }
+        else if (key === 'text') {
+            text$1(value, key);
+            // Text updates are literal replacements, not Markdown fragments.
+            next.children = [{ type: 'text', value }];
+            if (node.blockId) {
+                next.children.push({ type: 'blockId', value: node.blockId });
+            }
+        }
+        else {
+            Object.assign(next, { [key]: value });
+        }
+    });
+    // Validate relationships after all fields have changed, allowing fragment switches.
+    if (next.heading !== undefined && next.heading !== null && next.block !== null) {
+        throw new TypeError('Use either heading or block');
+    }
+    if (['wikiLink', 'embed'].includes(node.type) && !next.target && !next.heading && !next.block) {
+        throw new TypeError('A link needs a target or fragment');
+    }
+    return next;
+};
+
+// Wrap live nodes, but only give output hooks detached, filtered views.
+class Section {
+    #node;
+    context;
+    constructor(node, context) {
+        this.#node = node;
+        this.context = context;
+    }
+    ast(options = {}) {
+        return outputTree(this.#node, options);
+    }
+    text(options = {}) {
+        const node = this.ast(options);
+        return node ? this._text(node, options) : '';
+    }
+    json(options = {}) {
+        const node = this.ast(options);
+        return node ? this._json(node, options) : null;
+    }
+    _json(node, options) {
+        return this.context.serialize(node, options);
+    }
+    _text(node, options) {
+        if (node.type === 'comment' && options.comments !== true) {
+            return '';
+        }
+        if (node.type === 'blockId' && options.blockIds !== true) {
+            return '';
+        }
+        if (node.type === 'tag') {
+            return '#' + node.value;
+        }
+        if (node.type === 'break') {
+            return '\n';
+        }
+        if (node.value !== undefined) {
+            return node.value;
+        }
+        let separator = '';
+        if (['root', 'list', 'listItem', 'blockquote', 'table'].includes(node.type)) {
+            separator = '\n';
+        }
+        if (node.type === 'tableRow') {
+            separator = '\t';
+        }
+        return (node.children || []).map(child => this.context.renderText(child, options)).join(separator);
+    }
+    // Subclasses may refine edits, but the base commits only a fully validated copy.
+    _update(node, changes) {
+        return edit(node, changes);
+    }
+    #owner() {
+        if (!this.context.locate || !this.context.changed || !this.context.page) {
+            throw new Error('This section is not attached to a page');
+        }
+        return this.context;
+    }
+    update(changes) {
+        const owner = this.#owner();
+        owner.locate(this.#node);
+        const next = this._update(structuredClone(this.#node), changes);
+        // Preserve identity so other sections referencing this node stay valid.
+        Object.keys(this.#node).forEach(key => { Reflect.deleteProperty(this.#node, key); });
+        Object.assign(this.#node, next);
+        owner.changed();
+        return this;
+    }
+    remove() {
+        const owner = this.#owner();
+        const parent = owner.locate(this.#node);
+        const children = parent.children?.includes(this.#node) ? parent.children : parent.title;
+        const index = children.indexOf(this.#node);
+        const following = children[index + 1];
+        children.splice(index, 1);
+        // Remove a standalone identifier along with the block it labels.
+        if (this.#node.blockId && following?.type === 'paragraph' && following.blockId === this.#node.blockId) {
+            children.splice(index, 1);
+        }
+        owner.changed();
+        return owner.page;
+    }
+}
+
+class Link extends Section {
+    target() {
+        const node = this.json();
+        return node.target ?? node.url ?? '';
+    }
+    _text(node, options) {
+        if (node.type !== 'wikiLink') {
+            return super._text(node, options);
+        }
+        if (node.alias != null) {
+            return node.alias;
+        }
+        const fragment = node.heading ?? (node.block ? '^' + node.block : '');
+        return node.target + (node.target && fragment ? '#' : '') + fragment;
+    }
+}
+
+class Embed extends Section {
+    _text(node) {
+        if (node.type === 'embed') {
+            return node.alias ?? node.target;
+        }
+        return node.alt || '';
+    }
+}
+
+class Callout extends Section {
+    title(options = {}) {
+        return this.json(options)?.title || '';
+    }
+    body(options = {}) {
+        return this.text({ ...options, calloutTitles: false });
+    }
+    _text(node, options) {
+        const children = [...node.children];
+        if (options.calloutTitles !== false && node.title?.length) {
+            children.unshift({ type: 'paragraph', children: node.title });
+        }
+        return children.map(child => this.context.renderText(child, options)).join('\n');
+    }
+    _json(node, options) {
+        return {
+            ...super._json(node, options),
+            title: this.context.renderText({ type: 'paragraph', children: node.title }, options)
+        };
+    }
+}
+
 /*! js-yaml 5.5.0 https://github.com/nodeca/js-yaml @license MIT */
 //#region src/tag.ts
 /**
@@ -29361,76 +29653,9 @@ const definitions = (tree) => {
     return result;
 };
 
-// Extract tree content without trimming, collapsing whitespace, or resolving embeds.
-const text$1 = (node, options = {}) => {
-    if (!node) {
-        return '';
-    }
-    // Hidden syntax is opt-in for text, even when it remains in the output tree.
-    if (node.type === 'comment' && options.comments !== true) {
-        return '';
-    }
-    if (node.type === 'blockId' && options.blockIds !== true) {
-        return '';
-    }
-    if (node.type === 'tag') {
-        return '#' + node.value;
-    }
-    if (node.type === 'wikiLink' && node.alias == null) {
-        const fragment = node.heading ?? (node.block ? '^' + node.block : '');
-        return node.target + (node.target && fragment ? '#' : '') + fragment;
-    }
-    if (node.type === 'wikiLink' || node.type === 'embed') {
-        return node.alias ?? node.target;
-    }
-    if (node.type === 'image' || node.type === 'imageReference') {
-        return node.alt || '';
-    }
-    if (node.type === 'break') {
-        return '\n';
-    }
-    if (node.value !== undefined) {
-        return node.value;
-    }
-    // Treat the title as a first paragraph without changing the callout's children.
-    const children = [...(node.children || [])];
-    if (node.type === 'callout' &&
-        options.calloutTitles !== false &&
-        Array.isArray(node.title) &&
-        node.title.length) {
-        children.unshift({ type: 'paragraph', children: node.title });
-    }
-    // Supply structural separators only; preserve whitespace within text nodes.
-    let separator = '';
-    if (['root', 'list', 'listItem', 'blockquote', 'callout', 'table'].includes(node.type)) {
-        separator = '\n';
-    }
-    if (node.type === 'tableRow') {
-        separator = '\t';
-    }
-    return children.map((child) => text$1(child, options)).join(separator);
-};
-
-// Shared category names for selectors, JSON collections, and output exclusions.
-const groups = {
-    headings: (node) => node.type === 'heading',
-    paragraphs: (node) => node.type === 'paragraph',
-    links: (node) => ['wikiLink', 'link', 'linkReference'].includes(node.type),
-    embeds: (node) => ['embed', 'image', 'imageReference'].includes(node.type),
-    tasks: (node) => node.type === 'listItem' && typeof node.checked === 'boolean',
-    lists: (node) => node.type === 'list',
-    callouts: (node) => node.type === 'callout',
-    highlights: (node) => node.type === 'highlight',
-    comments: (node) => node.type === 'comment',
-    code: (node) => node.type === 'code',
-    math: (node) => ['math', 'inlineMath'].includes(node.type),
-    tables: (node) => node.type === 'table',
-    frontmatter: (node) => node.type === 'yaml',
-    tags: (node) => node.type === 'tag',
-    footnotes: (node) => ['footnoteDefinition', 'inlineFootnote'].includes(node.type)
-};
-const json = (node, options = {}, definitions = new Map()) => {
-    const result = { type: node.type, text: text$1(node, options) };
+// Common metadata; specialized sections can extend this output.
+const serialize = (node, options = {}, definitions, text) => {
+    const result = { type: node.type, text: text(node, options) };
     if (node.type === 'yaml') {
         Object.assign(result, properties(node.value));
     }
@@ -29481,9 +29706,6 @@ const json = (node, options = {}, definitions = new Map()) => {
     if (node.type === 'comment') {
         result.text = node.value;
     }
-    if (node.type === 'callout') {
-        result.title = text$1({ type: 'paragraph', children: node.title }, options);
-    }
     // Size hints occupy the alias in embeds and the final alt-text segment in images.
     if (node.type === 'embed') {
         Object.assign(result, dimensions(node.alias ?? ''));
@@ -29504,53 +29726,44 @@ const json = (node, options = {}, definitions = new Map()) => {
     // Flatten cells into rows so consumers need not traverse table nodes.
     if (node.type === 'table') {
         result.align = [...node.align];
-        result.rows = node.children.map((row) => row.children.map((cell) => text$1(cell, options)));
+        result.rows = node.children.map((row) => row.children.map((cell) => text(cell, options)));
     }
     if (node.type === 'list') {
         result.items = node.children.map((item) => ({
-            text: text$1(item, options),
+            text: text(item, options),
             checked: item.checked ?? null
         }));
     }
     return result;
 };
 
-// The same inclusion flags apply to every output format.
-const includes = (node, options) => {
-    if (options.blockIds === false && node.type === 'blockId') {
-        return false;
-    }
-    if (options.html === false && node.type === 'html') {
-        return false;
-    }
-    return !Object.entries(groups).some(([key, matches]) => options[key] === false && matches(node, null));
+const classes = {
+    wikiLink: Link, link: Link, linkReference: Link,
+    embed: Embed, image: Embed, imageReference: Embed,
+    callout: Callout
 };
-const outputTree = (tree, options = {}) => {
-    const copy = (node) => {
-        // Excluding a container also excludes everything nested inside it.
-        if (!includes(node, options)) {
-            return null;
+// The same factory handles selections and recursive output, including unknown nodes.
+const createSection = (node, context = {}) => {
+    const Constructor = Object.hasOwn(classes, node.type) ? classes[node.type] : Section;
+    return new Constructor(node, {
+        ...context,
+        renderText: (child, options) => createSection(child, context).text(options),
+        serialize: (value, options) => {
+            let references = context.references;
+            if (context.page) {
+                references = definitions(context.page.ast(options));
+            }
+            return serialize(value, options, references || new Map(), (child, flags) => createSection(child, context).text(flags));
         }
-        const result = { ...node };
-        if (node.children) {
-            result.children = node.children
-                .map(copy)
-                .filter((child) => child !== null);
-        }
-        if (Array.isArray(node.title)) {
-            result.title =
-                options.calloutTitles === false
-                    ? []
-                    : node.title.map(copy).filter((child) => child !== null);
-        }
-        // Block IDs also appear as metadata on the block they identify.
-        if (options.blockIds === false) {
-            delete result.blockId;
-        }
-        return result;
-    };
-    // Detach metadata too, so AST consumers cannot mutate the page through a view.
-    return structuredClone(copy(tree));
+    });
+};
+
+// Nested nodes use the same overrides as sections returned by Page selectors.
+const text = (node, options = {}) => {
+    if (!node) {
+        return '';
+    }
+    return createSection(node).text(options);
 };
 
 const clearPositions = (tree) => {
@@ -29585,166 +29798,21 @@ const select = (tree, predicate) => {
 // Build flat collections from an already-filtered tree in one traversal.
 const treeJson = (tree, options) => {
     const references = definitions(tree);
-    const result = { text: text$1(tree, options), blocks: [] };
+    const result = { text: text(tree, options), blocks: [] };
     Object.keys(groups).forEach((key) => {
         result[key] = [];
     });
     walk(tree, (node, parent) => {
         if (parent === tree || node.blockId) {
-            result.blocks.push(json(node, options, references));
+            result.blocks.push(createSection(node, { references }).json(options));
         }
         Object.entries(groups).forEach(([key, matches]) => {
             if (matches(node, null)) {
-                result[key].push(json(node, options, references));
+                result[key].push(createSection(node, { references }).json(options));
             }
         });
     });
     return result;
-};
-
-const text = (value, key) => {
-    if (typeof value !== 'string') {
-        throw new TypeError(`${key} must be a string`);
-    }
-};
-// Only expose semantic fields; callers cannot replace node types or child arrays.
-const fields = {
-    heading: ['text', 'depth'],
-    paragraph: ['text'],
-    wikiLink: ['target', 'alias', 'heading', 'block'],
-    embed: ['target', 'alias', 'heading', 'block'],
-    link: ['url', 'text', 'title'],
-    image: ['url', 'alt', 'title'],
-    listItem: ['checked'],
-    callout: ['title', 'calloutType', 'fold'],
-    code: ['value', 'lang', 'meta'],
-    math: ['value'],
-    inlineMath: ['value'],
-    comment: ['value'],
-    highlight: ['text'],
-    yaml: ['value']
-};
-const edit = (node, changes) => {
-    if (!changes || typeof changes !== 'object' || Array.isArray(changes)) {
-        throw new TypeError('Expected an update object');
-    }
-    // Validate the complete patch before the handle commits it to the live node.
-    const next = structuredClone(node);
-    Object.entries(changes).forEach(([key, value]) => {
-        if (!fields[node.type]?.includes(key)) {
-            throw new TypeError(`Cannot update ${key} on ${node.type}`);
-        }
-        if (key === 'depth') {
-            if (typeof value !== 'number' || !Number.isInteger(value) || value < 1 || value > 6) {
-                throw new RangeError('Heading depth must be 1–6');
-            }
-        }
-        else if (key === 'checked') {
-            if (typeof value !== 'boolean' || typeof node.checked !== 'boolean') {
-                throw new TypeError('checked requires a task and a boolean');
-            }
-            // Explicit checkbox changes reset custom markers such as [?] to standard ones.
-            delete next.taskMarker;
-        }
-        else if (key === 'fold') {
-            if (![null, 'expanded', 'collapsed'].includes(value)) {
-                throw new TypeError('Invalid callout fold');
-            }
-        }
-        else if (value !== null ||
-            !['alias', 'heading', 'block', 'title', 'lang', 'meta'].includes(key)) {
-            text(value, key);
-        }
-        if (typeof value === 'string' &&
-            node.type === 'heading' &&
-            key === 'text' &&
-            /[\r\n]/.test(value)) {
-            throw new TypeError('Heading text must be one line');
-        }
-        // Reject punctuation that could escape the serialized wikilink.
-        if (['wikiLink', 'embed'].includes(node.type) && typeof value === 'string') {
-            if (/[\[\]\r\n|\\]/.test(value) ||
-                value.includes('%%') ||
-                (key === 'target' && /[#^]/.test(value))) {
-                throw new TypeError(`Invalid ${key}`);
-            }
-            if (key === 'block' && !/^[A-Za-z0-9-]+$/.test(value)) {
-                throw new TypeError('Invalid block identifier');
-            }
-        }
-        if (key === 'calloutType' && typeof value === 'string' && !/^[\w-]+$/.test(value)) {
-            throw new TypeError('Invalid calloutType');
-        }
-        if (node.type === 'comment' && typeof value === 'string' && value.includes('%%')) {
-            throw new TypeError('Comment value cannot contain %%');
-        }
-        if (node.type === 'callout' && key === 'title') {
-            if (typeof value !== 'string' || /[\r\n]/.test(value)) {
-                throw new TypeError('Callout title must be one line');
-            }
-            next.title = [{ type: 'text', value }];
-        }
-        else if (key === 'text') {
-            text(value, key);
-            // Text updates are literal replacements, not Markdown fragments.
-            next.children = [{ type: 'text', value }];
-            if (node.blockId) {
-                next.children.push({ type: 'blockId', value: node.blockId });
-            }
-        }
-        else {
-            Object.assign(next, { [key]: value });
-        }
-    });
-    // Validate relationships after all fields have changed, allowing fragment switches.
-    if (next.heading !== undefined && next.heading !== null && next.block !== null) {
-        throw new TypeError('Use either heading or block');
-    }
-    if (['wikiLink', 'embed'].includes(node.type) && !next.target && !next.heading && !next.block) {
-        throw new TypeError('A link needs a target or fragment');
-    }
-    return next;
-};
-
-// Keep the node private and route edits through the owning page's callbacks.
-const createHandle = (node, { locate, changed, page }) => {
-    const handle = {
-        json: (options = {}) => {
-            const tree = outputTree(node, options);
-            return tree ? json(tree, options, definitions(page.ast(options))) : null;
-        },
-        ast: (options = {}) => outputTree(node, options),
-        text: (options = {}) => text$1(outputTree(node, options), options),
-        update: (changes) => {
-            // Reject stale handles before validating changes on a copy.
-            locate(node);
-            const next = edit(node, changes);
-            // Preserve node identity so other handles to this item remain valid.
-            Object.keys(node).forEach((key) => {
-                Reflect.deleteProperty(node, key);
-            });
-            Object.assign(node, next);
-            changed();
-            return handle;
-        },
-        remove: () => {
-            const parent = locate(node);
-            // A callout's title nodes live outside its body children.
-            const children = parent.children.includes(node)
-                ? parent.children
-                : parent.title;
-            const index = children.indexOf(node);
-            const following = children[index + 1];
-            children.splice(index, 1);
-            // Remove a separate block-ID paragraph along with the block it labels.
-            if (node.blockId && following?.type === 'paragraph' && following.blockId === node.blockId) {
-                children.splice(index, 1);
-            }
-            changed();
-            return page;
-        }
-    };
-    return handle;
 };
 
 // Owns document state; parsing and serialization are stateless operations.
@@ -29774,7 +29842,7 @@ class Page {
     }
     // Handles reference live nodes; output methods return detached views.
     #select(predicate) {
-        return select(this.#tree, predicate).map((node) => createHandle(node, {
+        return select(this.#tree, predicate).map((node) => createSection(node, {
             locate: (target) => locate(this.#tree, target),
             changed: () => this.#changed(),
             page: this
@@ -29784,7 +29852,7 @@ class Page {
         return outputTree(this.#tree, options);
     }
     text(options = {}) {
-        return text$1(outputTree(this.#tree, options), options);
+        return text(outputTree(this.#tree, options), options);
     }
     markdown(options = {}) {
         // Reuse exact source only when neither edits nor exclusions affect the output.

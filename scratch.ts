@@ -13,7 +13,7 @@ const input = `hello [[world]]
 const page = parsePage(input)
 
 // console.log(page.json({}))
-console.log(page.text())
+console.log(page.embeds()[0].text())
 
 /*
  * blocks
