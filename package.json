@@ -6,17 +6,20 @@
   "author": "Spencer Kelly <spencermountain@gmail.com> (https://spencermountain.dev)",
   "minimumReleaseAge": "1 day",
   "scripts": {
-    "build": "rollup -c --silent",
+    "build": "pnpm compile && rollup -c --silent",
     "test": "tape \"tests/**/*.test.js\" | tap-dancer",
     "testb": "TESTENV=prod pnpm run test",
     "watch": "node --watch scratch.js",
     "lint": "eslint .",
-    "prepack": "pnpm build"
+    "prepack": "pnpm build",
+    "compile": "tsc -p tsconfig.json && node scripts/declarations.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "pretest": "pnpm compile",
+    "prewatch": "pnpm compile"
   },
   "type": "module",
-  "main": "./builds/index.cjs",
+  "main": "./builds/obsidian-parser.cjs",
   "files": [
-    "src",
     "builds",
     "types"
   ],
@@ -43,22 +46,41 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "^29.0.3",
     "@rollup/plugin-node-resolve": "^16.0.3",
+    "@types/mdast": "^4.0.4",
+    "@types/unist": "^3.0.3",
+    "@typescript-eslint/parser": "^8.71.2",
     "eslint": "10.11.0",
+    "mdast-util-from-markdown": "^2.1.0",
+    "micromark-util-types": "^2.0.3",
     "rollup": "^4.64.7",
     "tap-dancer": "0.4.2",
-    "tape": "^5.10.2"
+    "tape": "^5.10.2",
+    "typescript": "^6.0.3"
   },
   "license": "MIT",
-  "module": "./builds/index.js",
+  "module": "./builds/obsidian-parser.mjs",
   "exports": {
     ".": {
-      "import": "./builds/index.js",
-      "require": "./builds/index.cjs"
+      "import": {
+        "types": "./types/index.d.ts",
+        "default": "./builds/obsidian-parser.mjs"
+      },
+      "require": {
+        "types": "./types/index.d.cts",
+        "default": "./builds/obsidian-parser.cjs"
+      }
     },
     "./remark": {
-      "import": "./builds/remark.js",
-      "require": "./builds/remark.cjs"
+      "import": {
+        "types": "./types/remark.d.ts",
+        "default": "./builds/remark/obsidian-parser.mjs"
+      },
+      "require": {
+        "types": "./types/remark.d.cts",
+        "default": "./builds/remark/obsidian-parser.cjs"
+      }
     }
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "types": "./types/index.d.ts"
 }

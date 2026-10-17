@@ -1,8 +1,9 @@
+import type { MarkdownNode, NodeJSON, OutputOptions, Collection, Predicate } from '../types.js'
 import text from './text.js'
 import { dimensions } from '../parse/syntax/_lib.js'
 
 // Shared category names for selectors, JSON collections, and output exclusions.
-const groups = {
+const groups: Record<Collection, Predicate> = {
   headings: (node) => node.type === 'heading',
   paragraphs: (node) => node.type === 'paragraph',
   links: (node) => ['wikiLink', 'link', 'linkReference'].includes(node.type),
@@ -19,10 +20,10 @@ const groups = {
   footnotes: (node) => node.type === 'footnoteDefinition'
 }
 
-const json = (node, options = {}) => {
-  const result = { type: node.type, text: text(node, options) }
+const json = (node: MarkdownNode, options: OutputOptions = {}): NodeJSON => {
+  const result: NodeJSON = { type: node.type, text: text(node, options) }
   // Copy public metadata explicitly instead of leaking nested AST internals.
-  const fields = [
+  const fields: Array<keyof NodeJSON & keyof MarkdownNode> = [
     'depth',
     'target',
     'alias',
@@ -45,7 +46,7 @@ const json = (node, options = {}) => {
   ]
   fields.forEach((key) => {
     if (node[key] !== undefined) {
-      result[key] = node[key]
+      Object.assign(result, { [key]: node[key] })
     }
   })
   if (node.position) {
@@ -53,10 +54,10 @@ const json = (node, options = {}) => {
   }
   // Direct comment inspection exposes its content even when document text omits it.
   if (node.type === 'comment') {
-    result.text = node.value
+    result.text = node.value!
   }
   if (node.type === 'callout') {
-    result.title = text({ children: node.title }, options)
+    result.title = text({ type: 'paragraph', children: node.title as MarkdownNode[] }, options)
   }
   // Size hints occupy the alias in embeds and the final alt-text segment in images.
   if (node.type === 'embed') {
@@ -67,11 +68,11 @@ const json = (node, options = {}) => {
   }
   // Flatten cells into rows so consumers need not traverse table nodes.
   if (node.type === 'table') {
-    result.align = [...node.align]
-    result.rows = node.children.map((row) => row.children.map((cell) => text(cell, options)))
+    result.align = [...node.align!]
+    result.rows = node.children!.map((row) => row.children!.map((cell) => text(cell, options)))
   }
   if (node.type === 'list') {
-    result.items = node.children.map((item) => ({
+    result.items = node.children!.map((item) => ({
       text: text(item, options),
       checked: item.checked ?? null
     }))

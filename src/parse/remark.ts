@@ -1,3 +1,6 @@
+import type { Processor, Transformer } from 'unified'
+import type { Root } from 'mdast'
+import type { ParseOptions, DocumentNode } from '../types.js'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import remarkFrontmatter from 'remark-frontmatter'
@@ -7,10 +10,10 @@ import toMarkdown from './syntax/to-markdown.js'
 import transform from './syntax/transform.js'
 
 // Unified supplies `this`; arrow functions cannot be used for plugin attachers.
-const obsidianSyntax = function () {
+const obsidianSyntax = function (this: Processor) {
   // External remark users may call runSync(parse(input)) without passing a file.
   // Keep the source for that tree so escaped markers and HTML remain literal.
-  const sources = new WeakMap()
+  const sources = new WeakMap<object, string>()
   const parser = this.parser
   if (parser) {
     this.parser = (input, file) => {
@@ -29,16 +32,17 @@ const obsidianSyntax = function () {
   data.fromMarkdownExtensions.push(fromMarkdown())
   data.toMarkdownExtensions.push(toMarkdown())
 
-  return (tree, file) => {
+  const transformer: Transformer<Root, Root> = (tree, file) => {
     let source = sources.get(tree)
     if (source === undefined && file.value !== undefined) {
       source = String(file.value)
     }
-    return transform(tree, (input) => this.parse(input), source)
+    transform(tree as unknown as DocumentNode, (input) => this.parse(input) as unknown as DocumentNode, source)
   }
+  return transformer
 }
 
-const remarkObsidian = function (options = {}) {
+const remarkObsidian = function (this: Processor, options: ParseOptions = {}) {
   // Obsidian strikethrough uses double tildes unless the caller overrides GFM.
   this.use(remarkGfm, { singleTilde: false, ...options.gfm })
   this.use(remarkMath, options.math)

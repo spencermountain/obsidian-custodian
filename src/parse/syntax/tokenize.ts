@@ -1,5 +1,17 @@
+import type { Construct, Extension, State, TokenTypeMap } from 'micromark-util-types'
+// Register custom token names with micromark's extensible token map.
+declare module 'micromark-util-types' {
+  interface TokenTypeMap {
+    obsidianLink: 'obsidianLink'
+    obsidianEmbed: 'obsidianEmbed'
+    obsidianComment: 'obsidianComment'
+    obsidianCommentData: 'obsidianCommentData'
+    obsidianHighlight: 'obsidianHighlight'
+  }
+}
+
 // Tokenize before Markdown decodes escapes or interprets link punctuation.
-const delimited = (name, opening, closing, { multiline = false, flow = false } = {}) => ({
+const delimited = (name: keyof TokenTypeMap, opening: string, closing: string, { multiline = false, flow = false } = {}): Construct => ({
   // Block comments can span blank lines without starting new Markdown containers.
   concrete: flow,
   name,
@@ -12,7 +24,7 @@ const delimited = (name, opening, closing, { multiline = false, flow = false } =
     let codeFence = 0
     let escaped = false
     // Match the opening delimiter, or let CommonMark try another construct.
-    const start = (code) => {
+    const start: State = (code) => {
       if (code !== opening.charCodeAt(opened)) {
         return nok(code)
       }
@@ -34,7 +46,7 @@ const delimited = (name, opening, closing, { multiline = false, flow = false } =
       return start
     }
     // Micromark uses null for EOF and codes below -2 for line endings.
-    const content = (code) => {
+    const content: State = (code) => {
       if (code === null || (!multiline && code < -2)) {
         return nok(code)
       }
@@ -85,7 +97,7 @@ const delimited = (name, opening, closing, { multiline = false, flow = false } =
       return content
     }
     // A block comment must end the line; otherwise try inline parsing.
-    const end = (code) => {
+    const end: State = (code) => {
       if (code === null || code < -2) {
         return ok(code)
       }
@@ -95,7 +107,7 @@ const delimited = (name, opening, closing, { multiline = false, flow = false } =
   }
 })
 
-const syntax = () => ({
+const syntax = (): Extension => ({
   // Keys are the character codes of possible opening markers.
   flow: { 37: delimited('obsidianComment', '%%', '%%', { multiline: true, flow: true }) },
   text: {

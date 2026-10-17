@@ -1,13 +1,14 @@
+import type { MarkdownNode, DocumentNode } from '../../types.js'
 import protectHtml from './html.js'
 import { walk } from './_lib.js'
 import callout from './_lib/callout.js'
 import { task, blockId, attachBlockIds } from './_lib/blocks.js'
 
-const transform = (tree, parse, source) => {
+const transform = (tree: MarkdownNode, parse: (input: string) => DocumentNode, source?: string) => {
   // Collapse HTML before visiting its contents: Obsidian treats those as literal.
   protectHtml(tree, source)
   // Original source distinguishes escaped markers from decoded text nodes.
-  const raw = (node) => source?.slice(node.position?.start.offset, node.position?.end.offset)
+  const raw = (node: MarkdownNode) => source?.slice(node.position?.start.offset, node.position?.end.offset)
 
   walk(tree, (node) => {
     if (node.type === 'highlight' && node.value !== undefined) {

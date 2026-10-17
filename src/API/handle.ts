@@ -1,11 +1,27 @@
+import type { MarkdownNode, NodeJSON, OutputOptions, EditChanges } from '../types.js'
+import type Page from './Page.js'
 import { json } from './json.js'
 import edit from './edit.js'
 import outputTree from './_lib/output.js'
 import text from './text.js'
 
+interface ItemHandle {
+  json(options?: OutputOptions): NodeJSON | null
+  ast(options?: OutputOptions): MarkdownNode | null
+  text(options?: OutputOptions): string
+  update(changes: EditChanges): ItemHandle
+  remove(): Page
+}
+
+interface HandleContext {
+  locate(node: MarkdownNode): MarkdownNode
+  changed(): void
+  page: Page
+}
+
 // Keep the node private and route edits through the owning page's callbacks.
-const createHandle = (node, { locate, changed, page }) => {
-  const handle = {
+const createHandle = (node: MarkdownNode, { locate, changed, page }: HandleContext): ItemHandle => {
+  const handle: ItemHandle = {
     json: (options = {}) => {
       const tree = outputTree(node, options)
       return tree ? json(tree, options) : null
@@ -18,7 +34,7 @@ const createHandle = (node, { locate, changed, page }) => {
       const next = edit(node, changes)
       // Preserve node identity so other handles to this item remain valid.
       Object.keys(node).forEach((key) => {
-        delete node[key]
+        Reflect.deleteProperty(node, key)
       })
       Object.assign(node, next)
       changed()
@@ -27,7 +43,7 @@ const createHandle = (node, { locate, changed, page }) => {
     remove: () => {
       const parent = locate(node)
       // A callout's title nodes live outside its body children.
-      const children = parent.children.includes(node) ? parent.children : parent.title
+      const children = parent.children!.includes(node) ? parent.children! : parent.title as MarkdownNode[]
       const index = children.indexOf(node)
       const following = children[index + 1]
       children.splice(index, 1)
@@ -43,3 +59,5 @@ const createHandle = (node, { locate, changed, page }) => {
 }
 
 export default createHandle
+
+export type { ItemHandle }

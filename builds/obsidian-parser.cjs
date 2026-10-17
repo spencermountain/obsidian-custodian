@@ -25969,236 +25969,258 @@ function remarkFrontmatter(options) {
 
 // Tokenize before Markdown decodes escapes or interprets link punctuation.
 const delimited = (name, opening, closing, { multiline = false, flow = false } = {}) => ({
-  concrete: flow,
-  name,
-  tokenize: function (effects, ok, nok) {
-    let opened = 0;
-    let closed = 0;
-    let size = 0;
-    let ticks = 0;
-    let codeFence = 0;
-    let escaped = false;
-    // Match the opening delimiter, or let CommonMark try another construct.
-    const start = (code) => {
-      if (code !== opening.charCodeAt(opened)) {
-        return nok(code)
-      }
-      if (opened === 0) {
-        effects.enter(name);
-        if (flow) {
-          effects.enter('obsidianCommentData');
-        }
-      }
-      effects.consume(code);
-      opened += 1;
-      if (opened === opening.length) {
-        // A flow interruption check only needs the opening marker.
-        if (flow && this.interrupt) {
-          return ok
-        }
-        return content
-      }
-      return start
-    };
-    // Micromark uses null for EOF and codes below -2 for line endings.
-    const content = (code) => {
-      if (code === null || (!multiline && code < -2)) {
-        return nok(code)
-      }
-      if (flow && code < -2) {
-        // Separate data and line endings keep multiline comments valid at EOF.
-        effects.exit('obsidianCommentData');
-        effects.enter('lineEnding');
-      }
-      effects.consume(code);
-      if (flow && code < -2) {
-        effects.exit('lineEnding');
-        effects.enter('obsidianCommentData');
-      }
-      // Escapes and code spans must not close a highlight's == delimiter.
-      let literal = false;
-      if (name === 'obsidianHighlight') {
-        if (code === 96 && !escaped) {
-          ticks += 1;
-          literal = true;
-        } else if (ticks) {
-          if (!codeFence) {
-            codeFence = ticks;
-          } else if (codeFence === ticks) {
-            codeFence = 0;
-          }
-          ticks = 0;
-        }
-        literal ||= escaped || codeFence > 0;
-        escaped = code === 92 && !escaped;
-      }
-      if (!literal && code === closing.charCodeAt(closed)) {
-        closed += 1;
-        if (closed === closing.length) {
-          if (size === 0 && name !== 'obsidianComment') {
-            return nok(code)
-          }
-          if (flow) {
-            effects.exit('obsidianCommentData');
-          }
-          effects.exit(name);
-          return flow ? end : ok
-        }
-      } else {
-        size += closed + 1;
-        closed = 0;
-      }
-      return content
-    };
-    // A block comment must end the line; otherwise try inline parsing.
-    const end = (code) => {
-      if (code === null || code < -2) {
-        return ok(code)
-      }
-      return nok(code)
-    };
-    return start
-  }
+    // Block comments can span blank lines without starting new Markdown containers.
+    concrete: flow,
+    name,
+    tokenize: function (effects, ok, nok) {
+        // Delimiter progress and code-span state belong to this tokenization attempt.
+        let opened = 0;
+        let closed = 0;
+        let size = 0;
+        let ticks = 0;
+        let codeFence = 0;
+        let escaped = false;
+        // Match the opening delimiter, or let CommonMark try another construct.
+        const start = (code) => {
+            if (code !== opening.charCodeAt(opened)) {
+                return nok(code);
+            }
+            if (opened === 0) {
+                effects.enter(name);
+                if (flow) {
+                    effects.enter('obsidianCommentData');
+                }
+            }
+            effects.consume(code);
+            opened += 1;
+            if (opened === opening.length) {
+                // A flow interruption check only needs the opening marker.
+                if (flow && this.interrupt) {
+                    return ok;
+                }
+                return content;
+            }
+            return start;
+        };
+        // Micromark uses null for EOF and codes below -2 for line endings.
+        const content = (code) => {
+            if (code === null || (!multiline && code < -2)) {
+                return nok(code);
+            }
+            if (flow && code < -2) {
+                // Separate data and line endings keep multiline comments valid at EOF.
+                effects.exit('obsidianCommentData');
+                effects.enter('lineEnding');
+            }
+            effects.consume(code);
+            if (flow && code < -2) {
+                effects.exit('lineEnding');
+                effects.enter('obsidianCommentData');
+            }
+            // Escapes and code spans must not close a highlight's == delimiter.
+            let literal = false;
+            if (name === 'obsidianHighlight') {
+                if (code === 96 && !escaped) {
+                    ticks += 1;
+                    literal = true;
+                }
+                else if (ticks) {
+                    if (!codeFence) {
+                        codeFence = ticks;
+                    }
+                    else if (codeFence === ticks) {
+                        codeFence = 0;
+                    }
+                    ticks = 0;
+                }
+                literal ||= escaped || codeFence > 0;
+                escaped = code === 92 && !escaped;
+            }
+            if (!literal && code === closing.charCodeAt(closed)) {
+                closed += 1;
+                if (closed === closing.length) {
+                    if (size === 0 && name !== 'obsidianComment') {
+                        return nok(code);
+                    }
+                    if (flow) {
+                        effects.exit('obsidianCommentData');
+                    }
+                    effects.exit(name);
+                    return flow ? end : ok;
+                }
+            }
+            else {
+                // A partial closing delimiter is content if the next character mismatches.
+                size += closed + 1;
+                closed = 0;
+            }
+            return content;
+        };
+        // A block comment must end the line; otherwise try inline parsing.
+        const end = (code) => {
+            if (code === null || code < -2) {
+                return ok(code);
+            }
+            return nok(code);
+        };
+        return start;
+    }
 });
-
 const syntax = () => ({
-  // Keys are the character codes of possible opening markers.
-  flow: { 37: delimited('obsidianComment', '%%', '%%', { multiline: true, flow: true }) },
-  text: {
-    33: delimited('obsidianEmbed', '![[', ']]'),
-    91: delimited('obsidianLink', '[[', ']]'),
-    37: delimited('obsidianComment', '%%', '%%', { multiline: true }),
-    61: delimited('obsidianHighlight', '==', '==')
-  }
+    // Keys are the character codes of possible opening markers.
+    flow: { 37: delimited('obsidianComment', '%%', '%%', { multiline: true, flow: true }) },
+    text: {
+        33: delimited('obsidianEmbed', '![[', ']]'),
+        91: delimited('obsidianLink', '[[', ']]'),
+        37: delimited('obsidianComment', '%%', '%%', { multiline: true }),
+        61: delimited('obsidianHighlight', '==', '==')
+    }
 });
 
+// Accept width or width x height hints; ordinary aliases have no dimensions.
 const dimensions = (value = '') => {
-  const match = /^(\d+)(?:x(\d+))?$/.exec(value);
-  if (!match) { return {} }
-  const result = { width: Number(match[1]) };
-  if (match[2]) { result.height = Number(match[2]); }
-  return result
+    const match = /^(\d+)(?:x(\d+))?$/.exec(value);
+    if (!match) {
+        return {};
+    }
+    const result = { width: Number(match[1]) };
+    if (match[2]) {
+        result.height = Number(match[2]);
+    }
+    return result;
 };
-
 const wikiFields = (value) => {
-  // Split [[path#heading|label]] or [[path#^block|label]] without resolving the vault.
-  const pipe = value.indexOf('|');
-  const destination = pipe < 0 ? value : value.slice(0, pipe);
-  const hash = destination.indexOf('#');
-  const result = { target: destination, alias: null, heading: null, block: null };
-  if (pipe >= 0) { result.alias = value.slice(pipe + 1); }
-  if (hash >= 0) {
-    result.target = destination.slice(0, hash);
-    const fragment = destination.slice(hash + 1);
-    if (fragment.startsWith('^')) { result.block = fragment.slice(1); } else { result.heading = fragment; }
-  }
-  return result
+    // Split [[path#heading|label]] or [[path#^block|label]] without resolving the vault.
+    const pipe = value.indexOf('|');
+    const destination = pipe < 0 ? value : value.slice(0, pipe);
+    const hash = destination.indexOf('#');
+    const result = { target: destination, alias: null, heading: null, block: null };
+    if (pipe >= 0) {
+        result.alias = value.slice(pipe + 1);
+    }
+    if (hash >= 0) {
+        result.target = destination.slice(0, hash);
+        const fragment = destination.slice(hash + 1);
+        if (fragment.startsWith('^')) {
+            result.block = fragment.slice(1);
+        }
+        else {
+            result.heading = fragment;
+        }
+    }
+    return result;
 };
-
 const wikiMarkdown = (node) => {
-  let value = node.target;
-  if (node.heading !== null) { value += `#${node.heading}`; }
-  if (node.block !== null) { value += `#^${node.block}`; }
-  if (node.alias !== null) { value += `|${node.alias}`; }
-  return `${node.type === 'embed' ? '!' : ''}[[${value}]]`
+    let value = node.target;
+    if (node.heading !== null) {
+        value += `#${node.heading}`;
+    }
+    if (node.block !== null) {
+        value += `#^${node.block}`;
+    }
+    if (node.alias !== null) {
+        value += `|${node.alias}`;
+    }
+    return `${node.type === 'embed' ? '!' : ''}[[${value}]]`;
 };
-
+// Visit parents first so transforms can replace children before traversal continues.
 const walk = (node, visit, parent = null) => {
-  visit(node, parent);
-  node.children?.forEach((child) => walk(child, visit, node));
-  // Callout titles contain inline nodes; ordinary link titles are strings.
-  if (Array.isArray(node.title)) {
-    node.title.forEach((child) => walk(child, visit, node));
-  }
+    visit(node, parent);
+    node.children?.forEach((child) => walk(child, visit, node));
+    // Callout titles contain inline nodes; ordinary link titles are strings.
+    if (Array.isArray(node.title)) {
+        node.title.forEach((child) => walk(child, visit, node));
+    }
 };
-
+// Internal text used for block recognition, independent of API output preferences.
 const plainText = (node) => {
-  if (node.type === 'comment' || node.type === 'blockId') { return '' }
-  if (node.type === 'wikiLink' || node.type === 'embed') { return node.alias ?? node.target }
-  if (node.type === 'image') { return node.alt || '' }
-  if (node.value !== undefined) { return node.value }
-  const separator = ['root', 'list', 'listItem', 'blockquote', 'callout'].includes(node.type) ? '\n' : '';
-  return (node.children || []).map(plainText).join(separator)
+    if (node.type === 'comment' || node.type === 'blockId') {
+        return '';
+    }
+    if (node.type === 'wikiLink' || node.type === 'embed') {
+        return node.alias ?? node.target;
+    }
+    if (node.type === 'image') {
+        return node.alt || '';
+    }
+    if (node.value !== undefined) {
+        return node.value;
+    }
+    const separator = ['root', 'list', 'listItem', 'blockquote', 'callout'].includes(node.type) ? '\n' : '';
+    return (node.children || []).map(plainText).join(separator);
 };
 
 const types = {
-  obsidianLink: 'wikiLink',
-  obsidianEmbed: 'embed',
-  obsidianComment: 'comment',
-  obsidianHighlight: 'highlight'
+    obsidianLink: 'wikiLink',
+    obsidianEmbed: 'embed',
+    obsidianComment: 'comment',
+    obsidianHighlight: 'highlight'
 };
-
 // Translate micromark tokens into the custom nodes used by the API.
 const fromMarkdown = () => {
-  const enter = {};
-  const exit = {};
-  Object.entries(types).forEach(([tokenType, type]) => {
-    // mdast handlers receive the compiler as their dynamic receiver.
-    enter[tokenType] = function (token) {
-      this.enter({ type, value: '' }, token);
-    };
-    exit[tokenType] = function (token) {
-      const node = this.stack[this.stack.length - 1];
-      const raw = this.sliceSerialize(token);
-      const start = type === 'embed' ? 3 : 2;
-      node.value = raw.slice(start, -2);
-      if (type === 'wikiLink' || type === 'embed') {
-        // GFM tables require the alias separator to be written as \|.
-        Object.assign(node, wikiFields(node.value.replace(/\\\|/g, '|')));
-        delete node.value;
-      }
-      this.exit(token);
-    };
-  });
-  return { enter, exit }
+    const enter = {};
+    const exit = {};
+    Object.entries(types).forEach(([tokenType, type]) => {
+        // mdast handlers receive the compiler as their dynamic receiver.
+        enter[tokenType] = function (token) {
+            this.enter({ type, value: '' }, token);
+        };
+        exit[tokenType] = function (token) {
+            const node = this.stack[this.stack.length - 1];
+            const raw = this.sliceSerialize(token);
+            // Embeds open with ![[; every other custom delimiter is two characters wide.
+            const start = type === 'embed' ? 3 : 2;
+            node.value = raw.slice(start, -2);
+            if (type === 'wikiLink' || type === 'embed') {
+                // GFM tables require the alias separator to be written as \|.
+                Object.assign(node, wikiFields(node.value.replace(/\\\|/g, '|')));
+                delete node.value;
+            }
+            this.exit(token);
+        };
+    });
+    return { enter, exit };
 };
 
 const wiki = (node, parent, state) => {
-  const value = wikiMarkdown(node);
-  // An alias separator must not become a new table cell.
-  return state.stack.includes('tableCell') ? value.replace(/\|/g, '\\|') : value
+    const value = wikiMarkdown(node);
+    // An alias separator must not become a new table cell.
+    return state.stack.includes('tableCell') ? value.replace(/\|/g, '\\|') : value;
 };
-
 const highlight = (node, parent, state, info) => {
-  const content = state.containerPhrasing(node, { ...info, before: '=', after: '=' });
-  return `==${content}==`
+    // Give remark the delimiter context so it can escape nested text correctly.
+    const content = state.containerPhrasing(node, { ...info, before: '=', after: '=' });
+    return `==${content}==`;
 };
-
-const callout$1 = (node, parent, state, info) => {
-  let fold = '';
-  if (node.fold) {
-    fold = node.fold === 'collapsed' ? '-' : '+';
-  }
-  const title = state.containerPhrasing(
-    { type: 'paragraph', children: node.title },
-    { ...info, before: ' ', after: '\n' }
-  );
-  const body = state.containerFlow({ type: 'blockquote', children: node.children }, info);
-  let content = `[!${node.calloutType}]${fold}`;
-  if (title) { content += ` ${title}`; }
-  if (body) { content += `\n${body}`; }
-  return content.split('\n').map((line) => line ? `> ${line}` : '>').join('\n')
+const callout$1 = (raw, parent, state, info) => {
+    const node = raw;
+    let fold = '';
+    if (node.fold) {
+        fold = node.fold === 'collapsed' ? '-' : '+';
+    }
+    const title = state.containerPhrasing({ type: 'paragraph', children: node.title }, { ...info, before: ' ', after: '\n' });
+    const body = state.containerFlow({ type: 'blockquote', children: node.children }, info);
+    let content = `[!${node.calloutType}]${fold}`;
+    if (title) {
+        content += ` ${title}`;
+    }
+    if (body) {
+        content += `\n${body}`;
+    }
+    // Every line, including blanks and nested blocks, must remain inside the quote.
+    return content.split('\n').map((line) => line ? `> ${line}` : '>').join('\n');
 };
-
-const listItem = (node, parent, state, info) => {
-  const content = handle.listItem(node, parent, state, info);
-  if (typeof node.checked !== 'boolean') {
-    return content
-  }
-  // Preserve Obsidian's custom checked markers, such as [?] and [-].
-  const marker = node.checked ? node.taskMarker || 'x' : ' ';
-  return content.replace(/^([*+-]|\d+[.)])(?: |$)/, `$1 [${marker}] `)
+const listItem = (raw, parent, state, info) => {
+    const node = raw;
+    const content = handle.listItem(node, parent, state, info);
+    if (typeof node.checked !== 'boolean') {
+        return content;
+    }
+    // Preserve Obsidian's custom checked markers, such as [?] and [-].
+    const marker = node.checked ? node.taskMarker || 'x' : ' ';
+    return content.replace(/^([*+-]|\d+[.)])(?: |$)/, `$1 [${marker}] `);
 };
-
-const toMarkdown = () => ({
-  // Escape literal text that would otherwise be interpreted as Obsidian syntax.
-  unsafe: [
-    { character: '[', after: '\\[' },
-    { character: '=', after: '=' },
-    { character: '%', after: '%' },
-    { character: '^', before: '(?:^|\\s)', after: '[A-Za-z0-9-]+(?:$|\\n)' }
-  ],
-  handlers: {
+const handlers = {
     wikiLink: wiki,
     embed: wiki,
     comment: (node) => `%%${node.value}%%`,
@@ -26206,180 +26228,224 @@ const toMarkdown = () => ({
     highlight,
     callout: callout$1,
     listItem
-  }
+};
+const toMarkdown = () => ({
+    // Escape literal text that would otherwise be interpreted as Obsidian syntax.
+    unsafe: [
+        { character: '[', after: '\\[' },
+        { character: '=', after: '=' },
+        { character: '%', after: '%' },
+        { character: '^', before: '(?:^|\\s)', after: '[A-Za-z0-9-]+(?:$|\\n)' }
+    ],
+    handlers
 });
 
 // Obsidian leaves Markdown inside HTML elements uninterpreted.
 const protectHtml = (tree, source) => {
-  if (source === undefined) { return }
-  walk(tree, (node) => {
-    if (!node.children) { return }
-    for (let i = 0; i < node.children.length; i += 1) {
-      const first = node.children[i];
-      const opening = first.type === 'html' && /^<([A-Za-z][\w:-]*)(?:\s[^>]*)?>$/.exec(first.value);
-      if (!opening || /\/>$/.test(first.value)) { continue }
-      let depth = 1;
-      // Count matching nested tags before collapsing the original source span.
-      for (let j = i + 1; j < node.children.length; j += 1) {
-        const last = node.children[j];
-        if (last.type !== 'html') { continue }
-        const tag = /^<(\/?)([A-Za-z][\w:-]*)(?:\s[^>]*)?>$/.exec(last.value);
-        if (!tag || tag[2].toLowerCase() !== opening[1].toLowerCase()) { continue }
-        depth += tag[1] ? -1 : 1;
-        if (depth === 0) {
-          const position = { start: first.position.start, end: last.position.end };
-          node.children.splice(i, j - i + 1, {
-            type: 'html', value: source.slice(position.start.offset, position.end.offset), position
-          });
-          break
-        }
-      }
+    if (source === undefined) {
+        return;
     }
-  });
+    walk(tree, (node) => {
+        if (!node.children) {
+            return;
+        }
+        for (let i = 0; i < node.children.length; i += 1) {
+            const first = node.children[i];
+            const opening = first.type === 'html' && /^<([A-Za-z][\w:-]*)(?:\s[^>]*)?>$/.exec(first.value);
+            if (!opening || /\/>$/.test(first.value)) {
+                continue;
+            }
+            let depth = 1;
+            // Count matching nested tags before collapsing the original source span.
+            for (let j = i + 1; j < node.children.length; j += 1) {
+                const last = node.children[j];
+                if (last.type !== 'html') {
+                    continue;
+                }
+                const tag = /^<(\/?)([A-Za-z][\w:-]*)(?:\s[^>]*)?>$/.exec(last.value);
+                if (!tag || tag[2].toLowerCase() !== opening[1].toLowerCase()) {
+                    continue;
+                }
+                depth += tag[1] ? -1 : 1;
+                if (depth === 0) {
+                    const position = { start: first.position.start, end: last.position.end };
+                    // Preserve the exact markup rather than reserializing its parsed children.
+                    node.children.splice(i, j - i + 1, {
+                        type: 'html', value: source.slice(position.start.offset, position.end.offset), position
+                    });
+                    break;
+                }
+            }
+        }
+    });
 };
 
 const callout = (node) => {
-  const paragraph = node.children[0];
-  const first = paragraph?.children?.[0];
-  if (first?.type !== 'text') { return }
-  const match = /^\[!([\w-]+)\]([+-]?)[ \t]*/.exec(first.value);
-  if (!match) { return }
-
-  first.value = first.value.slice(match[0].length);
-  const title = [];
-  const body = [];
-  let inBody = false;
-  // The first line is the title; preserve its inline formatting separately.
-  paragraph.children.forEach((child) => {
-    if (!inBody && child.type === 'text' && /[\r\n]/.test(child.value)) {
-      const index = child.value.search(/[\r\n]/);
-      title.push({ ...child, value: child.value.slice(0, index) });
-      body.push({ ...child, value: child.value.slice(index).replace(/^\r?\n/, '') });
-      inBody = true;
-    } else if (inBody) {
-      body.push(child);
-    } else {
-      title.push(child);
+    const paragraph = node.children[0];
+    const first = paragraph?.children?.[0];
+    if (first?.type !== 'text') {
+        return;
     }
-  });
-  node.type = 'callout';
-  node.calloutType = match[1].toLowerCase();
-  node.fold = null;
-  if (match[2]) { node.fold = match[2] === '-' ? 'collapsed' : 'expanded'; }
-  node.title = title;
-  node.children = node.children.slice(1);
-  if (body.length) { node.children.unshift({ type: 'paragraph', children: body }); }
+    const match = /^\[!([\w-]+)\]([+-]?)[ \t]*/.exec(first.value);
+    if (!match) {
+        return;
+    }
+    first.value = first.value.slice(match[0].length);
+    const title = [];
+    const body = [];
+    let inBody = false;
+    // The first line is the title; preserve its inline formatting separately.
+    paragraph.children.forEach((child) => {
+        if (!inBody && child.type === 'text' && /[\r\n]/.test(child.value)) {
+            const index = child.value.search(/[\r\n]/);
+            title.push({ ...child, value: child.value.slice(0, index) });
+            body.push({ ...child, value: child.value.slice(index).replace(/^\r?\n/, '') });
+            inBody = true;
+        }
+        else if (inBody) {
+            body.push(child);
+        }
+        else {
+            title.push(child);
+        }
+    });
+    node.type = 'callout';
+    node.calloutType = match[1].toLowerCase();
+    // No marker means non-foldable; +/- records the initial expansion state.
+    node.fold = null;
+    if (match[2]) {
+        node.fold = match[2] === '-' ? 'collapsed' : 'expanded';
+    }
+    node.title = title;
+    node.children = node.children.slice(1);
+    if (body.length) {
+        node.children.unshift({ type: 'paragraph', children: body });
+    }
 };
 
 const task = (node, raw) => {
-  const first = node.children[0]?.children?.[0];
-  const match = first?.type === 'text' && /^\[([^\]\s])\][ \t]+/.exec(first.value);
-  // GFM already handles [x] and [ ]; Obsidian accepts other checked markers.
-  if (node.checked == null && match && !raw(first)?.startsWith('\\')) {
-    node.checked = true;
-    node.taskMarker = match[1];
-    first.value = first.value.slice(match[0].length);
-  }
+    const first = node.children[0]?.children?.[0];
+    const match = first?.type === 'text' && /^\[([^\]\s])\][ \t]+/.exec(first.value);
+    // GFM already handles [x] and [ ]; Obsidian accepts other checked markers.
+    if (node.checked == null && match && !raw(first)?.startsWith('\\')) {
+        node.checked = true;
+        node.taskMarker = match[1];
+        first.value = first.value.slice(match[0].length);
+    }
 };
-
 const blockId = (node, raw, hasSource) => {
-  const last = node.children.at(-1);
-  const pattern = /(?:^|[ \t\n])\^([a-zA-Z0-9-]+)$/;
-  const match = last?.type === 'text' && pattern.exec(last.value);
-  if (!match) { return }
-  // Check the original text too: Markdown has already decoded backslash escapes.
-  if (hasSource && !pattern.test(raw(last))) { return }
-  last.value = last.value.slice(0, match.index);
-  node.children.push({ type: 'blockId', value: match[1] });
-  node.blockId = match[1];
+    const last = node.children.at(-1);
+    const pattern = /(?:^|[ \t\n])\^([a-zA-Z0-9-]+)$/;
+    const match = last?.type === 'text' && pattern.exec(last.value);
+    if (!match) {
+        return;
+    }
+    // Check the original text too: Markdown has already decoded backslash escapes.
+    if (hasSource && !pattern.test(raw(last) ?? '')) {
+        return;
+    }
+    last.value = last.value.slice(0, match.index);
+    // Keep a serializable marker as well as metadata for block lookup.
+    node.children.push({ type: 'blockId', value: match[1] });
+    node.blockId = match[1];
 };
-
 const attachBlockIds = (node) => {
-  node.children?.forEach((child, index) => {
-    if (child.type !== 'paragraph' || !child.blockId) { return }
-    if (plainText(child).replace(child.blockId, '').trim()) { return }
-    // A standalone ^id refers to the preceding list, quote, table, or paragraph.
-    const previous = node.children[index - 1];
-    if (previous) { previous.blockId = child.blockId; }
-  });
+    node.children?.forEach((child, index) => {
+        if (child.type !== 'paragraph' || !child.blockId) {
+            return;
+        }
+        if (plainText(child).replace(child.blockId, '').trim()) {
+            return;
+        }
+        // A standalone ^id refers to the preceding list, quote, table, or paragraph.
+        const previous = node.children[index - 1];
+        if (previous) {
+            previous.blockId = child.blockId;
+        }
+    });
 };
 
 const transform = (tree, parse, source) => {
-  // Collapse HTML before visiting its contents: Obsidian treats those as literal.
-  protectHtml(tree, source);
-  const raw = (node) => source?.slice(node.position?.start.offset, node.position?.end.offset);
-
-  walk(tree, (node) => {
-    if (node.type === 'highlight' && node.value !== undefined) {
-      // Highlights start as raw text; parse their enclosed inline Markdown now.
-      const parsed = parse(node.value);
-      node.children = parsed.children[0]?.children || [{ type: 'text', value: node.value }];
-      delete node.value;
-      // These positions belong to the fragment, not the original document.
-      walk(node, (child) => { if (child !== node) { delete child.position; } });
-    }
-    if (node.type === 'blockquote' && !raw(node)?.match(/^>\s*\\/)) {
-      callout(node);
-    }
-    if (node.type === 'listItem') {
-      task(node, raw);
-    }
-    if (node.type === 'paragraph') {
-      blockId(node, raw, source !== undefined);
-    }
-  });
-  // Associate standalone IDs after every paragraph has been inspected.
-  walk(tree, attachBlockIds);
-  return tree
+    // Collapse HTML before visiting its contents: Obsidian treats those as literal.
+    protectHtml(tree, source);
+    // Original source distinguishes escaped markers from decoded text nodes.
+    const raw = (node) => source?.slice(node.position?.start.offset, node.position?.end.offset);
+    walk(tree, (node) => {
+        if (node.type === 'highlight' && node.value !== undefined) {
+            // Highlights start as raw text; parse their enclosed inline Markdown now.
+            const parsed = parse(node.value);
+            node.children = parsed.children[0]?.children || [{ type: 'text', value: node.value }];
+            delete node.value;
+            // These positions belong to the fragment, not the original document.
+            walk(node, (child) => { if (child !== node) {
+                delete child.position;
+            } });
+        }
+        if (node.type === 'blockquote' && !raw(node)?.match(/^>\s*\\/)) {
+            callout(node);
+        }
+        if (node.type === 'listItem') {
+            task(node, raw);
+        }
+        if (node.type === 'paragraph') {
+            blockId(node, raw, source !== undefined);
+        }
+    });
+    // Associate standalone IDs after every paragraph has been inspected.
+    walk(tree, attachBlockIds);
+    return tree;
 };
 
 // Unified supplies `this`; arrow functions cannot be used for plugin attachers.
 const obsidianSyntax = function () {
-  // External remark users may call runSync(parse(input)) without passing a file.
-  // Keep the source for that tree so escaped markers and HTML remain literal.
-  const sources = new WeakMap();
-  const parser = this.parser;
-  if (parser) {
-    this.parser = (input, file) => {
-      const tree = parser(input, file);
-      sources.set(tree, input);
-      return tree
-    };
-  }
-
-  const data = this.data();
-  data.micromarkExtensions ??= [];
-  data.fromMarkdownExtensions ??= [];
-  data.toMarkdownExtensions ??= [];
-  data.micromarkExtensions.push(syntax());
-  data.fromMarkdownExtensions.push(fromMarkdown());
-  data.toMarkdownExtensions.push(toMarkdown());
-
-  return (tree, file) => {
-    let source = sources.get(tree);
-    if (source === undefined && file.value !== undefined) {
-      source = String(file.value);
+    // External remark users may call runSync(parse(input)) without passing a file.
+    // Keep the source for that tree so escaped markers and HTML remain literal.
+    const sources = new WeakMap();
+    const parser = this.parser;
+    if (parser) {
+        this.parser = (input, file) => {
+            const tree = parser(input, file);
+            sources.set(tree, input);
+            return tree;
+        };
     }
-    return transform(tree, (input) => this.parse(input), source)
-  }
+    // Extend the host pipeline instead of replacing its existing syntax handlers.
+    const data = this.data();
+    data.micromarkExtensions ??= [];
+    data.fromMarkdownExtensions ??= [];
+    data.toMarkdownExtensions ??= [];
+    data.micromarkExtensions.push(syntax());
+    data.fromMarkdownExtensions.push(fromMarkdown());
+    data.toMarkdownExtensions.push(toMarkdown());
+    const transformer = (tree, file) => {
+        let source = sources.get(tree);
+        if (source === undefined && file.value !== undefined) {
+            source = String(file.value);
+        }
+        transform(tree, (input) => this.parse(input), source);
+    };
+    return transformer;
 };
-
 const remarkObsidian = function (options = {}) {
-  this.use(remarkGfm, { singleTilde: false, ...options.gfm });
-  this.use(remarkMath, options.math);
-  this.use(remarkFrontmatter, ['yaml']);
-  // Register last so our task-list serializer takes precedence over GFM's.
-  this.use(obsidianSyntax);
+    // Obsidian strikethrough uses double tildes unless the caller overrides GFM.
+    this.use(remarkGfm, { singleTilde: false, ...options.gfm });
+    this.use(remarkMath, options.math);
+    // Recognize YAML boundaries but leave property values as raw text.
+    this.use(remarkFrontmatter, ['yaml']);
+    // Register last so our task-list serializer takes precedence over GFM's.
+    this.use(obsidianSyntax);
 };
 
 const parseMd = (input, options = {}) => {
-  if (typeof input !== 'string') {
-    throw new TypeError('Markdown must be a string')
-  }
-  const processor = unified().use(remarkParse).use(remarkObsidian, options);
-  // parse() builds the tree; runSync() applies callouts and other Obsidian transforms.
-  const tree = processor.runSync(processor.parse(input), { value: input });
-  return { tree, source: input }
+    if (typeof input !== 'string') {
+        throw new TypeError('Markdown must be a string');
+    }
+    // Fresh plugin state prevents one parse's settings or source from affecting another.
+    const processor = unified().use(remarkParse).use(remarkObsidian, options);
+    // parse() builds the tree; runSync() applies callouts and other Obsidian transforms.
+    const tree = processor.runSync(processor.parse(input), { value: input });
+    // Keep the source for exact round trips before the page is edited.
+    return { tree, source: input };
 };
 
 /**
@@ -26421,364 +26487,453 @@ function remarkStringify(options) {
 }
 
 const stringifyMd = (tree, options = {}) => {
-  const processor = unified()
-    .use(remarkStringify, { bullet: '-', ...options.markdown })
-    .use(remarkObsidian, options);
-  // The tree is already transformed. Only run the Markdown serializer.
-  return processor.stringify(tree)
+    // Install output handlers without a parser; this operation only reads the tree.
+    const processor = unified()
+        .use(remarkStringify, { bullet: '-', ...options.markdown })
+        .use(remarkObsidian, options);
+    // The tree is already transformed. Only run the Markdown serializer.
+    return processor.stringify(tree);
 };
 
 // Extract tree content without trimming, collapsing whitespace, or resolving embeds.
 const text$1 = (node, options = {}) => {
-  if (!node) { return '' }
-  if (node.type === 'comment' && options.comments !== true) { return '' }
-  if (node.type === 'blockId' && options.blockIds !== true) { return '' }
-  if (node.type === 'wikiLink' || node.type === 'embed') { return node.alias ?? node.target }
-  if (node.type === 'image' || node.type === 'imageReference') { return node.alt || '' }
-  if (node.type === 'break') { return '\n' }
-  if (node.value !== undefined) { return node.value }
-
-  const children = [...(node.children || [])];
-  if (node.type === 'callout' && options.calloutTitles !== false && node.title?.length) {
-    children.unshift({ type: 'paragraph', children: node.title });
-  }
-  let separator = '';
-  if (['root', 'list', 'listItem', 'blockquote', 'callout', 'table'].includes(node.type)) {
-    separator = '\n';
-  }
-  if (node.type === 'tableRow') { separator = '\t'; }
-  return children.map((child) => text$1(child, options)).join(separator)
-};
-
-const groups = {
-  headings: (node) => node.type === 'heading',
-  paragraphs: (node) => node.type === 'paragraph',
-  links: (node) => ['wikiLink', 'link', 'linkReference'].includes(node.type),
-  embeds: (node) => ['embed', 'image', 'imageReference'].includes(node.type),
-  tasks: (node) => node.type === 'listItem' && typeof node.checked === 'boolean',
-  lists: (node) => node.type === 'list',
-  callouts: (node) => node.type === 'callout',
-  highlights: (node) => node.type === 'highlight',
-  comments: (node) => node.type === 'comment',
-  code: (node) => node.type === 'code',
-  math: (node) => ['math', 'inlineMath'].includes(node.type),
-  tables: (node) => node.type === 'table',
-  frontmatter: (node) => node.type === 'yaml',
-  footnotes: (node) => node.type === 'footnoteDefinition'
-};
-
-const json = (node, options = {}) => {
-  const result = { type: node.type, text: text$1(node, options) };
-  const fields = [
-    'depth',
-    'target',
-    'alias',
-    'heading',
-    'block',
-    'url',
-    'alt',
-    'checked',
-    'taskMarker',
-    'ordered',
-    'start',
-    'lang',
-    'meta',
-    'value',
-    'identifier',
-    'label',
-    'blockId',
-    'calloutType',
-    'fold'
-  ];
-  fields.forEach((key) => {
-    if (node[key] !== undefined) {
-      result[key] = node[key];
+    if (!node) {
+        return '';
     }
-  });
-  if (node.position) {
-    result.position = structuredClone(node.position);
-  }
-  if (node.type === 'comment') {
-    result.text = node.value;
-  }
-  if (node.type === 'callout') {
-    result.title = text$1({ children: node.title }, options);
-  }
-  if (node.type === 'embed') {
-    Object.assign(result, dimensions(node.alias ?? ''));
-  }
-  if (node.type === 'image') {
-    Object.assign(result, dimensions((node.alt || '').split('|').at(-1)));
-  }
-  if (node.type === 'table') {
-    result.align = [...node.align];
-    result.rows = node.children.map((row) => row.children.map((cell) => text$1(cell, options)));
-  }
-  if (node.type === 'list') {
-    result.items = node.children.map((item) => ({
-      text: text$1(item, options),
-      checked: item.checked ?? null
-    }));
-  }
-  return result
+    // Hidden syntax is opt-in for text, even when it remains in the output tree.
+    if (node.type === 'comment' && options.comments !== true) {
+        return '';
+    }
+    if (node.type === 'blockId' && options.blockIds !== true) {
+        return '';
+    }
+    if (node.type === 'wikiLink' || node.type === 'embed') {
+        return node.alias ?? node.target;
+    }
+    if (node.type === 'image' || node.type === 'imageReference') {
+        return node.alt || '';
+    }
+    if (node.type === 'break') {
+        return '\n';
+    }
+    if (node.value !== undefined) {
+        return node.value;
+    }
+    // Treat the title as a first paragraph without changing the callout's children.
+    const children = [...(node.children || [])];
+    if (node.type === 'callout' && options.calloutTitles !== false && Array.isArray(node.title) && node.title.length) {
+        children.unshift({ type: 'paragraph', children: node.title });
+    }
+    // Supply structural separators only; preserve whitespace within text nodes.
+    let separator = '';
+    if (['root', 'list', 'listItem', 'blockquote', 'callout', 'table'].includes(node.type)) {
+        separator = '\n';
+    }
+    if (node.type === 'tableRow') {
+        separator = '\t';
+    }
+    return children.map((child) => text$1(child, options)).join(separator);
+};
+
+// Shared category names for selectors, JSON collections, and output exclusions.
+const groups = {
+    headings: (node) => node.type === 'heading',
+    paragraphs: (node) => node.type === 'paragraph',
+    links: (node) => ['wikiLink', 'link', 'linkReference'].includes(node.type),
+    embeds: (node) => ['embed', 'image', 'imageReference'].includes(node.type),
+    tasks: (node) => node.type === 'listItem' && typeof node.checked === 'boolean',
+    lists: (node) => node.type === 'list',
+    callouts: (node) => node.type === 'callout',
+    highlights: (node) => node.type === 'highlight',
+    comments: (node) => node.type === 'comment',
+    code: (node) => node.type === 'code',
+    math: (node) => ['math', 'inlineMath'].includes(node.type),
+    tables: (node) => node.type === 'table',
+    frontmatter: (node) => node.type === 'yaml',
+    footnotes: (node) => node.type === 'footnoteDefinition'
+};
+const json = (node, options = {}) => {
+    const result = { type: node.type, text: text$1(node, options) };
+    // Copy public metadata explicitly instead of leaking nested AST internals.
+    const fields = [
+        'depth',
+        'target',
+        'alias',
+        'heading',
+        'block',
+        'url',
+        'alt',
+        'checked',
+        'taskMarker',
+        'ordered',
+        'start',
+        'lang',
+        'meta',
+        'value',
+        'identifier',
+        'label',
+        'blockId',
+        'calloutType',
+        'fold'
+    ];
+    fields.forEach((key) => {
+        if (node[key] !== undefined) {
+            Object.assign(result, { [key]: node[key] });
+        }
+    });
+    if (node.position) {
+        result.position = structuredClone(node.position);
+    }
+    // Direct comment inspection exposes its content even when document text omits it.
+    if (node.type === 'comment') {
+        result.text = node.value;
+    }
+    if (node.type === 'callout') {
+        result.title = text$1({ type: 'paragraph', children: node.title }, options);
+    }
+    // Size hints occupy the alias in embeds and the final alt-text segment in images.
+    if (node.type === 'embed') {
+        Object.assign(result, dimensions(node.alias ?? ''));
+    }
+    if (node.type === 'image') {
+        Object.assign(result, dimensions((node.alt || '').split('|').at(-1)));
+    }
+    // Flatten cells into rows so consumers need not traverse table nodes.
+    if (node.type === 'table') {
+        result.align = [...node.align];
+        result.rows = node.children.map((row) => row.children.map((cell) => text$1(cell, options)));
+    }
+    if (node.type === 'list') {
+        result.items = node.children.map((item) => ({
+            text: text$1(item, options),
+            checked: item.checked ?? null
+        }));
+    }
+    return result;
 };
 
 // The same inclusion flags apply to every output format.
 const includes = (node, options) => {
-  if (options.blockIds === false && node.type === 'blockId') { return false }
-  if (options.html === false && node.type === 'html') { return false }
-  return !Object.entries(groups).some(([key, matches]) => options[key] === false && matches(node))
-};
-
-const outputTree = (tree, options = {}) => {
-  const copy = (node) => {
-    if (!includes(node, options)) { return null }
-    const result = { ...node };
-    if (node.children) { result.children = node.children.map(copy).filter(Boolean); }
-    if (Array.isArray(node.title)) {
-      result.title = options.calloutTitles === false ? [] : node.title.map(copy).filter(Boolean);
+    if (options.blockIds === false && node.type === 'blockId') {
+        return false;
     }
-    if (options.blockIds === false) { delete result.blockId; }
-    return result
-  };
-  return structuredClone(copy(tree))
+    if (options.html === false && node.type === 'html') {
+        return false;
+    }
+    return !Object.entries(groups).some(([key, matches]) => options[key] === false && matches(node, null));
+};
+const outputTree = (tree, options = {}) => {
+    const copy = (node) => {
+        // Excluding a container also excludes everything nested inside it.
+        if (!includes(node, options)) {
+            return null;
+        }
+        const result = { ...node };
+        if (node.children) {
+            result.children = node.children.map(copy).filter((child) => child !== null);
+        }
+        if (Array.isArray(node.title)) {
+            result.title = options.calloutTitles === false ? [] : node.title.map(copy).filter((child) => child !== null);
+        }
+        // Block IDs also appear as metadata on the block they identify.
+        if (options.blockIds === false) {
+            delete result.blockId;
+        }
+        return result;
+    };
+    // Detach metadata too, so AST consumers cannot mutate the page through a view.
+    return structuredClone(copy(tree));
 };
 
 const clearPositions = (tree) => {
-  // Source positions no longer describe the document after editing.
-  walk(tree, (node) => { delete node.position; });
+    // Source positions no longer describe the document after editing.
+    walk(tree, (node) => { delete node.position; });
 };
-
+// Resolve by identity on each edit: an earlier removal may have detached the node.
 const locate = (tree, target) => {
-  let found = null;
-  walk(tree, (node, parent) => {
-    if (node === target) { found = parent; }
-  });
-  if (!found) {
-    throw new Error('This item has been removed or detached')
-  }
-  return found
-};
-
-const select = (tree, predicate) => {
-  const nodes = [];
-  walk(tree, (node, parent) => {
-    if (predicate(node, parent)) { nodes.push(node); }
-  });
-  return nodes
-};
-
-const treeJson = (tree, options) => {
-  const result = { text: text$1(tree, options), blocks: [] };
-  Object.keys(groups).forEach((key) => { result[key] = []; });
-  walk(tree, (node, parent) => {
-    if (parent === tree || node.blockId) { result.blocks.push(json(node, options)); }
-    Object.entries(groups).forEach(([key, matches]) => {
-      if (matches(node)) { result[key].push(json(node, options)); }
+    let found = null;
+    walk(tree, (node, parent) => {
+        if (node === target) {
+            found = parent;
+        }
     });
-  });
-  return result
+    if (!found) {
+        throw new Error('This item has been removed or detached');
+    }
+    return found;
+};
+// Return original nodes in walk order so handles can edit the live document.
+const select = (tree, predicate) => {
+    const nodes = [];
+    walk(tree, (node, parent) => {
+        if (predicate(node, parent)) {
+            nodes.push(node);
+        }
+    });
+    return nodes;
+};
+// Build flat collections from an already-filtered tree in one traversal.
+const treeJson = (tree, options) => {
+    const result = { text: text$1(tree, options), blocks: [] };
+    Object.keys(groups).forEach((key) => { result[key] = []; });
+    walk(tree, (node, parent) => {
+        if (parent === tree || node.blockId) {
+            result.blocks.push(json(node, options));
+        }
+        Object.entries(groups).forEach(([key, matches]) => {
+            if (matches(node, null)) {
+                result[key].push(json(node, options));
+            }
+        });
+    });
+    return result;
 };
 
 const text = (value, key) => {
-  if (typeof value !== 'string') { throw new TypeError(`${key} must be a string`) }
+    if (typeof value !== 'string') {
+        throw new TypeError(`${key} must be a string`);
+    }
 };
+// Only expose semantic fields; callers cannot replace node types or child arrays.
 const fields = {
-  heading: ['text', 'depth'], paragraph: ['text'],
-  wikiLink: ['target', 'alias', 'heading', 'block'],
-  embed: ['target', 'alias', 'heading', 'block'],
-  link: ['url', 'text', 'title'], image: ['url', 'alt', 'title'],
-  listItem: ['checked'], callout: ['title', 'calloutType', 'fold'],
-  code: ['value', 'lang', 'meta'], math: ['value'], inlineMath: ['value'],
-  comment: ['value'], highlight: ['text'], yaml: ['value']
+    heading: ['text', 'depth'], paragraph: ['text'],
+    wikiLink: ['target', 'alias', 'heading', 'block'],
+    embed: ['target', 'alias', 'heading', 'block'],
+    link: ['url', 'text', 'title'], image: ['url', 'alt', 'title'],
+    listItem: ['checked'], callout: ['title', 'calloutType', 'fold'],
+    code: ['value', 'lang', 'meta'], math: ['value'], inlineMath: ['value'],
+    comment: ['value'], highlight: ['text'], yaml: ['value']
 };
-
 const edit = (node, changes) => {
-  if (!changes || typeof changes !== 'object' || Array.isArray(changes)) { throw new TypeError('Expected an update object') }
-  const next = structuredClone(node);
-  Object.entries(changes).forEach(([key, value]) => {
-    if (!fields[node.type]?.includes(key)) { throw new TypeError(`Cannot update ${key} on ${node.type}`) }
-    if (key === 'depth') {
-      if (!Number.isInteger(value) || value < 1 || value > 6) { throw new RangeError('Heading depth must be 1–6') }
-    } else if (key === 'checked') {
-      if (typeof value !== 'boolean' || typeof node.checked !== 'boolean') { throw new TypeError('checked requires a task and a boolean') }
-      delete next.taskMarker;
-    } else if (key === 'fold') {
-      if (![null, 'expanded', 'collapsed'].includes(value)) { throw new TypeError('Invalid callout fold') }
-    } else if (value !== null || !['alias', 'heading', 'block', 'title', 'lang', 'meta'].includes(key)) {
-      text(value, key);
+    if (!changes || typeof changes !== 'object' || Array.isArray(changes)) {
+        throw new TypeError('Expected an update object');
     }
-    if (node.type === 'heading' && key === 'text' && /[\r\n]/.test(value)) { throw new TypeError('Heading text must be one line') }
-    if (['wikiLink', 'embed'].includes(node.type) && value !== null) {
-      if (/[\[\]\r\n|\\]/.test(value) || value.includes('%%') || (key === 'target' && /[#^]/.test(value))) {
-        throw new TypeError(`Invalid ${key}`)
-      }
-      if (key === 'block' && !/^[A-Za-z0-9-]+$/.test(value)) { throw new TypeError('Invalid block identifier') }
+    // Validate the complete patch before the handle commits it to the live node.
+    const next = structuredClone(node);
+    Object.entries(changes).forEach(([key, value]) => {
+        if (!fields[node.type]?.includes(key)) {
+            throw new TypeError(`Cannot update ${key} on ${node.type}`);
+        }
+        if (key === 'depth') {
+            if (typeof value !== 'number' || !Number.isInteger(value) || value < 1 || value > 6) {
+                throw new RangeError('Heading depth must be 1–6');
+            }
+        }
+        else if (key === 'checked') {
+            if (typeof value !== 'boolean' || typeof node.checked !== 'boolean') {
+                throw new TypeError('checked requires a task and a boolean');
+            }
+            // Explicit checkbox changes reset custom markers such as [?] to standard ones.
+            delete next.taskMarker;
+        }
+        else if (key === 'fold') {
+            if (![null, 'expanded', 'collapsed'].includes(value)) {
+                throw new TypeError('Invalid callout fold');
+            }
+        }
+        else if (value !== null || !['alias', 'heading', 'block', 'title', 'lang', 'meta'].includes(key)) {
+            text(value, key);
+        }
+        if (typeof value === 'string' && node.type === 'heading' && key === 'text' && /[\r\n]/.test(value)) {
+            throw new TypeError('Heading text must be one line');
+        }
+        // Reject punctuation that could escape the serialized wikilink.
+        if (['wikiLink', 'embed'].includes(node.type) && typeof value === 'string') {
+            if (/[\[\]\r\n|\\]/.test(value) || value.includes('%%') || (key === 'target' && /[#^]/.test(value))) {
+                throw new TypeError(`Invalid ${key}`);
+            }
+            if (key === 'block' && !/^[A-Za-z0-9-]+$/.test(value)) {
+                throw new TypeError('Invalid block identifier');
+            }
+        }
+        if (key === 'calloutType' && typeof value === 'string' && !/^[\w-]+$/.test(value)) {
+            throw new TypeError('Invalid calloutType');
+        }
+        if (node.type === 'comment' && typeof value === 'string' && value.includes('%%')) {
+            throw new TypeError('Comment value cannot contain %%');
+        }
+        if (node.type === 'callout' && key === 'title') {
+            if (typeof value !== 'string' || /[\r\n]/.test(value)) {
+                throw new TypeError('Callout title must be one line');
+            }
+            next.title = [{ type: 'text', value }];
+        }
+        else if (key === 'text') {
+            text(value, key);
+            // Text updates are literal replacements, not Markdown fragments.
+            next.children = [{ type: 'text', value }];
+            if (node.blockId) {
+                next.children.push({ type: 'blockId', value: node.blockId });
+            }
+        }
+        else {
+            Object.assign(next, { [key]: value });
+        }
+    });
+    // Validate relationships after all fields have changed, allowing fragment switches.
+    if (next.heading !== undefined && next.heading !== null && next.block !== null) {
+        throw new TypeError('Use either heading or block');
     }
-    if (key === 'calloutType' && !/^[\w-]+$/.test(value)) { throw new TypeError('Invalid calloutType') }
-    if (node.type === 'comment' && value.includes('%%')) { throw new TypeError('Comment value cannot contain %%') }
-    if (node.type === 'callout' && key === 'title') {
-      if (typeof value !== 'string' || /[\r\n]/.test(value)) { throw new TypeError('Callout title must be one line') }
-      next.title = [{ type: 'text', value }];
-    } else if (key === 'text') {
-      next.children = [{ type: 'text', value }];
-      if (node.blockId) { next.children.push({ type: 'blockId', value: node.blockId }); }
-    } else { next[key] = value; }
-  });
-  if (next.heading !== undefined && next.heading !== null && next.block !== null) { throw new TypeError('Use either heading or block') }
-  if (['wikiLink', 'embed'].includes(node.type) && !next.target && !next.heading && !next.block) { throw new TypeError('A link needs a target or fragment') }
-  return next
+    if (['wikiLink', 'embed'].includes(node.type) && !next.target && !next.heading && !next.block) {
+        throw new TypeError('A link needs a target or fragment');
+    }
+    return next;
 };
 
+// Keep the node private and route edits through the owning page's callbacks.
 const createHandle = (node, { locate, changed, page }) => {
-  const handle = {
-    json: (options = {}) => {
-      const tree = outputTree(node, options);
-      return tree ? json(tree, options) : null
-    },
-    ast: (options = {}) => outputTree(node, options),
-    text: (options = {}) => text$1(outputTree(node, options), options),
-    update: (changes) => {
-      locate(node);
-      const next = edit(node, changes);
-      Object.keys(node).forEach((key) => { delete node[key]; });
-      Object.assign(node, next);
-      changed();
-      return handle
-    },
-    remove: () => {
-      const parent = locate(node);
-      const children = parent.children.includes(node) ? parent.children : parent.title;
-      const index = children.indexOf(node);
-      const following = children[index + 1];
-      children.splice(index, 1);
-      if (node.blockId && following?.type === 'paragraph' && following.blockId === node.blockId) { children.splice(index, 1); }
-      changed();
-      return page
-    }
-  };
-  return handle
+    const handle = {
+        json: (options = {}) => {
+            const tree = outputTree(node, options);
+            return tree ? json(tree, options) : null;
+        },
+        ast: (options = {}) => outputTree(node, options),
+        text: (options = {}) => text$1(outputTree(node, options), options),
+        update: (changes) => {
+            // Reject stale handles before validating changes on a copy.
+            locate(node);
+            const next = edit(node, changes);
+            // Preserve node identity so other handles to this item remain valid.
+            Object.keys(node).forEach((key) => {
+                Reflect.deleteProperty(node, key);
+            });
+            Object.assign(node, next);
+            changed();
+            return handle;
+        },
+        remove: () => {
+            const parent = locate(node);
+            // A callout's title nodes live outside its body children.
+            const children = parent.children.includes(node) ? parent.children : parent.title;
+            const index = children.indexOf(node);
+            const following = children[index + 1];
+            children.splice(index, 1);
+            // Remove a separate block-ID paragraph along with the block it labels.
+            if (node.blockId && following?.type === 'paragraph' && following.blockId === node.blockId) {
+                children.splice(index, 1);
+            }
+            changed();
+            return page;
+        }
+    };
+    return handle;
 };
 
+// Owns document state; parsing and serialization are stateless operations.
 class Page {
-  #tree
-  #source
-  #options
-  #dirty = false
-
-  constructor(tree, source, options = {}) {
-    if (tree?.type !== 'root' || !Array.isArray(tree.children)) {
-      throw new TypeError('Expected a parsed document root')
+    #tree;
+    #source;
+    #options;
+    #dirty = false;
+    constructor(tree, source, options = {}) {
+        if (tree?.type !== 'root' || !Array.isArray(tree.children)) {
+            throw new TypeError('Expected a parsed document root');
+        }
+        // Each page owns its edits, even when created from the same document.
+        this.#tree = structuredClone(tree);
+        this.#source = source;
+        // Retain settings so inserted fragments and later serialization stay consistent.
+        this.#options = {
+            ...options,
+            gfm: { ...options.gfm },
+            math: { ...options.math },
+            markdown: { ...options.markdown }
+        };
     }
-    // Each page owns its edits, even when created from the same document.
-    this.#tree = structuredClone(tree);
-    this.#source = source;
-    this.#options = {
-      ...options,
-      gfm: { ...options.gfm },
-      math: { ...options.math },
-      markdown: { ...options.markdown }
-    };
-  }
-
-  #changed() {
-    this.#dirty = true;
-    clearPositions(this.#tree);
-  }
-
-  #select(predicate) {
-    return select(this.#tree, predicate).map((node) => createHandle(node, {
-      locate: (target) => locate(this.#tree, target),
-      changed: () => this.#changed(),
-      page: this
-    }))
-  }
-
-  ast(options = {}) {
-    return outputTree(this.#tree, options)
-  }
-
-  text(options = {}) {
-    return text$1(outputTree(this.#tree, options), options)
-  }
-
-  markdown(options = {}) {
-    const filtered = Object.values(options).includes(false);
-    if (!filtered && !this.#dirty && typeof this.#source === 'string') {
-      return this.#source
+    #changed() {
+        this.#dirty = true;
+        clearPositions(this.#tree);
     }
-    return stringifyMd(outputTree(this.#tree, options), this.#options)
-  }
-
-  blocks() {
-    return this.#select((node, parent) => parent === this.#tree || Boolean(node.blockId))
-  }
-
-  json(options = {}) {
-    return treeJson(outputTree(this.#tree, options), options)
-  }
-
-  append(markdown) {
-    this.#tree.children.push(...parseMd(markdown, this.#options).tree.children);
-    this.#changed();
-    return this
-  }
-
-  prepend(markdown) {
-    this.#tree.children.unshift(...parseMd(markdown, this.#options).tree.children);
-    this.#changed();
-    return this
-  }
-
-  headings() {
-    return this.#select(groups.headings)
-  }
-  paragraphs() {
-    return this.#select(groups.paragraphs)
-  }
-  links() {
-    return this.#select(groups.links)
-  }
-  embeds() {
-    return this.#select(groups.embeds)
-  }
-  tasks() {
-    return this.#select(groups.tasks)
-  }
-  lists() {
-    return this.#select(groups.lists)
-  }
-  callouts() {
-    return this.#select(groups.callouts)
-  }
-  highlights() {
-    return this.#select(groups.highlights)
-  }
-  comments() {
-    return this.#select(groups.comments)
-  }
-  code() {
-    return this.#select(groups.code)
-  }
-  math() {
-    return this.#select(groups.math)
-  }
-  tables() {
-    return this.#select(groups.tables)
-  }
-  frontmatter() {
-    return this.#select(groups.frontmatter)
-  }
-  footnotes() {
-    return this.#select(groups.footnotes)
-  }
+    // Handles reference live nodes; output methods return detached views.
+    #select(predicate) {
+        return select(this.#tree, predicate).map((node) => createHandle(node, {
+            locate: (target) => locate(this.#tree, target),
+            changed: () => this.#changed(),
+            page: this
+        }));
+    }
+    ast(options = {}) {
+        return outputTree(this.#tree, options);
+    }
+    text(options = {}) {
+        return text$1(outputTree(this.#tree, options), options);
+    }
+    markdown(options = {}) {
+        // Reuse exact source only when neither edits nor exclusions affect the output.
+        const filtered = Object.values(options).includes(false);
+        if (!filtered && !this.#dirty && typeof this.#source === 'string') {
+            return this.#source;
+        }
+        return stringifyMd(outputTree(this.#tree, options), this.#options);
+    }
+    // Include nested addressable blocks as well as the document's top-level blocks.
+    blocks() {
+        return this.#select((node, parent) => parent === this.#tree || Boolean(node.blockId));
+    }
+    json(options = {}) {
+        return treeJson(outputTree(this.#tree, options), options);
+    }
+    // Parse before insertion so malformed input cannot partially change the tree.
+    append(markdown) {
+        this.#tree.children.push(...parseMd(markdown, this.#options).tree.children);
+        this.#changed();
+        return this;
+    }
+    prepend(markdown) {
+        this.#tree.children.unshift(...parseMd(markdown, this.#options).tree.children);
+        this.#changed();
+        return this;
+    }
+    // Selection methods share the same predicates as JSON output and filtering.
+    headings() {
+        return this.#select(groups.headings);
+    }
+    paragraphs() {
+        return this.#select(groups.paragraphs);
+    }
+    links() {
+        return this.#select(groups.links);
+    }
+    embeds() {
+        return this.#select(groups.embeds);
+    }
+    tasks() {
+        return this.#select(groups.tasks);
+    }
+    lists() {
+        return this.#select(groups.lists);
+    }
+    callouts() {
+        return this.#select(groups.callouts);
+    }
+    highlights() {
+        return this.#select(groups.highlights);
+    }
+    comments() {
+        return this.#select(groups.comments);
+    }
+    code() {
+        return this.#select(groups.code);
+    }
+    math() {
+        return this.#select(groups.math);
+    }
+    tables() {
+        return this.#select(groups.tables);
+    }
+    frontmatter() {
+        return this.#select(groups.frontmatter);
+    }
+    footnotes() {
+        return this.#select(groups.footnotes);
+    }
 }
-
 const makePage = (tree, source, options) => new Page(tree, source, options);
 
+// Keep parsing separate from the editable page and retain the original source.
 const parsePage = (input, options = {}) => {
-  const { tree, source } = parseMd(input, options);
-  return makePage(tree, source, options)
+    const { tree, source } = parseMd(input, options);
+    return makePage(tree, source, options);
 };
 
 module.exports = parsePage;

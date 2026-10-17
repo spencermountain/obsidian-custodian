@@ -1,28 +1,29 @@
+import type { MarkdownNode, OutputOptions, Collection } from '../../types.js'
 import { groups } from '../json.js'
 
 // The same inclusion flags apply to every output format.
-const includes = (node, options) => {
+const includes = (node: MarkdownNode, options: OutputOptions) => {
   if (options.blockIds === false && node.type === 'blockId') {
     return false
   }
   if (options.html === false && node.type === 'html') {
     return false
   }
-  return !Object.entries(groups).some(([key, matches]) => options[key] === false && matches(node))
+  return !Object.entries(groups).some(([key, matches]) => options[key as Collection] === false && matches(node, null))
 }
 
-const outputTree = (tree, options = {}) => {
-  const copy = (node) => {
+const outputTree = (tree: MarkdownNode, options: OutputOptions = {}): MarkdownNode | null => {
+  const copy = (node: MarkdownNode): MarkdownNode | null => {
     // Excluding a container also excludes everything nested inside it.
     if (!includes(node, options)) {
       return null
     }
     const result = { ...node }
     if (node.children) {
-      result.children = node.children.map(copy).filter(Boolean)
+      result.children = node.children.map(copy).filter((child): child is MarkdownNode => child !== null)
     }
     if (Array.isArray(node.title)) {
-      result.title = options.calloutTitles === false ? [] : node.title.map(copy).filter(Boolean)
+      result.title = options.calloutTitles === false ? [] : node.title.map(copy).filter((child): child is MarkdownNode => child !== null)
     }
     // Block IDs also appear as metadata on the block they identify.
     if (options.blockIds === false) {

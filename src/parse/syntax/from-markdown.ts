@@ -1,3 +1,5 @@
+import type { Extension, Handle } from 'mdast-util-from-markdown'
+import type { MarkdownNode } from '../../types.js'
 import { wikiFields } from './_lib.js'
 
 const types = {
@@ -8,16 +10,16 @@ const types = {
 }
 
 // Translate micromark tokens into the custom nodes used by the API.
-const fromMarkdown = () => {
-  const enter = {}
-  const exit = {}
+const fromMarkdown = (): Extension => {
+  const enter: Record<string, Handle> = {}
+  const exit: Record<string, Handle> = {}
   Object.entries(types).forEach(([tokenType, type]) => {
     // mdast handlers receive the compiler as their dynamic receiver.
     enter[tokenType] = function (token) {
-      this.enter({ type, value: '' }, token)
+      this.enter({ type, value: '' } as Parameters<typeof this.enter>[0], token)
     }
     exit[tokenType] = function (token) {
-      const node = this.stack[this.stack.length - 1]
+      const node = this.stack[this.stack.length - 1] as unknown as MarkdownNode
       const raw = this.sliceSerialize(token)
       // Embeds open with ![[; every other custom delimiter is two characters wide.
       const start = type === 'embed' ? 3 : 2

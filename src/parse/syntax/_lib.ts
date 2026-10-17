@@ -1,18 +1,19 @@
+import type { MarkdownNode } from '../../types.js'
 // Accept width or width x height hints; ordinary aliases have no dimensions.
 const dimensions = (value = '') => {
   const match = /^(\d+)(?:x(\d+))?$/.exec(value)
   if (!match) { return {} }
-  const result = { width: Number(match[1]) }
+  const result: { width: number; height?: number } = { width: Number(match[1]) }
   if (match[2]) { result.height = Number(match[2]) }
   return result
 }
 
-const wikiFields = (value) => {
+const wikiFields = (value: string) => {
   // Split [[path#heading|label]] or [[path#^block|label]] without resolving the vault.
   const pipe = value.indexOf('|')
   const destination = pipe < 0 ? value : value.slice(0, pipe)
   const hash = destination.indexOf('#')
-  const result = { target: destination, alias: null, heading: null, block: null }
+  const result: { target: string; alias: string | null; heading: string | null; block: string | null } = { target: destination, alias: null, heading: null, block: null }
   if (pipe >= 0) { result.alias = value.slice(pipe + 1) }
   if (hash >= 0) {
     result.target = destination.slice(0, hash)
@@ -22,8 +23,8 @@ const wikiFields = (value) => {
   return result
 }
 
-const wikiMarkdown = (node) => {
-  let value = node.target
+const wikiMarkdown = (node: MarkdownNode) => {
+  let value = node.target!
   if (node.heading !== null) { value += `#${node.heading}` }
   if (node.block !== null) { value += `#^${node.block}` }
   if (node.alias !== null) { value += `|${node.alias}` }
@@ -31,7 +32,7 @@ const wikiMarkdown = (node) => {
 }
 
 // Visit parents first so transforms can replace children before traversal continues.
-const walk = (node, visit, parent = null) => {
+const walk = (node: MarkdownNode, visit: (node: MarkdownNode, parent: MarkdownNode | null) => void, parent: MarkdownNode | null = null): void => {
   visit(node, parent)
   node.children?.forEach((child) => walk(child, visit, node))
   // Callout titles contain inline nodes; ordinary link titles are strings.
@@ -41,9 +42,9 @@ const walk = (node, visit, parent = null) => {
 }
 
 // Internal text used for block recognition, independent of API output preferences.
-const plainText = (node) => {
+const plainText = (node: MarkdownNode): string => {
   if (node.type === 'comment' || node.type === 'blockId') { return '' }
-  if (node.type === 'wikiLink' || node.type === 'embed') { return node.alias ?? node.target }
+  if (node.type === 'wikiLink' || node.type === 'embed') { return node.alias ?? node.target! }
   if (node.type === 'image') { return node.alt || '' }
   if (node.value !== undefined) { return node.value }
   const separator = ['root', 'list', 'listItem', 'blockquote', 'callout'].includes(node.type) ? '\n' : ''

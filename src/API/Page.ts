@@ -1,3 +1,4 @@
+import type { DocumentNode, ParseOptions, OutputOptions, Predicate, PageJSON } from '../types.js'
 import parseMd from '../parse/index.js'
 import stringifyMd from '../parse/stringify.js'
 import outputTree from './_lib/output.js'
@@ -8,12 +9,12 @@ import createHandle from './handle.js'
 
 // Owns document state; parsing and serialization are stateless operations.
 class Page {
-  #tree
-  #source
-  #options
+  #tree: DocumentNode
+  #source: string | undefined
+  #options: ParseOptions
   #dirty = false
 
-  constructor(tree, source, options = {}) {
+  constructor(tree: DocumentNode, source?: string, options: ParseOptions = {}) {
     if (tree?.type !== 'root' || !Array.isArray(tree.children)) {
       throw new TypeError('Expected a parsed document root')
     }
@@ -35,7 +36,7 @@ class Page {
   }
 
   // Handles reference live nodes; output methods return detached views.
-  #select(predicate) {
+  #select(predicate: Predicate) {
     return select(this.#tree, predicate).map((node) =>
       createHandle(node, {
         locate: (target) => locate(this.#tree, target),
@@ -45,21 +46,21 @@ class Page {
     )
   }
 
-  ast(options = {}) {
-    return outputTree(this.#tree, options)
+  ast(options: OutputOptions = {}): DocumentNode {
+    return outputTree(this.#tree, options) as DocumentNode
   }
 
-  text(options = {}) {
+  text(options: OutputOptions = {}) {
     return text(outputTree(this.#tree, options), options)
   }
 
-  markdown(options = {}) {
+  markdown(options: OutputOptions = {}) {
     // Reuse exact source only when neither edits nor exclusions affect the output.
     const filtered = Object.values(options).includes(false)
     if (!filtered && !this.#dirty && typeof this.#source === 'string') {
       return this.#source
     }
-    return stringifyMd(outputTree(this.#tree, options), this.#options)
+    return stringifyMd(outputTree(this.#tree, options) as DocumentNode, this.#options)
   }
 
   // Include nested addressable blocks as well as the document's top-level blocks.
@@ -67,18 +68,18 @@ class Page {
     return this.#select((node, parent) => parent === this.#tree || Boolean(node.blockId))
   }
 
-  json(options = {}) {
-    return treeJson(outputTree(this.#tree, options), options)
+  json(options: OutputOptions = {}): PageJSON {
+    return treeJson(outputTree(this.#tree, options) as DocumentNode, options)
   }
 
   // Parse before insertion so malformed input cannot partially change the tree.
-  append(markdown) {
+  append(markdown: string) {
     this.#tree.children.push(...parseMd(markdown, this.#options).tree.children)
     this.#changed()
     return this
   }
 
-  prepend(markdown) {
+  prepend(markdown: string) {
     this.#tree.children.unshift(...parseMd(markdown, this.#options).tree.children)
     this.#changed()
     return this
@@ -129,7 +130,7 @@ class Page {
   }
 }
 
-const makePage = (tree, source, options) => new Page(tree, source, options)
+const makePage = (tree: DocumentNode, source?: string, options?: ParseOptions) => new Page(tree, source, options)
 
 export { makePage }
 export default Page
