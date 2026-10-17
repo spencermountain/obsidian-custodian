@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@rollup/plugin-terser':
-        specifier: ^1.0.0
-        version: 1.0.0(rollup@4.64.7)
       js-yaml:
         specifier: ^5.5.0
         version: 5.5.0
@@ -32,9 +29,6 @@ importers:
       remark-stringify:
         specifier: ^11.0.0
         version: 11.0.0
-      rollup-plugin-filesize-check:
-        specifier: ^2.0.1
-        version: 2.0.1(rollup@4.64.7)
       unified:
         specifier: ^11.0.5
         version: 11.0.5
@@ -45,6 +39,9 @@ importers:
       '@rollup/plugin-node-resolve':
         specifier: ^16.0.3
         version: 16.0.3(rollup@4.64.7)
+      '@rollup/plugin-terser':
+        specifier: ^1.0.0
+        version: 1.0.0(rollup@4.64.7)
       '@types/mdast':
         specifier: ^4.0.4
         version: 4.0.4
@@ -66,6 +63,9 @@ importers:
       rollup:
         specifier: ^4.64.7
         version: 4.64.7
+      rollup-plugin-filesize-check:
+        specifier: ^2.0.1
+        version: 2.0.1(rollup@4.64.7)
       tap-dancer:
         specifier: 0.4.4
         version: 0.4.4

@@ -52,6 +52,8 @@ I'm going spec-safe with [remark plugins](https://github.com/remarkjs/remark/blo
 
 ## Usage
 
+The library supports Node.js 18+ and browsers. The CLI requires Node.js 22+ for native glob support.
+
 ```js
 import custodian from 'obsidian-custodian'
 
@@ -67,16 +69,16 @@ console.log(page.json())
   ... 
   links: [{
     text: 'world',
-    type: 'internal'
+    type: 'wikiLink',
     target: 'world',
   }]
 }*/
 
 // grab that link and change it
 const link = page.links()[0]
-link.text = 'cruel ' + link.text
+link.title = 'cruel ' + link.title
 console.log(page.html())
-// 'hello <a href="./world">cruel world</a>'
+// '<p>hello <a href="world" class="internal-link" data-href="world">cruel world</a></p>'
 ```
 
 we also support a fair-amount of safe document editing, like:
