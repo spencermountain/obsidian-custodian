@@ -1,11 +1,19 @@
 import { createRequire } from 'node:module'
 import commonjs from '@rollup/plugin-commonjs'
 import { nodeResolve } from '@rollup/plugin-node-resolve'
+import sizeCheck from 'rollup-plugin-filesize-check'
+import terser from '@rollup/plugin-terser'
+import fs from 'node:fs'
 
-// Bundle ESM-only dependencies so require() also works on Node 18.
-const config = ['index', 'remark'].map((name) => ({
-  input: `src/${name}.js`,
+const pkg = JSON.parse(fs.readFileSync('./package.json').toString())
+
+const banner = `/* spencermountain/${pkg.name} ${pkg.version} ${pkg.license} */`
+
+const main = {
+  input: 'src/index.js',
   plugins: [
+    nodeResolve({ browser: true }),
+    commonjs(),
     {
       name: 'portable-entities',
       resolveId: (source, importer) => {
@@ -14,13 +22,42 @@ const config = ['index', 'remark'].map((name) => ({
           return createRequire(importer).resolve(source)
         }
       }
-    },
-    nodeResolve({ browser: true }), commonjs()
+    }
   ],
   output: [
-    { file: `builds/${name}.js`, format: 'es', sourcemap: true },
-    { file: `builds/${name}.cjs`, format: 'cjs', exports: 'default', sourcemap: true }
+    {
+      banner,
+      file: 'builds/obsidian-parser.mjs',
+      format: 'esm',
+      plugins: [terser()]
+    },
+    {
+      banner,
+      file: 'builds/obsidian-parser.cjs',
+      format: 'cjs'
+    },
+    {
+      banner,
+      file: 'builds/obsidian-parser.min.js',
+      format: 'umd',
+      name: 'obsidianParser',
+      plugins: [
+        terser(),
+        sizeCheck({
+          expect: 45, // sizes in kb
+          warn: 10, // acceptable change (+/-)
+          throw: 25 // unacceptable change (+/-)
+        })
+      ]
+    }
   ]
-}))
+}
+const remark = {
+  input: 'src/remark.js',
+  output: [
+    { file: 'builds/remark/obsidian-parser.mjs', format: 'esm', plugins: [terser()] },
+    { file: 'builds/remark/obsidian-parser.cjs', format: 'cjs', plugins: [terser()] }
+  ]
+}
 
-export default config
+export default { main, remark }

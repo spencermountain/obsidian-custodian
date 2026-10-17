@@ -29,12 +29,14 @@
     "printWidth": 100
   },
   "dependencies": {
+    "@rollup/plugin-terser": "^1.0.0",
     "mdast-util-to-markdown": "^2.2.0",
     "remark-frontmatter": "^5.0.0",
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
     "remark-parse": "^11.0.0",
     "remark-stringify": "^11.0.0",
+    "rollup-plugin-filesize-check": "^2.0.1",
     "unified": "^11.0.5"
   },
   "devDependencies": {

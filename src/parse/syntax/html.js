@@ -10,6 +10,7 @@ const protectHtml = (tree, source) => {
       const opening = first.type === 'html' && /^<([A-Za-z][\w:-]*)(?:\s[^>]*)?>$/.exec(first.value)
       if (!opening || /\/>$/.test(first.value)) { continue }
       let depth = 1
+      // Count matching nested tags before collapsing the original source span.
       for (let j = i + 1; j < node.children.length; j += 1) {
         const last = node.children[j]
         if (last.type !== 'html') { continue }

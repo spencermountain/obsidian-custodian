@@ -57,7 +57,17 @@ const str = `hello [[world]]
 const page = parsePage(str)
 ```
 
-### Support
+### Features
+
+We're using these Remark plugins, which are fantastic:
+
+- [remark-parse](https://github.com/remarkjs/remark/tree/main/packages/remark-parse) - parses CommonMark into the internal syntax tree.
+- [remark-stringify](https://github.com/remarkjs/remark/tree/main/packages/remark-stringify) - serializes the tree back to Markdown after edits.
+- [remark-gfm](https://github.com/remarkjs/remark-gfm) - adds tables, task lists, strikethrough, footnotes, and autolinks.
+- [remark-math](https://github.com/remarkjs/remark-math/tree/main/packages/remark-math) - adds inline and block math syntax.
+- [remark-frontmatter](https://github.com/remarkjs/remark-frontmatter) - recognizes and preserves YAML frontmatter without parsing its contents.
+
+---
 
 [spec documentation](https://obsidian.md/help/obsidian-flavored-markdown)
 
@@ -74,16 +84,6 @@ const page = parsePage(str)
 - `- [x]` Completed task
 - `> [!note]` Callouts
 - ... Tables
-
-### Remark plugins
-
-- [remark-parse](https://github.com/remarkjs/remark/tree/main/packages/remark-parse) - parses CommonMark into the internal syntax tree.
-- [remark-stringify](https://github.com/remarkjs/remark/tree/main/packages/remark-stringify) - serializes the tree back to Markdown after edits.
-- [remark-gfm](https://github.com/remarkjs/remark-gfm) - adds tables, task lists, strikethrough, footnotes, and autolinks.
-- [remark-math](https://github.com/remarkjs/remark-math/tree/main/packages/remark-math) - adds inline and block math syntax.
-- [remark-frontmatter](https://github.com/remarkjs/remark-frontmatter) - recognizes and preserves YAML frontmatter without parsing its contents.
-
-Obsidian-specific syntax is handled by this package's own remark extension.
 
 ### See also
 

@@ -1,9 +1,9 @@
-import createParser from './parser.js'
-import createPage from './page/index.js'
+import parseMd from './parse/index.js'
+import { makePage } from './API/Page.js'
 
 const parsePage = (input, options = {}) => {
-  const parser = createParser(options)
-  return createPage(parser.parse(input), parser)
+  const { tree, source } = parseMd(input, options)
+  return makePage(tree, source, options)
 }
 
 export default parsePage

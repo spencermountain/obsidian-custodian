@@ -7,6 +7,7 @@ const dimensions = (value = '') => {
 }
 
 const wikiFields = (value) => {
+  // Split [[path#heading|label]] or [[path#^block|label]] without resolving the vault.
   const pipe = value.indexOf('|')
   const destination = pipe < 0 ? value : value.slice(0, pipe)
   const hash = destination.indexOf('#')
@@ -31,7 +32,10 @@ const wikiMarkdown = (node) => {
 const walk = (node, visit, parent = null) => {
   visit(node, parent)
   node.children?.forEach((child) => walk(child, visit, node))
-  node.title?.forEach?.((child) => walk(child, visit, node))
+  // Callout titles contain inline nodes; ordinary link titles are strings.
+  if (Array.isArray(node.title)) {
+    node.title.forEach((child) => walk(child, visit, node))
+  }
 }
 
 const plainText = (node) => {

@@ -1,9 +1,9 @@
 import test from 'tape'
-import parsePage from '../src/index.js'
+import parsePage from '../../src/index.js'
 import { unified } from 'unified'
 import remarkParse from 'remark-parse'
 import remarkStringify from 'remark-stringify'
-import remarkObsidian from '../src/remark.js'
+import remarkObsidian from '../../src/remark.js'
 
 test('public API exposes flat, detached JSON and exact untouched Markdown', (t) => {
   const input = '# Hello **world**\r\n\r\nhello [[world]]\r\n\r\n![[path/to/myFile.jpg|500]]'
@@ -21,14 +21,22 @@ test('public API exposes flat, detached JSON and exact untouched Markdown', (t) 
 })
 
 test('Obsidian syntax, standard plugins, and protected literal contexts', (t) => {
-  const page = parsePage('---\ntitle: Test\n---\n\n> [!TIP]- **Title**\n> Body [[Note#Heading|label]]\n\n==**marked**== %%hidden [[no]]%%\n\nA block ^my-id\n\n- [?] custom task\n- [ ] todo\n\n`[[code]]` \\[[escaped]]\n\n```js\n[[code]]\n```\n\n$x^2$\n\n| A | B |\n| - | - |\n| [[Note\\|Alias]] | yes |\n\nFootnote[^one]\n\n[^one]: Text')
+  const page = parsePage(
+    '---\ntitle: Test\n---\n\n> [!TIP]- **Title**\n> Body [[Note#Heading|label]]\n\n==**marked**== %%hidden [[no]]%%\n\nA block ^my-id\n\n- [?] custom task\n- [ ] todo\n\n`[[code]]` \\[[escaped]]\n\n```js\n[[code]]\n```\n\n$x^2$\n\n| A | B |\n| - | - |\n| [[Note\\|Alias]] | yes |\n\nFootnote[^one]\n\n[^one]: Text'
+  )
   t.equal(page.callouts()[0].json().calloutType, 'tip')
   t.equal(page.callouts()[0].json().fold, 'collapsed')
   t.equal(page.highlights()[0].json().text, 'marked')
   t.equal(page.comments()[0].json().text, 'hidden [[no]]')
   t.equal(page.links().length, 2)
   t.equal(page.links()[1].json().alias, 'Alias')
-  t.equal(page.blocks().find((block) => block.json().blockId === 'my-id').json().text, 'A block')
+  t.equal(
+    page
+      .blocks()
+      .find((block) => block.json().blockId === 'my-id')
+      .json().text,
+    'A block'
+  )
   t.equal(page.tasks()[0].json().checked, true)
   t.equal(page.tasks()[1].json().checked, false)
   t.equal(page.json().frontmatter[0].value, 'title: Test')
@@ -61,7 +69,8 @@ test('structured edits validate input and survive a parse/serialize cycle', (t) 
 
 test('remark entry point parses and serializes custom nodes', (t) => {
   const processor = unified().use(remarkParse).use(remarkObsidian).use(remarkStringify)
-  const source = '[[Note|alias]] ![[image.png|40x20]] ==bold== %%hidden%%\n\n> [!note]+ Title\n> Text'
+  const source =
+    '[[Note|alias]] ![[image.png|40x20]] ==bold== %%hidden%%\n\n> [!note]+ Title\n> Text'
   const tree = processor.runSync(processor.parse(source))
   const result = String(processor.stringify(tree))
   t.ok(result.includes('[[Note|alias]]'))
