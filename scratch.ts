@@ -1,6 +1,9 @@
 import parsePage from './src/index.ts'
 
-const input = `hello [[world]]
+const input = `hello [[world#cool]]
+
+
+  [Label](<https://example.com>)
 
 ![[path/to/myFile.jpg]]
 
@@ -8,12 +11,14 @@ const input = `hello [[world]]
 - [x] brush teeth
 
 [[links]], ![[embeds]], ==highlights==,  %%comments%%
+
 `
 
 const page = parsePage(input)
-
+page.links()[1].title = 'farming'
+console.log(page.markdown())
 // console.log(page.json({}))
-console.log(page.embeds()[0].text())
+// console.log(page.embeds()[0].text())
 
 /*
  * blocks

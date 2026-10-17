@@ -29532,6 +29532,7 @@ const fields = {
     wikiLink: ['target', 'alias', 'heading', 'block'],
     embed: ['target', 'alias', 'heading', 'block'],
     link: ['url', 'text', 'title'],
+    linkReference: ['text', 'url', 'title'],
     image: ['url', 'alt', 'title'],
     listItem: ['checked'],
     callout: ['title', 'calloutType', 'fold'],
@@ -29606,6 +29607,10 @@ const edit = (node, changes) => {
             text(value, key);
             // Text updates are literal replacements, not Markdown fragments.
             next.children = [{ type: 'text', value }];
+            // An explicit reference keeps the destination when its visible label changes.
+            if (node.type === 'linkReference') {
+                next.referenceType = 'full';
+            }
             if (node.blockId) {
                 next.children.push({ type: 'blockId', value: node.blockId });
             }
@@ -29614,6 +29619,13 @@ const edit = (node, changes) => {
             Object.assign(next, { [key]: value });
         }
     });
+    // Give an edited reference its own destination without changing shared definitions.
+    if (node.type === 'linkReference' && Object.hasOwn(changes, 'url')) {
+        next.type = 'link';
+        delete next.identifier;
+        delete next.label;
+        delete next.referenceType;
+    }
     // Validate relationships after all fields have changed, allowing fragment switches.
     if (next.heading !== undefined && next.heading !== null && next.block !== null) {
         throw new TypeError('Use either heading or block');
@@ -29714,9 +29726,32 @@ class Section {
 }
 
 class Link extends Section {
-    target() {
+    get title() {
+        return this.text();
+    }
+    set title(value) {
+        if (this.ast().type === 'wikiLink') {
+            this.update({ alias: value });
+        }
+        else {
+            this.update({ text: value });
+        }
+    }
+    get target() {
         const node = this.json();
         return node.target ?? node.url ?? '';
+    }
+    set target(value) {
+        const node = this.ast();
+        if (node.type === 'wikiLink') {
+            this.update({ target: value });
+        }
+        else if (node.type === 'linkReference') {
+            this.update({ url: value, title: this.json().title ?? null });
+        }
+        else {
+            this.update({ url: value });
+        }
     }
     text(options = {}) {
         const node = this.ast(options);
