@@ -26,9 +26,9 @@
 
 Everything is always more complicated than you think,
 
-- but I'll admit, I did shake my head in sanctimonious disbelief, when I found out that **obsidian** does not release or even share details, about their internal markdown parser.
+——but I'll admit, I did shake my head in sanctimonious disbelief, when I found out that **obsidian** does not release or even share details, about their internal markdown parser.
 
-People are out there writing notes in their syntax, and it's not currently possible or easy to _get the information back out_ - it's stuck in their ad-hoc markup format.
+They have people are out there writing notes in their syntax, and it's not currently possible or easy to _get the information back out_ - it's stuck in their ad-hoc markup format.
 
 Which means that people have to write endless half-baked parsers - and all the plugins that inspect this markdown are slightly buggy and in their own unique ways.
 
@@ -61,19 +61,29 @@ const page = parsePage(str)
 
 [spec documentation](https://obsidian.md/help/obsidian-flavored-markdown)
 
-- `[[Link]]1 Internal links
-- `![[Link]]1 	Embed files
-- `![[Link#^id]]1 	Block references
-- `^id1 Defining a block
-- `[^id]1 Footnotes
-- `%%Text%%1 Comments
-- `~~Text~~1 Strikethroughs
-- `==Text==1 Highlights
-- `\`\`\`1 Code blocks
-- `- [ ]1 Incomplete task
-- `- [x]1 Completed task
-- `> [!note]1 Callouts
+- `[[Link]]` Internal links
+- `![[Link]]` Embed files
+- `![[Link#^id]]` Block references
+- `^id1` Defining a block
+- `[^id]` Footnotes
+- `%%Text%%` Comments
+- `~~Text~~` Strikethroughs
+- `==Text==` Highlights
+- `\`\`\`` Code blocks
+- `- [ ]` Incomplete task
+- `- [x]` Completed task
+- `> [!note]` Callouts
 - ... Tables
+
+### Remark plugins
+
+- [remark-parse](https://github.com/remarkjs/remark/tree/main/packages/remark-parse) - parses CommonMark into the internal syntax tree.
+- [remark-stringify](https://github.com/remarkjs/remark/tree/main/packages/remark-stringify) - serializes the tree back to Markdown after edits.
+- [remark-gfm](https://github.com/remarkjs/remark-gfm) - adds tables, task lists, strikethrough, footnotes, and autolinks.
+- [remark-math](https://github.com/remarkjs/remark-math/tree/main/packages/remark-math) - adds inline and block math syntax.
+- [remark-frontmatter](https://github.com/remarkjs/remark-frontmatter) - recognizes and preserves YAML frontmatter without parsing its contents.
+
+Obsidian-specific syntax is handled by this package's own remark extension.
 
 ### See also
 

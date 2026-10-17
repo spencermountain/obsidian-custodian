@@ -1,4 +1,4 @@
-import parsePage from 'src/index.js'
+import parsePage from './src/index.js'
 
 const input = `hello [[world]]
 
