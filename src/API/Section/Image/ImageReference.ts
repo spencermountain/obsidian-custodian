@@ -1,6 +1,6 @@
-import metadata from './_lib/metadata.ts'
-import { text as escape, url } from './_lib/html/elements.ts'
-import { normalize } from '../ast/references.ts'
+import metadata from '../_lib/metadata.ts'
+import { text as escape, url } from '../_lib/html/elements.ts'
+import { normalize } from '../../ast/references.ts'
 import Image from './Image.ts'
 
 class ImageReference extends Image {

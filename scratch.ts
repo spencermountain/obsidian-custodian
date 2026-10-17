@@ -1,4 +1,4 @@
-import parsePage from './src/index.ts'
+import custodian from './src/index.ts'
 
 const input = `hello [[world#cool]]
 
@@ -8,7 +8,7 @@ const input = `hello [[world#cool]]
 ![[path/to/myFile.jpg]]
 
 
-
+---
 
 
 - [ ] go to work
@@ -18,9 +18,10 @@ const input = `hello [[world#cool]]
 
 `
 
-const page = parsePage(input)
-page.links()[1].title = 'farming'
-console.log(page.json())
+const page = custodian(input)
+page.tasks()[0].checked = true
+console.log(page.markdown())
+
 // console.log(page.json({}))
 // console.log(page.embeds()[0].text())
 

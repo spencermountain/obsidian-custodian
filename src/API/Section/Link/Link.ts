@@ -1,7 +1,7 @@
-import Section from './Section.ts'
-import type { TextOptions } from '../../types/options.ts'
-import metadata from './_lib/metadata.ts'
-import { element, url } from './_lib/html/elements.ts'
+import Section from '../Section.ts'
+import type { TextOptions } from '../../../types/options.ts'
+import metadata from '../_lib/metadata.ts'
+import { element, url } from '../_lib/html/elements.ts'
 
 class Link extends Section {
   get title(): string { return this.text() }

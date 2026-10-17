@@ -27319,9 +27319,6 @@ class Section {
 }
 
 class Root extends Section {
-    json(setting) {
-        return super.json(setting);
-    }
     text(setting) {
         if (setting === false) {
             return '';
@@ -27343,9 +27340,6 @@ class Root extends Section {
 }
 
 class Paragraph extends Section {
-    json(setting) {
-        return super.json(setting);
-    }
     text(setting) {
         if (setting === false) {
             return '';
@@ -27476,20 +27470,18 @@ class Html extends Section {
     }
 }
 
-class Emphasis extends Section {
-    json(setting) {
-        return super.json(setting);
-    }
+// Inline formatting wraps child content without changing its plain-text meaning.
+class Format extends Section {
     text(setting) {
-        if (setting === false) {
-            return '';
-        }
         const node = this.textNode(setting);
         if (!node) {
             return '';
         }
         return (node.children || []).map(child => this.renderText(child)).join('');
     }
+}
+
+class Emphasis extends Format {
     html(setting) {
         const state = this.context.html;
         if (!state) {
@@ -27500,20 +27492,7 @@ class Emphasis extends Section {
     }
 }
 
-class Strong extends Section {
-    json(setting) {
-        return super.json(setting);
-    }
-    text(setting) {
-        if (setting === false) {
-            return '';
-        }
-        const node = this.textNode(setting);
-        if (!node) {
-            return '';
-        }
-        return (node.children || []).map(child => this.renderText(child)).join('');
-    }
+class Strong extends Format {
     html(setting) {
         const state = this.context.html;
         if (!state) {
@@ -27524,20 +27503,7 @@ class Strong extends Section {
     }
 }
 
-class Strikethrough extends Section {
-    json(setting) {
-        return super.json(setting);
-    }
-    text(setting) {
-        if (setting === false) {
-            return '';
-        }
-        const node = this.textNode(setting);
-        if (!node) {
-            return '';
-        }
-        return (node.children || []).map(child => this.renderText(child)).join('');
-    }
+class Strikethrough extends Format {
     html(setting) {
         const state = this.context.html;
         if (!state) {
@@ -27598,9 +27564,6 @@ class Code extends Section {
 }
 
 class Break extends Section {
-    json(setting) {
-        return super.json(setting);
-    }
     text(setting) {
         if (setting === false) {
             return '';
@@ -27622,33 +27585,16 @@ class Break extends Section {
 }
 
 class ThematicBreak extends Section {
-    json(setting) {
-        return super.json(setting);
-    }
-    text(setting) {
-        if (setting === false) {
-            return '';
-        }
-        const node = this.textNode(setting);
-        if (!node) {
-            return '';
-        }
-        return (node.children || []).map(child => this.renderText(child)).join('');
-    }
     html(setting) {
         const state = this.context.html;
         if (!state) {
             return super.html(setting);
         }
-        this.node;
         return element('hr');
     }
 }
 
 class Quote extends Section {
-    json(setting) {
-        return super.json(setting);
-    }
     text(setting) {
         if (setting === false) {
             return '';
@@ -27721,9 +27667,6 @@ const listItem = (node, state, parent, prefix = '') => {
 };
 
 class ListItem extends Section {
-    json(setting) {
-        return super.json(setting);
-    }
     text(setting) {
         if (setting === false) {
             return '';
@@ -27797,9 +27740,6 @@ class Table extends Section {
 }
 
 class TableRow extends Section {
-    json(setting) {
-        return super.json(setting);
-    }
     text(setting) {
         if (setting === false) {
             return '';
@@ -27826,9 +27766,6 @@ class TableRow extends Section {
 }
 
 class TableCell extends Section {
-    json(setting) {
-        return super.json(setting);
-    }
     text(setting) {
         if (setting === false) {
             return '';
@@ -28246,9 +28183,6 @@ class FootnoteReference extends Section {
 }
 
 class InlineFootnote extends Section {
-    json(setting) {
-        return super.json(setting);
-    }
     text(setting) {
         if (setting === false) {
             return '';
@@ -28278,19 +28212,9 @@ class InlineFootnote extends Section {
     }
 }
 
-class Highlight extends Section {
+class Highlight extends Format {
     json(setting) {
         return metadata(super.json(setting), this.node, ['color']);
-    }
-    text(setting) {
-        if (setting === false) {
-            return '';
-        }
-        const node = this.textNode(setting);
-        if (!node) {
-            return '';
-        }
-        return (node.children || []).map(child => this.renderText(child)).join('');
     }
     html(setting) {
         const state = this.context.html;
@@ -28334,15 +28258,8 @@ class Comment extends Section {
         }
         return result;
     }
-    text(setting) {
-        if (setting === false) {
-            return '';
-        }
-        const node = this.textNode(setting);
-        if (!node) {
-            return '';
-        }
-        return node.value ?? '';
+    text() {
+        return '';
     }
     html(setting) {
         const state = this.context.html;
@@ -31320,6 +31237,10 @@ class Page {
         this.#tree.children.unshift(...parseMd(markdown, this.#options).tree.children);
         this.#changed();
         return this;
+    }
+    // Return removable descendants in document order, including inline sections.
+    sections(type) {
+        return this.#select((node, parent) => parent !== null && (type === undefined || node.type === type));
     }
     // Selection methods share the same predicates as JSON output and filtering.
     headings() {

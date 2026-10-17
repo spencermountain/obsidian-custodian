@@ -70,4 +70,19 @@ const remark = {
   ]
 }
 
-export default [main, remark]
+// Keep the executable small by importing the existing ESM library bundle.
+const cli = {
+  input: 'bin/index.ts',
+  external: ['node:fs', 'node:path', 'node:util', '../builds/obsidian-custodian.mjs'],
+  output: {
+    file: 'builds/cli.mjs',
+    format: 'esm',
+    paths: { '../builds/obsidian-custodian.mjs': './obsidian-custodian.mjs' }
+  },
+  plugins: [{
+    name: 'executable-cli',
+    writeBundle: () => fs.chmodSync('builds/cli.mjs', 0o755)
+  }]
+}
+
+export default [main, remark, cli]

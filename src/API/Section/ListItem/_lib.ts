@@ -1,5 +1,5 @@
 // Tight lists omit paragraph wrappers; loose lists retain their block structure.
-import { element } from './html/elements.ts'
+import { element } from '../_lib/html/elements.ts'
 
 const listItem = (node, state, parent, prefix = ''): string => {
   const loose = parent?.spread || parent?.children?.some(child => child.spread)

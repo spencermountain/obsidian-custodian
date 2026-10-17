@@ -1,8 +1,8 @@
 import Link from './Link.ts'
-import type { TextOptions } from '../../types/options.ts'
-import metadata from './_lib/metadata.ts'
-import { url } from './_lib/html/elements.ts'
-import { normalize } from '../ast/references.ts'
+import type { TextOptions } from '../../../types/options.ts'
+import metadata from '../_lib/metadata.ts'
+import { url } from '../_lib/html/elements.ts'
+import { normalize } from '../../ast/references.ts'
 
 class LinkReference extends Link {
   get target(): string { return this.json()?.url ?? '' }

@@ -2,10 +2,6 @@ import Section from './Section.ts'
 import { element } from './_lib/html/elements.ts'
 
 class Quote extends Section {
-  json(setting?: boolean) {
-    return super.json(setting)
-  }
-
   text(setting?: boolean): string {
     if (setting === false) { return '' }
     const node = this.textNode(setting)

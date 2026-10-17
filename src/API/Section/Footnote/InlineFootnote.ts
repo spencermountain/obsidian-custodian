@@ -1,11 +1,7 @@
-import Section from './Section.ts'
-import { normalize } from '../ast/references.ts'
+import Section from '../Section.ts'
+import { normalize } from '../../ast/references.ts'
 
 class InlineFootnote extends Section {
-  json(setting?: boolean) {
-    return super.json(setting)
-  }
-
   text(setting?: boolean): string {
     if (setting === false) { return '' }
     const node = this.textNode(setting)

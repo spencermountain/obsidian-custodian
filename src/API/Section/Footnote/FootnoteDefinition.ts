@@ -1,9 +1,9 @@
-import Section from './Section.ts'
-import { element } from './_lib/html/elements.ts'
+import Section from '../Section.ts'
+import metadata from '../_lib/metadata.ts'
 
-class TableCell extends Section {
+class FootnoteDefinition extends Section {
   json(setting?: boolean) {
-    return super.json(setting)
+    return metadata(super.json(setting), this.node, ['identifier', 'label'])
   }
 
   text(setting?: boolean): string {
@@ -15,13 +15,10 @@ class TableCell extends Section {
 
   html(setting?: boolean): string {
     const state = this.context.html
-    const parent = this.context.parent
     if (!state) { return super.html(setting) }
     const node = this.node
-    const align = parent?.align
-    const properties = ['left', 'center', 'right'].includes(align) ? { align } : {}
-    return element(parent?.header ? 'th' : 'td', properties, state.all(node))
+    return ''
   }
 }
 
-export default TableCell
+export default FootnoteDefinition

@@ -1,6 +1,6 @@
-import Section from './Section.ts'
-import metadata from './_lib/metadata.ts'
-import { element, text as escape } from './_lib/html/elements.ts'
+import Section from '../Section.ts'
+import metadata from '../_lib/metadata.ts'
+import { element, text as escape } from '../_lib/html/elements.ts'
 
 class Math extends Section {
   json(setting?: boolean) {

@@ -79,6 +79,20 @@ console.log(page.html())
 // 'hello <a href="./world">cruel world</a>'
 ```
 
+we also support a fair-amount of safe document editing, like:
+
+```js
+const md = `
+- [x] brush teeth
+- [ ] go to work
+`
+const page = custodian(md)
+page.tasks()[1].checked = true
+console.log(page.markdown())
+// - [x] brush teeth
+// - [x] go to work
+```
+
 #### CLI
 
 ```bash
@@ -87,11 +101,16 @@ npx obsidian-custodian path/to/file.md # JSON output
 # non-json outputs
 npx obsidian-custodian --text path/to/file.md
 npx obsidian-custodian --html path/to/file.md
-
-# common transforms
-npx obsidian-custodian --lint path/to/file.md
-npx obsidian-custodian --normalize path/to/file.md
 ```
+
+Pipe the JSON into `jq` to list unfinished tasks grouped by file, omitting files with none:
+
+```bash
+# get all todo lists in a directory
+npx obsidian-custodian 'notes/**/*.md' | jq '[.[] | select(.tasks | length > 0)]'
+```
+
+Quote the glob so Node expands it. The CLI returns an array of pages, each with a `file` field.
 
 <!-- spacer -->
 <img height="20px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
@@ -179,6 +198,9 @@ Supported update fields depend on the item:
 | Math, comment, or YAML frontmatter | `value`                                                                 |
 
 Setting `text` replaces the item's inline content with literal text. Other item types support inspection and removal, but do not currently expose update fields. A wikilink can specify either a heading or a block fragment; use `null` to clear an alias or fragment.
+
+<!-- spacer -->
+<img height="20px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
 ### Remark usage
 

@@ -1,8 +1,8 @@
 import Link from './Link.ts'
-import type { TextOptions } from '../../types/options.ts'
-import metadata from './_lib/metadata.ts'
-import { element, text as escape, url } from './_lib/html/elements.ts'
-import destination from './_lib/destination.ts'
+import type { TextOptions } from '../../../types/options.ts'
+import metadata from '../_lib/metadata.ts'
+import { element, text as escape, url } from '../_lib/html/elements.ts'
+import destination from '../_lib/destination.ts'
 
 class WikiLink extends Link {
   get title(): string { return this.text() }

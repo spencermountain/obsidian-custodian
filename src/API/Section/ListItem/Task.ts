@@ -1,7 +1,7 @@
 import ListItem from './ListItem.ts'
-import metadata from './_lib/metadata.ts'
-import listItem from './_lib/listItem.ts'
-import { element } from './_lib/html/elements.ts'
+import metadata from '../_lib/metadata.ts'
+import listItem from './_lib.ts'
+import { element } from '../_lib/html/elements.ts'
 
 // Tasks share list-item structure while owning checkbox state and presentation.
 class Task extends ListItem {

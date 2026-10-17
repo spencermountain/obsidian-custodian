@@ -81,5 +81,8 @@
     }
   },
   "sideEffects": false,
-  "types": "./types/index.d.ts"
+  "types": "./types/index.d.ts",
+  "bin": {
+    "obsidian-custodian": "./builds/cli.mjs"
+  }
 }

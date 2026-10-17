@@ -1,5 +1,5 @@
-import Section from './Section.ts'
-import { element } from './_lib/html/elements.ts'
+import Section from '../Section.ts'
+import { element } from '../_lib/html/elements.ts'
 
 class Table extends Section {
   json(setting?: boolean) {

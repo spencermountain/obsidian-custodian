@@ -1,7 +1,7 @@
-import Section from './Section.ts'
-import metadata from './_lib/metadata.ts'
-import { element, url } from './_lib/html/elements.ts'
-import { dimensions } from '../../parse/syntax/_lib.ts'
+import Section from '../Section.ts'
+import metadata from '../_lib/metadata.ts'
+import { element, url } from '../_lib/html/elements.ts'
+import { dimensions } from '../../../parse/syntax/_lib.ts'
 
 class Image extends Section {
   json(setting?: boolean) {

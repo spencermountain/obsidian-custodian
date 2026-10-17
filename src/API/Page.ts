@@ -94,6 +94,11 @@ class Page {
     return this
   }
 
+  // Return removable descendants in document order, including inline sections.
+  sections(type?: string) {
+    return this.#select((node, parent) => parent !== null && (type === undefined || node.type === type))
+  }
+
   // Selection methods share the same predicates as JSON output and filtering.
   headings() {
     return this.#select(groups.headings) as Heading[]
