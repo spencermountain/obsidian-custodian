@@ -1,4 +1,4 @@
-import type { MarkdownNode, OutputOptions, Collection } from '../../types.ts'
+import type { MarkdownNode, OutputOptions, Collection } from '../../types/types.ts'
 import { groups } from '../json.ts'
 
 // The same inclusion flags apply to every output format.
@@ -9,7 +9,9 @@ const includes = (node: MarkdownNode, options: OutputOptions) => {
   if (options.html === false && node.type === 'html') {
     return false
   }
-  return !Object.entries(groups).some(([key, matches]) => options[key as Collection] === false && matches(node, null))
+  return !Object.entries(groups).some(
+    ([key, matches]) => options[key as Collection] === false && matches(node, null)
+  )
 }
 
 const outputTree = (tree: MarkdownNode, options: OutputOptions = {}): MarkdownNode | null => {
@@ -20,10 +22,15 @@ const outputTree = (tree: MarkdownNode, options: OutputOptions = {}): MarkdownNo
     }
     const result = { ...node }
     if (node.children) {
-      result.children = node.children.map(copy).filter((child): child is MarkdownNode => child !== null)
+      result.children = node.children
+        .map(copy)
+        .filter((child): child is MarkdownNode => child !== null)
     }
     if (Array.isArray(node.title)) {
-      result.title = options.calloutTitles === false ? [] : node.title.map(copy).filter((child): child is MarkdownNode => child !== null)
+      result.title =
+        options.calloutTitles === false
+          ? []
+          : node.title.map(copy).filter((child): child is MarkdownNode => child !== null)
     }
     // Block IDs also appear as metadata on the block they identify.
     if (options.blockIds === false) {

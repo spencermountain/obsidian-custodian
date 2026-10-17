@@ -1,5 +1,5 @@
 import type { Root } from 'mdast'
-import type { ParseOptions, DocumentNode } from '../types.ts'
+import type { ParseOptions, DocumentNode } from '../types/types.ts'
 import { unified } from 'unified'
 import remarkStringify from 'remark-stringify'
 import remarkObsidian from './remark.ts'

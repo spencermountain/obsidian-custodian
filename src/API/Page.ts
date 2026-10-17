@@ -1,4 +1,10 @@
-import type { DocumentNode, ParseOptions, OutputOptions, Predicate, PageJSON } from '../types.ts'
+import type {
+  DocumentNode,
+  ParseOptions,
+  OutputOptions,
+  Predicate,
+  PageJSON
+} from '../types/types.ts'
 import parseMd from '../parse/index.ts'
 import stringifyMd from '../parse/stringify.ts'
 import outputTree from './_lib/output.ts'
@@ -130,7 +136,8 @@ class Page {
   }
 }
 
-const makePage = (tree: DocumentNode, source?: string, options?: ParseOptions) => new Page(tree, source, options)
+const makePage = (tree: DocumentNode, source?: string, options?: ParseOptions) =>
+  new Page(tree, source, options)
 
 export { makePage }
 export default Page

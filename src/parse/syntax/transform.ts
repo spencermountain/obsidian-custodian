@@ -1,4 +1,4 @@
-import type { MarkdownNode, DocumentNode } from '../../types.ts'
+import type { MarkdownNode, DocumentNode } from '../../types/types.ts'
 import protectHtml from './html.ts'
 import { walk } from './_lib.ts'
 import callout from './_lib/callout.ts'
@@ -8,7 +8,8 @@ const transform = (tree: MarkdownNode, parse: (input: string) => DocumentNode, s
   // Collapse HTML before visiting its contents: Obsidian treats those as literal.
   protectHtml(tree, source)
   // Original source distinguishes escaped markers from decoded text nodes.
-  const raw = (node: MarkdownNode) => source?.slice(node.position?.start.offset, node.position?.end.offset)
+  const raw = (node: MarkdownNode) =>
+    source?.slice(node.position?.start.offset, node.position?.end.offset)
 
   walk(tree, (node) => {
     if (node.type === 'highlight' && node.value !== undefined) {
@@ -17,7 +18,11 @@ const transform = (tree: MarkdownNode, parse: (input: string) => DocumentNode, s
       node.children = parsed.children[0]?.children || [{ type: 'text', value: node.value }]
       delete node.value
       // These positions belong to the fragment, not the original document.
-      walk(node, (child) => { if (child !== node) { delete child.position } })
+      walk(node, (child) => {
+        if (child !== node) {
+          delete child.position
+        }
+      })
     }
     if (node.type === 'blockquote' && !raw(node)?.match(/^>\s*\\/)) {
       callout(node)

@@ -1,4 +1,10 @@
-import type { MarkdownNode, NodeJSON, OutputOptions, Collection, Predicate } from '../types.ts'
+import type {
+  MarkdownNode,
+  NodeJSON,
+  OutputOptions,
+  Collection,
+  Predicate
+} from '../types/types.ts'
 import text from './text.ts'
 import { dimensions } from '../parse/syntax/_lib.ts'
 

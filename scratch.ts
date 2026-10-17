@@ -2,7 +2,10 @@ import parsePage from './src/index.ts'
 
 const input = `hello [[world]]
 
-![[path/to/myFile.jpg]]`
+![[path/to/myFile.jpg]]
+
+[[links]], ![[embeds]], ==highlights==, and %%comments%%
+`
 
 const page = parsePage(input)
 

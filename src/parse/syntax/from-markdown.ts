@@ -1,5 +1,5 @@
 import type { Extension, Handle } from 'mdast-util-from-markdown'
-import type { MarkdownNode } from '../../types.ts'
+import type { MarkdownNode } from '../../types/types.ts'
 import { wikiFields } from './_lib.ts'
 
 const types = {

@@ -1,6 +1,6 @@
 import type { Handle, Options } from 'mdast-util-to-markdown'
 import type { Paragraph, Blockquote, ListItem } from 'mdast'
-import type { MarkdownNode } from '../../types.ts'
+import type { MarkdownNode } from '../../types/types.ts'
 import { defaultHandlers } from 'mdast-util-to-markdown'
 import { wikiMarkdown } from './_lib.ts'
 
@@ -22,16 +22,27 @@ const callout: Handle = (raw, parent, state, info) => {
   if (node.fold) {
     fold = node.fold === 'collapsed' ? '-' : '+'
   }
-  const title = state.containerPhrasing(
-    { type: 'paragraph', children: node.title } as Paragraph,
-    { ...info, before: ' ', after: '\n' }
+  const title = state.containerPhrasing({ type: 'paragraph', children: node.title } as Paragraph, {
+    ...info,
+    before: ' ',
+    after: '\n'
+  })
+  const body = state.containerFlow(
+    { type: 'blockquote', children: node.children } as Blockquote,
+    info
   )
-  const body = state.containerFlow({ type: 'blockquote', children: node.children } as Blockquote, info)
   let content = `[!${node.calloutType}]${fold}`
-  if (title) { content += ` ${title}` }
-  if (body) { content += `\n${body}` }
+  if (title) {
+    content += ` ${title}`
+  }
+  if (body) {
+    content += `\n${body}`
+  }
   // Every line, including blanks and nested blocks, must remain inside the quote.
-  return content.split('\n').map((line) => line ? `> ${line}` : '>').join('\n')
+  return content
+    .split('\n')
+    .map((line) => (line ? `> ${line}` : '>'))
+    .join('\n')
 }
 
 const listItem: Handle = (raw, parent, state, info) => {

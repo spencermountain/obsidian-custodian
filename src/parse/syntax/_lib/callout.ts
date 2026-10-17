@@ -1,10 +1,14 @@
-import type { MarkdownNode } from '../../../types.ts'
+import type { MarkdownNode } from '../../../types/types.ts'
 const callout = (node: MarkdownNode) => {
   const paragraph = node.children![0]
   const first = paragraph?.children?.[0]
-  if (first?.type !== 'text') { return }
+  if (first?.type !== 'text') {
+    return
+  }
   const match = /^\[!([\w-]+)\]([+-]?)[ \t]*/.exec(first.value!)
-  if (!match) { return }
+  if (!match) {
+    return
+  }
 
   first.value! = first.value!.slice(match[0].length)
   const title: MarkdownNode[] = []
@@ -27,10 +31,14 @@ const callout = (node: MarkdownNode) => {
   node.calloutType = match[1].toLowerCase()
   // No marker means non-foldable; +/- records the initial expansion state.
   node.fold = null
-  if (match[2]) { node.fold = match[2] === '-' ? 'collapsed' : 'expanded' }
+  if (match[2]) {
+    node.fold = match[2] === '-' ? 'collapsed' : 'expanded'
+  }
   node.title = title
   node.children = node.children!.slice(1)
-  if (body.length) { node.children.unshift({ type: 'paragraph', children: body }) }
+  if (body.length) {
+    node.children.unshift({ type: 'paragraph', children: body })
+  }
 }
 
 export default callout

@@ -1,10 +1,14 @@
-import type { MarkdownNode } from '../../types.ts'
+import type { MarkdownNode } from '../../types/types.ts'
 // Accept width or width x height hints; ordinary aliases have no dimensions.
 const dimensions = (value = '') => {
   const match = /^(\d+)(?:x(\d+))?$/.exec(value)
-  if (!match) { return {} }
+  if (!match) {
+    return {}
+  }
   const result: { width: number; height?: number } = { width: Number(match[1]) }
-  if (match[2]) { result.height = Number(match[2]) }
+  if (match[2]) {
+    result.height = Number(match[2])
+  }
   return result
 }
 
@@ -13,26 +17,47 @@ const wikiFields = (value: string) => {
   const pipe = value.indexOf('|')
   const destination = pipe < 0 ? value : value.slice(0, pipe)
   const hash = destination.indexOf('#')
-  const result: { target: string; alias: string | null; heading: string | null; block: string | null } = { target: destination, alias: null, heading: null, block: null }
-  if (pipe >= 0) { result.alias = value.slice(pipe + 1) }
+  const result: {
+    target: string
+    alias: string | null
+    heading: string | null
+    block: string | null
+  } = { target: destination, alias: null, heading: null, block: null }
+  if (pipe >= 0) {
+    result.alias = value.slice(pipe + 1)
+  }
   if (hash >= 0) {
     result.target = destination.slice(0, hash)
     const fragment = destination.slice(hash + 1)
-    if (fragment.startsWith('^')) { result.block = fragment.slice(1) } else { result.heading = fragment }
+    if (fragment.startsWith('^')) {
+      result.block = fragment.slice(1)
+    } else {
+      result.heading = fragment
+    }
   }
   return result
 }
 
 const wikiMarkdown = (node: MarkdownNode) => {
   let value = node.target!
-  if (node.heading !== null) { value += `#${node.heading}` }
-  if (node.block !== null) { value += `#^${node.block}` }
-  if (node.alias !== null) { value += `|${node.alias}` }
+  if (node.heading !== null) {
+    value += `#${node.heading}`
+  }
+  if (node.block !== null) {
+    value += `#^${node.block}`
+  }
+  if (node.alias !== null) {
+    value += `|${node.alias}`
+  }
   return `${node.type === 'embed' ? '!' : ''}[[${value}]]`
 }
 
 // Visit parents first so transforms can replace children before traversal continues.
-const walk = (node: MarkdownNode, visit: (node: MarkdownNode, parent: MarkdownNode | null) => void, parent: MarkdownNode | null = null): void => {
+const walk = (
+  node: MarkdownNode,
+  visit: (node: MarkdownNode, parent: MarkdownNode | null) => void,
+  parent: MarkdownNode | null = null
+): void => {
   visit(node, parent)
   node.children?.forEach((child) => walk(child, visit, node))
   // Callout titles contain inline nodes; ordinary link titles are strings.
@@ -43,11 +68,21 @@ const walk = (node: MarkdownNode, visit: (node: MarkdownNode, parent: MarkdownNo
 
 // Internal text used for block recognition, independent of API output preferences.
 const plainText = (node: MarkdownNode): string => {
-  if (node.type === 'comment' || node.type === 'blockId') { return '' }
-  if (node.type === 'wikiLink' || node.type === 'embed') { return node.alias ?? node.target! }
-  if (node.type === 'image') { return node.alt || '' }
-  if (node.value !== undefined) { return node.value }
-  const separator = ['root', 'list', 'listItem', 'blockquote', 'callout'].includes(node.type) ? '\n' : ''
+  if (node.type === 'comment' || node.type === 'blockId') {
+    return ''
+  }
+  if (node.type === 'wikiLink' || node.type === 'embed') {
+    return node.alias ?? node.target!
+  }
+  if (node.type === 'image') {
+    return node.alt || ''
+  }
+  if (node.value !== undefined) {
+    return node.value
+  }
+  const separator = ['root', 'list', 'listItem', 'blockquote', 'callout'].includes(node.type)
+    ? '\n'
+    : ''
   return (node.children || []).map(plainText).join(separator)
 }
 

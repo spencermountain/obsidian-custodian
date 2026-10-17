@@ -12,8 +12,8 @@
     "watch": "node --watch scratch.ts",
     "lint": "eslint --flag unstable_native_nodejs_ts_config .",
     "prepack": "pnpm build",
-    "compile": "tsc -p tsconfig.json && node scripts/declarations.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "compile": "tsc -p tsconfig.build.json && node scripts/declarations.ts",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit"
   },
   "type": "module",
   "main": "./builds/obsidian-parser.cjs",

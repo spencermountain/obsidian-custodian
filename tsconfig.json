@@ -7,19 +7,26 @@
       "ES2022",
       "DOM"
     ],
-    "rootDir": "src",
-    "outDir": "lib",
-    "declaration": true,
-    "declarationDir": "types",
-    "strict": true,
+    "strict": false,
     "noEmitOnError": true,
     "verbatimModuleSyntax": true,
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": false,
-    "noUnusedLocals": true,
-    "rewriteRelativeImportExtensions": true
+    "skipLibCheck": true,
+    "noUnusedLocals": false,
+    "rewriteRelativeImportExtensions": true,
+    "noImplicitAny": false,
+    "noEmit": true
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "tests/**/*.ts",
+    "scripts/**/*.ts",
+    "*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "lib",
+    "types",
+    "builds"
   ]
 }

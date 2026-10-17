@@ -1,4 +1,4 @@
-import type { ParseOptions } from './types.ts'
+import type { ParseOptions } from './types/types.ts'
 import parseMd from './parse/index.ts'
 import { makePage } from './API/Page.ts'
 
@@ -16,7 +16,7 @@ export type {
   DocumentNode,
   NodeJSON,
   PageJSON
-} from './types.ts'
+} from './types/types.ts'
 export type { ItemHandle } from './API/handle.ts'
 export type { default as Page } from './API/Page.ts'
 export default parsePage

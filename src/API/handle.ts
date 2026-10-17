@@ -1,4 +1,4 @@
-import type { MarkdownNode, NodeJSON, OutputOptions, EditChanges } from '../types.ts'
+import type { MarkdownNode, NodeJSON, OutputOptions, EditChanges } from '../types/types.ts'
 import type Page from './Page.ts'
 import { json } from './json.ts'
 import edit from './edit.ts'
@@ -43,7 +43,9 @@ const createHandle = (node: MarkdownNode, { locate, changed, page }: HandleConte
     remove: () => {
       const parent = locate(node)
       // A callout's title nodes live outside its body children.
-      const children = parent.children!.includes(node) ? parent.children! : parent.title as MarkdownNode[]
+      const children = parent.children!.includes(node)
+        ? parent.children!
+        : (parent.title as MarkdownNode[])
       const index = children.indexOf(node)
       const following = children[index + 1]
       children.splice(index, 1)
