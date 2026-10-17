@@ -1,8 +1,8 @@
 {
-  "name": "reluctant-obsidian",
+  "name": "obsidian-custodian",
   "version": "0.0.1",
   "description": "Obsidian markdown syntax parser",
-  "repository": "github:spencermountain/reluctant-obsidian",
+  "repository": "github:spencermountain/obsidian-custodian",
   "author": "Spencer Kelly <spencermountain@gmail.com> (https://spencermountain.dev)",
   "minimumReleaseAge": "1 day",
   "scripts": {
@@ -16,7 +16,7 @@
     "typecheck": "tsc -p tsconfig.build.json --noEmit"
   },
   "type": "module",
-  "main": "./builds/obsidian-parser.cjs",
+  "main": "./builds/obsidian-custodian.cjs",
   "files": [
     "builds",
     "types"

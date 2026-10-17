@@ -29,21 +29,21 @@ const main = {
   output: [
     {
       banner,
-      file: 'builds/reluctant-obsidian.mjs',
+      file: 'builds/obsidian-custodian.mjs',
       format: 'esm',
       plugins: [terser()]
     },
     {
       banner,
-      file: 'builds/reluctant-obsidian.cjs',
+      file: 'builds/obsidian-custodian.cjs',
       format: 'cjs',
       exports: 'default'
     },
     {
       banner,
-      file: 'builds/reluctant-obsidian.min.js',
+      file: 'builds/obsidian-custodian.min.js',
       format: 'umd',
-      name: 'reluctantObsidian',
+      name: 'obsidianCustodian',
       plugins: [
         terser(),
         sizeCheck({
@@ -60,9 +60,9 @@ const remark = {
   input: 'lib/remark.js',
   plugins: plugins(),
   output: [
-    { file: 'builds/remark/reluctant-obsidian.mjs', format: 'esm', plugins: [terser()] },
+    { file: 'builds/remark/obsidian-custodian.mjs', format: 'esm', plugins: [terser()] },
     {
-      file: 'builds/remark/reluctant-obsidian.cjs',
+      file: 'builds/remark/obsidian-custodian.cjs',
       format: 'cjs',
       exports: 'default',
       plugins: [terser()]

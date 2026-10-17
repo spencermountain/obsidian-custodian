@@ -1,7 +1,7 @@
 <div align="center">
-  <div><b>reluctant-obsidian</b></div>
+  <div><b>obsidian-custodian</b></div>
   <div>get reliable JSON from Obsidian markdown</div>
-  <div><code>npm install reluctant-obsidian</code></div>
+  <div><code>npm install obsidian-custodian</code></div>
   <div align="center">
     <sub>
       by
@@ -13,11 +13,11 @@
 <!--2nd row-->
 <div align="center">
   <div>
-    <a href="https://npmjs.org/package/reluctant-obsidian">
-    <img src="https://img.shields.io/npm/v/reluctant-obsidian.svg?style=flat-square" />
+    <a href="https://npmjs.org/package/obsidian-custodian">
+    <img src="https://img.shields.io/npm/v/obsidian-custodian.svg?style=flat-square" />
   </a>
-  <a href="https://bundlephobia.com/result?p=reluctant-obsidian">
-    <img src="https://badgen.net/bundlejs/min/reluctant-obsidian" />
+  <a href="https://bundlephobia.com/result?p=obsidian-custodian">
+    <img src="https://badgen.net/bundlejs/min/obsidian-custodian" />
   </a>
   </div>
 </div>
@@ -52,10 +52,10 @@ I'm going spec-safe with [remark plugins](https://github.com/remarkjs/remark/blo
 ## Usage
 
 ```js
-import reluctant from 'reluctant-obsidian'
+import custodian from 'obsidian-custodian'
 
 const str = `hello [[world]]`
-const page = reluctant(str)
+const page = custodian(str)
 
 // clean plaintext
 console.log(page.text()) // 'hello world'
@@ -81,15 +81,15 @@ console.log(page.html())
 #### CLI
 
 ```bash
-npx reluctant-md path/to/file.md # JSON output
+npx obsidian-custodian path/to/file.md # JSON output
 
 # non-json outputs
-npx reluctant-obsidian --text path/to/file.md
-npx reluctant-obsidian --html path/to/file.md
+npx obsidian-custodian --text path/to/file.md
+npx obsidian-custodian --html path/to/file.md
 
 # common transforms
-npx reluctant-obsidian --lint path/to/file.md
-npx reluctant-obsidian --normalize path/to/file.md
+npx obsidian-custodian --lint path/to/file.md
+npx obsidian-custodian --normalize path/to/file.md
 ```
 
 ### API
@@ -167,13 +167,13 @@ Setting `text` replaces the item's inline content with literal text. Other item 
 
 ### Remark usage
 
-Use `reluctant-obsidian/remark` to add Obsidian syntax to a unified/remark pipeline. This export operates on syntax trees and does not create a page or expose the page API. It includes the GFM, math, and YAML frontmatter plugins.
+Use `obsidian-custodian/remark` to add Obsidian syntax to a unified/remark pipeline. This export operates on syntax trees and does not create a page or expose the page API. It includes the GFM, math, and YAML frontmatter plugins.
 
 ```js
 import { unified } from 'unified'
 import remarkParse from 'remark-parse'
 import remarkStringify from 'remark-stringify'
-import remarkObsidian from 'reluctant-obsidian/remark'
+import remarkObsidian from 'obsidian-custodian/remark'
 
 const processor = unified()
   .use(remarkParse)
