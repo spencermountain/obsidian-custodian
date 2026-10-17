@@ -56,12 +56,12 @@ test('HTML supports Obsidian links, embeds, highlights, tags, and callouts', (t)
   t.end()
 })
 
-test('HTML escapes text and sanitizes raw markup and unsafe URLs', (t) => {
+test('HTML escapes text and raw markup and rejects unsafe URLs', (t) => {
   const page = parsePage('Text <b>bold</b>\n\n<script>alert(1)</script>\n\n<img src="x" onerror="alert(1)">\n\n[bad](javascript:alert%281%29)')
   const html = page.html()
-  t.ok(html.includes('<b>bold</b>'), 'safe raw HTML renders')
+  t.ok(html.includes('&lt;b&gt;bold&lt;/b&gt;'), 'raw HTML is displayed literally')
   t.notOk(html.includes('<script'))
-  t.notOk(html.includes('onerror'))
+  t.notOk(html.includes('<img src="x"'), 'raw attributes cannot create an element')
   t.notOk(html.includes('javascript:'))
   t.notOk(page.html({ html: false }).includes('<b>'))
   const link = parsePage('[[Note]]').links()[0]
