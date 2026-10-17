@@ -7,7 +7,7 @@
   "minimumReleaseAge": "1 day",
   "scripts": {
     "build": "rollup -c --silent",
-    "test": "tape \"tests/*.test.js\" | tap-dancer",
+    "test": "tape \"tests/**/*.test.js\" | tap-dancer",
     "watch": "node --watch scratch.js",
     "lint": "eslint .",
     "prepack": "pnpm build"
