@@ -220,3 +220,12 @@ test('callouts/title-only - serialized and reparsed', (t) => {
   )
   t.end()
 })
+
+test('hard breaks end callout titles', (t) => {
+  const page = parsePage('> [!note] Title  \n> Body')
+  t.equal(page.callouts()[0]?.json().title, 'Title')
+  t.equal(page.callouts()[0]?.ast().children[0]?.children[0]?.value, 'Body')
+  page.append('')
+  t.equal(parsePage(page.markdown()).callouts()[0]?.json().title, 'Title')
+  t.end()
+})

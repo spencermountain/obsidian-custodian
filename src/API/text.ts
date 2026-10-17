@@ -11,6 +11,11 @@ const text = (node: MarkdownNode | null, options: OutputOptions = {}): string =>
   if (node.type === 'blockId' && options.blockIds !== true) {
     return ''
   }
+  if (node.type === 'tag') { return '#' + node.value }
+  if (node.type === 'wikiLink' && node.alias == null) {
+    const fragment = node.heading ?? (node.block ? '^' + node.block : '')
+    return node.target + (node.target && fragment ? '#' : '') + fragment
+  }
   if (node.type === 'wikiLink' || node.type === 'embed') {
     return node.alias ?? node.target!
   }

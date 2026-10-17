@@ -1,8 +1,15 @@
+import colors from './_lib/colors.ts'
 import type { Handle, Options } from 'mdast-util-to-markdown'
 import type { Paragraph, Blockquote, ListItem } from 'mdast'
 import type { MarkdownNode } from '../../types/types.ts'
 import { defaultHandlers } from 'mdast-util-to-markdown'
 import { wikiMarkdown } from './_lib.ts'
+
+declare module 'mdast-util-to-markdown' {
+  interface ConstructNameMap {
+    inlineFootnote: 'inlineFootnote'
+  }
+}
 
 const wiki: Handle = (node, parent, state) => {
   const value = wikiMarkdown(node as unknown as MarkdownNode)
@@ -13,7 +20,8 @@ const wiki: Handle = (node, parent, state) => {
 const highlight: Handle = (node, parent, state, info) => {
   // Give remark the delimiter context so it can escape nested text correctly.
   const content = state.containerPhrasing(node as Paragraph, { ...info, before: '=', after: '=' })
-  return `==${content}==`
+  const emoji = Object.keys(colors).find((marker) => colors[marker] === (node as unknown as MarkdownNode).color) || ''
+  return `==${emoji}${content}==`
 }
 
 const callout: Handle = (raw, parent, state, info) => {
@@ -56,7 +64,16 @@ const listItem: Handle = (raw, parent, state, info) => {
   return content.replace(/^([*+-]|\d+[.)])(?: |$)/, `$1 [${marker}] `)
 }
 
+const inlineFootnote: Handle = (node, parent, state, info) => {
+  const exit = state.enter('inlineFootnote')
+  const content = state.containerPhrasing(node as Paragraph, { ...info, before: '[', after: ']' })
+  exit()
+  return `^[${content}]`
+}
+
 const handlers: Record<string, Handle> = {
+  inlineFootnote,
+  tag: (node) => '#' + (node as unknown as MarkdownNode).value,
   wikiLink: wiki,
   embed: wiki,
   comment: (node) => `%%${(node as unknown as MarkdownNode).value}%%`,
@@ -69,6 +86,8 @@ const handlers: Record<string, Handle> = {
 const toMarkdown = (): Options => ({
   // Escape literal text that would otherwise be interpreted as Obsidian syntax.
   unsafe: [
+    { character: '#' },
+    { character: ']', inConstruct: 'inlineFootnote' },
     { character: '[', after: '\\[' },
     { character: '=', after: '=' },
     { character: '%', after: '%' },

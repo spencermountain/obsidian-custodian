@@ -154,3 +154,21 @@ test('embeds/reference-image - serialized and reparsed', (t) => {
   t.equal(page.links().length, 0, 'reference image is not a link')
   t.end()
 })
+
+test('PDF fragments expose page and height options', (t) => {
+  const page = parsePage('![[Document.pdf#page=3&height=400]]')
+  t.equal(page.embeds()[0]?.json().page, 3)
+  t.equal(page.embeds()[0]?.json().height, 400)
+  page.append('')
+  t.equal(parsePage(page.markdown()).embeds()[0]?.json().page, 3)
+  t.end()
+})
+
+test('reference images resolve URLs and PDF fields reject non-numbers', (t) => {
+  const page = parsePage('![Alt][image]\n\n[image]: https://example.com/image.png "Caption"\n\n![[Document.pdf#page=oops&height=-1]]')
+  t.equal(page.embeds()[0]?.json().url, 'https://example.com/image.png')
+  t.equal(page.embeds()[0]?.json().title, 'Caption')
+  t.equal(page.embeds()[1]?.json().page, undefined)
+  t.equal(page.embeds()[1]?.json().height, undefined)
+  t.end()
+})

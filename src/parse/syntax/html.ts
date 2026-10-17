@@ -28,6 +28,7 @@ const protectHtml = (tree: MarkdownNode, source?: string) => {
         if (!tag || tag[2].toLowerCase() !== opening[1].toLowerCase()) {
           continue
         }
+        if (!tag[1] && /\/>$/.test(last.value!)) { continue }
         depth += tag[1] ? -1 : 1
         if (depth === 0) {
           const position = { start: first.position!.start, end: last.position!.end }

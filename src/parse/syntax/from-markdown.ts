@@ -6,7 +6,10 @@ const types = {
   obsidianLink: 'wikiLink',
   obsidianEmbed: 'embed',
   obsidianComment: 'comment',
-  obsidianHighlight: 'highlight'
+  obsidianHighlight: 'highlight',
+  obsidianFootnote: 'inlineFootnote',
+  obsidianTag: 'tag',
+  obsidianCommentTail: 'commentTail'
 }
 
 // Translate micromark tokens into the custom nodes used by the API.
@@ -21,9 +24,19 @@ const fromMarkdown = (): Extension => {
     exit[tokenType] = function (token) {
       const node = this.stack[this.stack.length - 1] as unknown as MarkdownNode
       const raw = this.sliceSerialize(token)
-      // Embeds open with ![[; every other custom delimiter is two characters wide.
+      // Delimiter widths differ for embeds, footnotes, and tags.
       const start = type === 'embed' ? 3 : 2
-      node.value = raw.slice(start, -2)
+      if (type === 'tag') {
+        node.value = raw.slice(1)
+      } else if (type === 'commentTail') {
+        node.value = raw
+      } else if (type === 'inlineFootnote') {
+        node.value = raw.slice(2, -1)
+      } else {
+        const closed = raw.length >= 4 && raw.endsWith('%%')
+        const end = type === 'comment' && !closed ? undefined : -2
+        node.value = raw.slice(start, end)
+      }
       if (type === 'wikiLink' || type === 'embed') {
         // GFM tables require the alias separator to be written as \|.
         Object.assign(node, wikiFields(node.value.replace(/\\\|/g, '|')))

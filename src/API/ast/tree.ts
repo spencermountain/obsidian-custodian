@@ -1,3 +1,4 @@
+import { definitions } from './references.ts'
 import type {
   MarkdownNode,
   DocumentNode,
@@ -44,17 +45,18 @@ const select = (tree: MarkdownNode, predicate: Predicate) => {
 
 // Build flat collections from an already-filtered tree in one traversal.
 const treeJson = (tree: DocumentNode, options: OutputOptions): PageJSON => {
+  const references = definitions(tree)
   const result = { text: text(tree, options), blocks: [] } as unknown as PageJSON
   Object.keys(groups).forEach((key) => {
     result[key as Collection] = []
   })
   walk(tree, (node, parent) => {
     if (parent === tree || node.blockId) {
-      result.blocks.push(json(node, options))
+      result.blocks.push(json(node, options, references))
     }
     Object.entries(groups).forEach(([key, matches]) => {
       if (matches(node, null)) {
-        result[key as Collection].push(json(node, options))
+        result[key as Collection].push(json(node, options, references))
       }
     })
   })

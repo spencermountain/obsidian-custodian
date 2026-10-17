@@ -1,3 +1,4 @@
+import colors from './_lib/colors.ts'
 import type { MarkdownNode, DocumentNode } from '../../types/types.ts'
 import protectHtml from './html.ts'
 import { walk } from './_lib.ts'
@@ -12,10 +13,22 @@ const transform = (tree: MarkdownNode, parse: (input: string) => DocumentNode, s
     source?.slice(node.position?.start.offset, node.position?.end.offset)
 
   walk(tree, (node) => {
-    if (node.type === 'highlight' && node.value !== undefined) {
-      // Highlights start as raw text; parse their enclosed inline Markdown now.
-      const parsed = parse(node.value)
-      node.children = parsed.children[0]?.children || [{ type: 'text', value: node.value }]
+    if (['highlight', 'inlineFootnote', 'commentTail'].includes(node.type) && node.value !== undefined) {
+      // Parse the inline contents of custom containers after their boundaries are known.
+      let value = node.value
+      if (node.type === 'highlight') {
+        const emoji = Object.keys(colors).find((marker) => value.startsWith(marker))
+        if (emoji) {
+          node.color = colors[emoji]
+          value = value.slice(emoji.length)
+        }
+      }
+      // A plain prefix forces inline parsing even for contents beginning with # or -.
+      const parsed = parse('x ' + value)
+      protectHtml(parsed, 'x ' + value)
+      node.children = parsed.children[0].children
+      node.children[0].value = node.children[0].value.slice(2)
+      if (node.type === 'commentTail') { node.type = 'paragraph' }
       delete node.value
       // These positions belong to the fragment, not the original document.
       walk(node, (child) => {

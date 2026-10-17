@@ -16,7 +16,9 @@ const callout = (node: MarkdownNode) => {
   let inBody = false
   // The first line is the title; preserve its inline formatting separately.
   paragraph.children!.forEach((child) => {
-    if (!inBody && child.type === 'text' && /[\r\n]/.test(child.value!)) {
+    if (!inBody && child.type === 'break') {
+      inBody = true
+    } else if (!inBody && child.type === 'text' && /[\r\n]/.test(child.value!)) {
       const index = child.value!.search(/[\r\n]/)
       title.push({ ...child, value: child.value!.slice(0, index) })
       body.push({ ...child, value: child.value!.slice(index).replace(/^\r?\n/, '') })

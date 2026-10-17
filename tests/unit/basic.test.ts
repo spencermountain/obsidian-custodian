@@ -263,3 +263,24 @@ test('basic/front-matter-properties - serialized and reparsed', (t) => {
   t.deepEqual(page.paragraphs().map((item) => item.text()), ['The YAML above is metadata, not a Markdown list.'], 'body after YAML')
   t.end()
 })
+
+test('frontmatter exposes structured properties without replacing YAML', (t) => {
+  const input = '---\ntags: [one, two]\naliases:\n  - Alternate\npublished: false\ncount: 3\n---'
+  const page = parsePage(input)
+  t.deepEqual(page.frontmatter()[0]?.json().properties, { tags: ['one', 'two'], aliases: ['Alternate'], published: false, count: 3 })
+  t.ok(page.frontmatter()[0]?.json().value.includes('tags: [one, two]'))
+  page.frontmatter()[0].update({ value: 'tags: [changed]' })
+  t.deepEqual(page.frontmatter()[0]?.json().properties, { tags: ['changed'] })
+  t.doesNotThrow(() => parsePage('---\nbroken: [\n---').json(), 'invalid YAML remains readable')
+  t.end()
+})
+
+test('invalid YAML reports errors and property output is detached', (t) => {
+  const invalid = parsePage('---\nbroken: [\n---').frontmatter()[0].json()
+  t.ok(invalid.propertiesError)
+  t.equal(invalid.value, 'broken: [')
+  const page = parsePage('---\ntags: [one]\n---')
+  page.frontmatter()[0].json().properties.tags.push('mutated')
+  t.deepEqual(page.frontmatter()[0].json().properties, { tags: ['one'] })
+  t.end()
+})

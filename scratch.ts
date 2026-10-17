@@ -4,12 +4,15 @@ const input = `hello [[world]]
 
 ![[path/to/myFile.jpg]]
 
-[[links]], ![[embeds]], ==highlights==, and %%comments%%
+- [ ] go to work
+- [x] brush teeth
+
+[[links]], ![[embeds]], ==highlights==,  %%comments%%
 `
 
 const page = parsePage(input)
 
-console.log(page.json({}))
+// console.log(page.json({}))
 console.log(page.text())
 
 /*

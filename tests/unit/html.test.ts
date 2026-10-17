@@ -60,3 +60,13 @@ test('html/inline-html - serialized and reparsed', (t) => {
   t.equal(first?.children.at(-1)?.value, ' after.', 'text after HTML')
   t.end()
 })
+
+test('self-closing nested HTML does not expose Markdown', (t) => {
+  const input = '<span>before<span />**literal** [[Hidden]]</span>'
+  const page = parsePage(input)
+  t.equal(page.links().length, 0)
+  t.equal(page.text(), input)
+  page.append('')
+  t.equal(parsePage(page.markdown()).links().length, 0)
+  t.end()
+})

@@ -1,8 +1,9 @@
+import { definitions } from './ast/references.ts'
 import type { MarkdownNode, NodeJSON, OutputOptions, EditChanges } from '../types/types.ts'
 import type Page from './Page.ts'
 import { json } from './json.ts'
-import edit from './edit.ts'
-import outputTree from './_lib/output.ts'
+import edit from './ast/edit.ts'
+import outputTree from './ast/output.ts'
 import text from './text.ts'
 
 interface ItemHandle {
@@ -24,7 +25,7 @@ const createHandle = (node: MarkdownNode, { locate, changed, page }: HandleConte
   const handle: ItemHandle = {
     json: (options = {}) => {
       const tree = outputTree(node, options)
-      return tree ? json(tree, options) : null
+      return tree ? json(tree, options, definitions(page.ast(options))) : null
     },
     ast: (options = {}) => outputTree(node, options),
     text: (options = {}) => text(outputTree(node, options), options),

@@ -216,3 +216,29 @@ examples.forEach(([name, expected]) => {
     t.end()
   })
 })
+
+test('wikilink text includes heading fragments', (t) => {
+  const page = parsePage('[[#Section]] [[Note#Section]] [[Note#Section|Alias]]')
+  t.deepEqual(page.links().map(item => item.text()), ['Section', 'Note#Section', 'Alias'])
+  t.deepEqual(page.json().links.map(item => item.text), ['Section', 'Note#Section', 'Alias'])
+  t.end()
+})
+
+test('reference links expose their definitions in JSON', (t) => {
+  const page = parsePage('[Label][id]\n\n[id]: https://example.com "Title"')
+  t.equal(page.links()[0]?.json().url, 'https://example.com')
+  t.equal(page.links()[0]?.json().title, 'Title')
+  t.equal(page.json().links[0]?.url, 'https://example.com')
+  page.append('')
+  t.equal(parsePage(page.markdown()).links()[0]?.json().url, 'https://example.com')
+  t.end()
+})
+
+test('reference resolution follows current definitions', (t) => {
+  const page = parsePage('[Label][ID]\n\n[id]: https://first.example\n\n[id]: https://second.example')
+  t.equal(page.links()[0]?.json().url, 'https://first.example', 'first definition wins')
+  page.blocks().find(item => item.ast().type === 'definition').remove()
+  t.equal(page.links()[0]?.json().url, 'https://second.example', 'removing a definition updates resolution')
+  t.equal(page.json().links[0]?.url, 'https://second.example')
+  t.end()
+})

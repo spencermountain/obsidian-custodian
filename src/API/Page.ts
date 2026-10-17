@@ -7,9 +7,9 @@ import type {
 } from '../types/types.ts'
 import parseMd from '../parse/index.ts'
 import stringifyMd from '../parse/stringify.ts'
-import outputTree from './_lib/output.ts'
+import outputTree from './ast/output.ts'
 import text from './text.ts'
-import { clearPositions, locate, select, treeJson } from './_lib/tree.ts'
+import { clearPositions, locate, select, treeJson } from './ast/tree.ts'
 import { groups } from './json.ts'
 import createHandle from './handle.ts'
 
@@ -130,6 +130,9 @@ class Page {
   }
   frontmatter() {
     return this.#select(groups.frontmatter)
+  }
+  tags() {
+    return this.#select(groups.tags)
   }
   footnotes() {
     return this.#select(groups.footnotes)

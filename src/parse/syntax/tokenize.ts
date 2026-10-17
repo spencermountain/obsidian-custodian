@@ -1,3 +1,4 @@
+import tag from './tag.ts'
 import type { Construct, Extension, State, TokenTypeMap } from 'micromark-util-types'
 // Register custom token names with micromark's extensible token map.
 declare module 'micromark-util-types' {
@@ -7,6 +8,9 @@ declare module 'micromark-util-types' {
     obsidianComment: 'obsidianComment'
     obsidianCommentData: 'obsidianCommentData'
     obsidianHighlight: 'obsidianHighlight'
+    obsidianFootnote: 'obsidianFootnote'
+    obsidianCommentTail: 'obsidianCommentTail'
+    obsidianTag: 'obsidianTag'
   }
 }
 
@@ -23,6 +27,7 @@ const delimited = (name: keyof TokenTypeMap, opening: string, closing: string, {
     let ticks = 0
     let codeFence = 0
     let escaped = false
+    let brackets = 0
     // Match the opening delimiter, or let CommonMark try another construct.
     const start: State = (code) => {
       if (code !== opening.charCodeAt(opened)) {
@@ -47,6 +52,11 @@ const delimited = (name: keyof TokenTypeMap, opening: string, closing: string, {
     }
     // Micromark uses null for EOF and codes below -2 for line endings.
     const content: State = (code) => {
+      if (code === null && flow) {
+        effects.exit('obsidianCommentData')
+        effects.exit(name)
+        return ok(code)
+      }
       if (code === null || (!multiline && code < -2)) {
         return nok(code)
       }
@@ -62,7 +72,7 @@ const delimited = (name: keyof TokenTypeMap, opening: string, closing: string, {
       }
       // Escapes and code spans must not close a highlight's == delimiter.
       let literal = false
-      if (name === 'obsidianHighlight') {
+      if (name === 'obsidianHighlight' || name === 'obsidianFootnote') {
         if (code === 96 && !escaped) {
           ticks += 1
           literal = true
@@ -76,6 +86,13 @@ const delimited = (name: keyof TokenTypeMap, opening: string, closing: string, {
         }
         literal ||= escaped || codeFence > 0
         escaped = code === 92 && !escaped
+      }
+      if (name === 'obsidianFootnote' && !literal) {
+        if (code === 91) { brackets += 1 }
+        if (code === 93 && brackets > 0) {
+          brackets -= 1
+          literal = true
+        }
       }
       if (!literal && code === closing.charCodeAt(closed)) {
         closed += 1
@@ -96,12 +113,22 @@ const delimited = (name: keyof TokenTypeMap, opening: string, closing: string, {
       }
       return content
     }
-    // A block comment must end the line; otherwise try inline parsing.
+    // After a block comment, retain any visible content before the line ends.
     const end: State = (code) => {
       if (code === null || code < -2) {
         return ok(code)
       }
-      return nok(code)
+      effects.enter('obsidianCommentTail')
+      return tail(code)
+    }
+    // Flow comments may end before visible inline content on the same line.
+    const tail: State = (code) => {
+      if (code === null || code < -2) {
+        effects.exit('obsidianCommentTail')
+        return ok(code)
+      }
+      effects.consume(code)
+      return tail
     }
     return start
   }
@@ -111,6 +138,8 @@ const syntax = (): Extension => ({
   // Keys are the character codes of possible opening markers.
   flow: { 37: delimited('obsidianComment', '%%', '%%', { multiline: true, flow: true }) },
   text: {
+    35: tag,
+    94: delimited('obsidianFootnote', '^[', ']'),
     33: delimited('obsidianEmbed', '![[', ']]'),
     91: delimited('obsidianLink', '[[', ']]'),
     37: delimited('obsidianComment', '%%', '%%', { multiline: true }),

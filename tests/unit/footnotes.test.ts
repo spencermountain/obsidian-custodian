@@ -64,3 +64,25 @@ test('footnotes/multiple-paragraphs - serialized and reparsed', (t) => {
   t.deepEqual(values(page, 'blockId'), [], 'footnotes are not Obsidian block IDs')
   t.end()
 })
+
+test('inline footnotes preserve inline formatting', (t) => {
+  const page = parsePage('Text ^[A **bold** note with [[Link]] and [brackets].]')
+  t.equal(page.footnotes().length, 1, 'inline footnote is addressable')
+  t.equal(page.footnotes()[0]?.text(), 'A bold note with Link and [brackets].')
+  t.equal(page.links().length, 1)
+  page.append('')
+  const reparsed = parsePage(page.markdown())
+  t.equal(reparsed.footnotes().length, 1)
+  t.equal(reparsed.footnotes()[0]?.text(), 'A bold note with Link and [brackets].')
+  t.equal(parsePage('`^[literal]` \\^[escaped]').footnotes().length, 0)
+  t.end()
+})
+
+test('inline footnotes keep bracket and code boundaries', (t) => {
+  const page = parsePage('A ^[Use `]` and **bold**.] B ^[Second note.]')
+  t.deepEqual(page.footnotes().map(item => item.text()), ['Use ] and bold.', 'Second note.'])
+  page.append('')
+  t.deepEqual(parsePage(page.markdown()).footnotes().map(item => item.text()), ['Use ] and bold.', 'Second note.'])
+  t.equal(page.text({ footnotes: false }), 'A  B ')
+  t.end()
+})
