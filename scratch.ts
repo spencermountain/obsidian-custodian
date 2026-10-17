@@ -7,6 +7,10 @@ const input = `hello [[world#cool]]
 
 ![[path/to/myFile.jpg]]
 
+
+
+
+
 - [ ] go to work
 - [x] brush teeth
 

@@ -26270,6 +26270,37 @@ const colors = {
     '🟢': 'green', '🔵': 'blue', '🟣': 'purple'
 };
 
+// Capture gaps before transforms remove positions or split callout paragraphs.
+const captureSpacing = (tree) => {
+    walk(tree, (parent) => {
+        if (!['root', 'blockquote', 'list', 'listItem', 'footnoteDefinition'].includes(parent.type)) {
+            return;
+        }
+        parent.children?.forEach((node, index, siblings) => {
+            const previous = siblings[index - 1];
+            const start = node.position?.start.line;
+            const end = previous?.position?.end.line;
+            if (start !== undefined && end !== undefined && start > end + 1) {
+                node.data = { ...node.data, blankLinesBefore: start - end - 1 };
+            }
+        });
+    });
+};
+const joinSpacing = (left, right, parent, state) => {
+    const count = right.data?.blankLinesBefore;
+    if (!(count > 1)) {
+        return;
+    }
+    // Keep remark's protective separators where blank lines alone are unsafe.
+    for (let index = 0; index < state.join.length; index += 1) {
+        const join = state.join[index];
+        if (join !== joinSpacing && join(left, right, parent, state) === false) {
+            return false;
+        }
+    }
+    return count;
+};
+
 const wiki = (node, parent, state) => {
     const value = wikiMarkdown(node);
     // An alias separator must not become a new table cell.
@@ -26298,7 +26329,8 @@ const callout$1 = (raw, parent, state, info) => {
         content += ` ${title}`;
     }
     if (body) {
-        content += `\n${body}`;
+        const blanks = node.children?.[0]?.data?.blankLinesBefore ?? 0;
+        content += '\n'.repeat(blanks + 1) + body;
     }
     // Every line, including blanks and nested blocks, must remain inside the quote.
     return content
@@ -26334,6 +26366,7 @@ const handlers = {
     listItem
 };
 const toMarkdown = () => ({
+    join: [joinSpacing],
     // Escape literal text that would otherwise be interpreted as Obsidian syntax.
     unsafe: [
         { character: '#' },
@@ -26552,6 +26585,7 @@ const obsidianSyntax = function () {
         if (source === undefined && file.value !== undefined) {
             source = String(file.value);
         }
+        captureSpacing(tree);
         transform(tree, (input) => this.parse(input), source);
     };
     return transformer;

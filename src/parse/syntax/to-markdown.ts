@@ -4,6 +4,7 @@ import type { Paragraph, Blockquote, ListItem } from 'mdast'
 import type { MarkdownNode } from '../../types/types.ts'
 import { defaultHandlers } from 'mdast-util-to-markdown'
 import { wikiMarkdown } from './_lib.ts'
+import { joinSpacing } from './_lib/spacing.ts'
 
 declare module 'mdast-util-to-markdown' {
   interface ConstructNameMap {
@@ -44,7 +45,8 @@ const callout: Handle = (raw, parent, state, info) => {
     content += ` ${title}`
   }
   if (body) {
-    content += `\n${body}`
+    const blanks = node.children?.[0]?.data?.blankLinesBefore ?? 0
+    content += '\n'.repeat(blanks + 1) + body
   }
   // Every line, including blanks and nested blocks, must remain inside the quote.
   return content
@@ -84,6 +86,7 @@ const handlers: Record<string, Handle> = {
 }
 
 const toMarkdown = (): Options => ({
+  join: [joinSpacing],
   // Escape literal text that would otherwise be interpreted as Obsidian syntax.
   unsafe: [
     { character: '#' },

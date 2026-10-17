@@ -8,6 +8,7 @@ import syntax from './syntax/tokenize.ts'
 import fromMarkdown from './syntax/from-markdown.ts'
 import toMarkdown from './syntax/to-markdown.ts'
 import transform from './syntax/transform.ts'
+import { captureSpacing } from './syntax/_lib/spacing.ts'
 
 // Unified supplies `this`; arrow functions cannot be used for plugin attachers.
 const obsidianSyntax = function (this: Processor) {
@@ -37,6 +38,7 @@ const obsidianSyntax = function (this: Processor) {
     if (source === undefined && file.value !== undefined) {
       source = String(file.value)
     }
+    captureSpacing(tree as unknown as DocumentNode)
     transform(
       tree as unknown as DocumentNode,
       (input) => this.parse(input) as unknown as DocumentNode,
