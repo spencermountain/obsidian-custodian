@@ -57,26 +57,26 @@
     "typescript": "^6.0.3"
   },
   "license": "MIT",
-  "module": "./builds/obsidian-parser.mjs",
+  "module": "./builds/obsidian-custodian.mjs",
   "exports": {
     ".": {
       "import": {
         "types": "./types/index.d.ts",
-        "default": "./builds/obsidian-parser.mjs"
+        "default": "./builds/obsidian-custodian.mjs"
       },
       "require": {
         "types": "./types/index.d.cts",
-        "default": "./builds/obsidian-parser.cjs"
+        "default": "./builds/obsidian-custodian.cjs"
       }
     },
     "./remark": {
       "import": {
         "types": "./types/remark.d.ts",
-        "default": "./builds/remark/obsidian-parser.mjs"
+        "default": "./builds/remark/obsidian-custodian.mjs"
       },
       "require": {
         "types": "./types/remark.d.cts",
-        "default": "./builds/remark/obsidian-parser.cjs"
+        "default": "./builds/remark/obsidian-custodian.cjs"
       }
     }
   },

@@ -42,13 +42,13 @@ test('callout body mode is for text and Markdown; structural outputs use boolean
   t.end()
 })
 
-test('text preserves whitespace and makes normally hidden content optional', (t) => {
+test('text preserves whitespace, omits comments, and optionally includes block IDs', (t) => {
   const page = parsePage('left  %%hidden%% right ^block-id')
   t.equal(page.text(), 'left   right')
-  t.equal(page.text({ comments: true }), 'left  hidden right')
+  t.equal(page.text({ comments: true }), 'left   right', 'comments remain omitted even when enabled')
   t.equal(page.text({ blockIds: true }), 'left   rightblock-id')
   t.equal(page.comments()[0].text(), '')
-  t.equal(page.comments()[0].text(true), 'hidden')
+  t.equal(page.comments()[0].text(), '', 'comment plaintext is always empty')
   t.equal(page.json({ comments: false }).comments.length, 0)
   t.equal(page.ast({ blockIds: false }).children[0].blockId, undefined)
   t.notOk(page.markdown({ blockIds: false }).includes('^block-id'))

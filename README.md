@@ -120,7 +120,35 @@ Quote the glob so Node expands it. The CLI returns an array of pages, each with 
 <!-- spacer -->
 <img height="20px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
-### API
+#### TypeScript
+
+```ts
+import custodian, { type Page, type TextOptions, type Task } from 'obsidian-custodian'
+
+const md = `'## Shopping
+-[ ] Buy coffee
+`
+const page: Page = custodian(md)
+const options: TextOptions = { headings: 'inline', embeds: false }
+
+console.log(page.text(options))
+// Shopping
+// Buy coffee
+
+const tasks: Task[] = page.tasks()
+for (const task of tasks) {
+  task.checked = true
+}
+
+// Individual sections take their own setting, rather than an options object.
+console.log(page.headings()[0]?.text('inline')) // Shopping
+console.log(page.markdown())
+// ## Shopping
+//
+// - [x] Buy coffee
+```
+
+## API
 
 `parsePage(markdown, options?)` synchronously returns a page.
 
