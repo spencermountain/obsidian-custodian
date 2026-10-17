@@ -1,4 +1,5 @@
-import { dimensions, plainText } from '../parse/syntax/_lib.js'
+import text from './text.js'
+import { dimensions } from '../parse/syntax/_lib.js'
 
 const groups = {
   headings: (node) => node.type === 'heading',
@@ -17,8 +18,8 @@ const groups = {
   footnotes: (node) => node.type === 'footnoteDefinition'
 }
 
-const json = (node) => {
-  const result = { type: node.type, text: plainText(node) }
+const json = (node, options = {}) => {
+  const result = { type: node.type, text: text(node, options) }
   const fields = [
     'depth',
     'target',
@@ -52,7 +53,7 @@ const json = (node) => {
     result.text = node.value
   }
   if (node.type === 'callout') {
-    result.title = plainText({ children: node.title })
+    result.title = text({ children: node.title }, options)
   }
   if (node.type === 'embed') {
     Object.assign(result, dimensions(node.alias ?? ''))
@@ -62,11 +63,11 @@ const json = (node) => {
   }
   if (node.type === 'table') {
     result.align = [...node.align]
-    result.rows = node.children.map((row) => row.children.map(plainText))
+    result.rows = node.children.map((row) => row.children.map((cell) => text(cell, options)))
   }
   if (node.type === 'list') {
     result.items = node.children.map((item) => ({
-      text: plainText(item),
+      text: text(item, options),
       checked: item.checked ?? null
     }))
   }

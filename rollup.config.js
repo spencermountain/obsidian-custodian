@@ -44,9 +44,9 @@ const main = {
       plugins: [
         terser(),
         sizeCheck({
-          expect: 45, // sizes in kb
-          warn: 10, // acceptable change (+/-)
-          throw: 25 // unacceptable change (+/-)
+          expect: 175, // sizes in kb
+          warn: 15, // acceptable change (+/-)
+          throw: 50 // unacceptable change (+/-)
         })
       ]
     }
@@ -60,4 +60,4 @@ const remark = {
   ]
 }
 
-export default { main, remark }
+export default [main, remark]

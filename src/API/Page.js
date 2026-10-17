@@ -1,7 +1,9 @@
 import parseMd from '../parse/index.js'
 import stringifyMd from '../parse/stringify.js'
-import { walk, plainText } from '../parse/syntax/_lib.js'
-import { groups } from './json.js'
+import outputTree from './output.js'
+import text from './text.js'
+import { walk } from '../parse/syntax/_lib.js'
+import { groups, json } from './json.js'
 import createHandle from './_lib.js'
 
 class Page {
@@ -62,25 +64,35 @@ class Page {
     return nodes
   }
 
-  ast() {
-    return structuredClone(this.#tree)
+  ast(options = {}) {
+    return outputTree(this.#tree, options)
   }
 
-  markdown() {
-    if (!this.#dirty && typeof this.#source === 'string') {
+  text(options = {}) {
+    return text(outputTree(this.#tree, options), options)
+  }
+
+  markdown(options = {}) {
+    const filtered = Object.values(options).includes(false)
+    if (!filtered && !this.#dirty && typeof this.#source === 'string') {
       return this.#source
     }
-    return stringifyMd(this.#tree, this.#options)
+    return stringifyMd(outputTree(this.#tree, options), this.#options)
   }
 
   blocks() {
     return this.#select((node, parent) => parent === this.#tree || Boolean(node.blockId))
   }
 
-  json() {
-    const result = { text: plainText(this.#tree), blocks: this.blocks().map((item) => item.json()) }
-    Object.keys(groups).forEach((key) => {
-      result[key] = this[key]().map((item) => item.json())
+  json(options = {}) {
+    const tree = outputTree(this.#tree, options)
+    const result = { text: text(tree, options), blocks: [] }
+    Object.keys(groups).forEach((key) => { result[key] = [] })
+    walk(tree, (node, parent) => {
+      if (parent === tree || node.blockId) { result.blocks.push(json(node, options)) }
+      Object.entries(groups).forEach(([key, matches]) => {
+        if (matches(node)) { result[key].push(json(node, options)) }
+      })
     })
     return result
   }

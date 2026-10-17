@@ -1,13 +1,14 @@
 {
-  "name": "reluctant-obsidian-parser",
+  "name": "reluctant-obsidian",
   "version": "0.0.1",
   "description": "Obsidian markdown syntax parser",
-  "repository": "github:spencermountain/reluctant-obsidian-parser",
+  "repository": "github:spencermountain/reluctant-obsidian",
   "author": "Spencer Kelly <spencermountain@gmail.com> (https://spencermountain.dev)",
   "minimumReleaseAge": "1 day",
   "scripts": {
     "build": "rollup -c --silent",
     "test": "tape \"tests/**/*.test.js\" | tap-dancer",
+    "testb": "TESTENV=prod pnpm run test",
     "watch": "node --watch scratch.js",
     "lint": "eslint .",
     "prepack": "pnpm build"
