@@ -1,5 +1,5 @@
-import renderText from '../out/text.ts'
-import serialize from '../out/json.ts'
+import renderText from '../out/text/text.ts'
+import serialize from '../out/json/json.ts'
 import { definitions } from '../ast/references.ts'
 import type { EditChanges, NodeJSON } from '../../types/api.ts'
 import type { TextOptions, AstOptions, JsonOptions } from '../../types/options.ts'
@@ -7,7 +7,10 @@ import type { TextOptions, AstOptions, JsonOptions } from '../../types/options.t
 import type { AstNode } from '../../types/ast.ts'
 import type Page from '../Page.ts'
 import edit from '../ast/edit.ts'
-import outputTree from '../out/output.ts'
+import outputTree from '../out/ast/output.ts'
+import astDefaults from '../out/ast/defaults.ts'
+import jsonDefaults from '../out/json/defaults.ts'
+import textDefaults from '../out/text/defaults.ts'
 
 interface SectionContext {
   locate?: (node: AstNode) => AstNode
@@ -25,12 +28,18 @@ class Section {
     this.context = context
   }
 
+  // Subclass outputs must not inherit another output format's exclusions.
+  protected get node(): AstNode {
+    return this.#node
+  }
+
   ast(options: AstOptions = {}) {
-    return outputTree(this.#node, options)
+    return outputTree(this.#node, { ...astDefaults, ...options })
   }
 
   json(options: JsonOptions = {}): NodeJSON | null {
-    const node = this.ast(options)
+    options = { ...jsonDefaults, ...options }
+    const node = outputTree(this.#node, options)
     if (!node) {
       return null
     }
@@ -42,7 +51,8 @@ class Section {
   }
 
   text(options: TextOptions = {}): string {
-    const node = this.ast(options)
+    options = { ...textDefaults, ...options }
+    const node = outputTree(this.#node, options)
     if (!node) {
       return ''
     }
@@ -68,7 +78,11 @@ class Section {
     if (node.type === 'tableRow') {
       separator = '\t'
     }
-    return (node.children || []).map((child) => renderText(child, options)).join(separator)
+    const content = (node.children || []).map((child) => renderText(child, options)).join(separator)
+    if (node.type === 'heading' && options.headings === true) {
+      return '#'.repeat(node.depth) + ' ' + content
+    }
+    return content
   }
 
   #owner() {

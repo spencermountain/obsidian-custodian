@@ -8,7 +8,7 @@ test('blocks/paragraph-block', (t) => {
   const page = parsePage(input)
   t.equal(page.markdown(), input, 'untouched source is preserved')
 
-  const block = page.blocks().find((item) => item.json().blockId === 'paragraph-id')
+  const block = page.paragraphs().find((item) => item.json().blockId === 'paragraph-id')
   t.equal(
     block?.text(),
     'A paragraph that can be linked to.',
@@ -30,7 +30,7 @@ test('blocks/paragraph-block - serialized and reparsed', (t) => {
   original.append('')
   const page = parsePage(original.markdown())
 
-  const block = page.blocks().find((item) => item.json().blockId === 'paragraph-id')
+  const block = page.paragraphs().find((item) => item.json().blockId === 'paragraph-id')
   t.equal(
     block?.text(),
     'A paragraph that can be linked to.',
@@ -76,7 +76,7 @@ test('blocks/list-item-block', (t) => {
   const page = parsePage(input)
   t.equal(page.markdown(), input, 'untouched source is preserved')
 
-  const block = page.blocks().find((item) => item.json().blockId === 'first-item')
+  const block = page.paragraphs().find((item) => item.json().blockId === 'first-item')
   t.equal(block?.text(), 'The first item has an identifier.', 'addressable item content')
   t.equal(page.lists()[0]?.json().items.length, 2, 'two list items')
   t.deepEqual(values(page, 'blockId'), ['first-item'], 'one marker within list')
@@ -91,7 +91,7 @@ test('blocks/list-item-block - serialized and reparsed', (t) => {
   original.append('')
   const page = parsePage(original.markdown())
 
-  const block = page.blocks().find((item) => item.json().blockId === 'first-item')
+  const block = page.paragraphs().find((item) => item.json().blockId === 'first-item')
   t.equal(block?.text(), 'The first item has an identifier.', 'addressable item content')
   t.equal(page.lists()[0]?.json().items.length, 2, 'two list items')
   t.deepEqual(values(page, 'blockId'), ['first-item'], 'one marker within list')

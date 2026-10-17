@@ -201,7 +201,7 @@ test('basic/escapes-and-entities', (t) => {
   t.equal(page.highlights().length, 0, 'escaped highlight stays literal')
   t.equal(nodes(page, 'emphasis').length, 0, 'escaped emphasis stays literal')
   t.equal(nodes(page, 'html').length, 0, 'decoded angle brackets are not HTML')
-  t.equal(page.blocks().filter((item) => item.json().blockId).length, 0, 'escaped caret does not define a block')
+  t.equal(page.paragraphs().filter((item) => item.json().blockId).length, 0, 'escaped caret does not define a block')
   t.end()
 })
 
@@ -224,7 +224,7 @@ test('basic/escapes-and-entities - serialized and reparsed', (t) => {
   t.equal(page.highlights().length, 0, 'escaped highlight stays literal')
   t.equal(nodes(page, 'emphasis').length, 0, 'escaped emphasis stays literal')
   t.equal(nodes(page, 'html').length, 0, 'decoded angle brackets are not HTML')
-  t.equal(page.blocks().filter((item) => item.json().blockId).length, 0, 'escaped caret does not define a block')
+  t.equal(page.paragraphs().filter((item) => item.json().blockId).length, 0, 'escaped caret does not define a block')
   t.end()
 })
 

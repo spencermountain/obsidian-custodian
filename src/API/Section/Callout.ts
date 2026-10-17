@@ -1,12 +1,9 @@
-import renderText from '../out/text.ts'
-import type {
-  TextOptions,
-  JsonOptions,
-  MarkdownOptions,
-  AstOptions,
-  HtmlOptions
-} from '../../types/options.ts'
+import renderText, { jsonText } from '../out/text/text.ts'
+import type { TextOptions, JsonOptions } from '../../types/options.ts'
 import Section from './Section.ts'
+import outputTree from '../out/ast/output.ts'
+import textDefaults from '../out/text/defaults.ts'
+import jsonDefaults from '../out/json/defaults.ts'
 
 class Callout extends Section {
   get title(): string {
@@ -17,30 +14,33 @@ class Callout extends Section {
   }
 
   body(options: TextOptions = {}): string {
-    return this.text({ ...options, calloutTitles: false })
+    options = { ...textDefaults, ...options }
+    return this.text({ ...options, callouts: options.callouts === false ? false : 'body' })
   }
 
   text(options: TextOptions = {}): string {
-    const node = this.ast(options)
+    options = { ...textDefaults, ...options }
+    const node = outputTree(this.node, options)
     if (!node) {
       return ''
     }
     const children = [...node.children]
-    if (options.calloutTitles !== false && node.title?.length) {
+    if (options.callouts !== 'body' && node.title?.length) {
       children.unshift({ type: 'paragraph', children: node.title })
     }
     return children.map((child) => renderText(child, options)).join('\n')
   }
 
   json(options: JsonOptions = {}) {
+    options = { ...jsonDefaults, ...options }
     const result = super.json(options)
     if (!result) {
       return null
     }
-    const node = this.ast(options)
+    const node = outputTree(this.node, options)
     return {
       ...result,
-      title: renderText({ type: 'paragraph', children: node.title }, options)
+      title: jsonText({ type: 'paragraph', children: node.title }, options)
     }
   }
 }

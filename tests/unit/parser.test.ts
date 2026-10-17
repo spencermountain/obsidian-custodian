@@ -32,7 +32,7 @@ test('Obsidian syntax, standard plugins, and protected literal contexts', (t) =>
   t.equal(page.links()[1].json().alias, 'Alias')
   t.equal(
     page
-      .blocks()
+      .paragraphs()
       .find((block) => block.json().blockId === 'my-id')
       .json().text,
     'A block'

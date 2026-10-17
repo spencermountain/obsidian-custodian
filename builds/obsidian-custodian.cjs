@@ -26680,12 +26680,20 @@ const groups = {
     footnotes: (node) => ['footnoteDefinition', 'inlineFootnote'].includes(node.type)
 };
 
+const extraGroups = {
+    quotes: 'blockquote',
+    thematicBreaks: 'thematicBreak',
+    definitions: 'definition'
+};
 // The same inclusion flags apply to every output format.
 const includes = (node, options) => {
     if (options.blockIds === false && node.type === 'blockId') {
         return false;
     }
     if (options.html === false && node.type === 'html') {
+        return false;
+    }
+    if (Object.entries(extraGroups).some(([key, type]) => options[key] === false && node.type === type)) {
         return false;
     }
     return !Object.entries(groups).some(([key, matches]) => options[key] === false && matches(node, null));
@@ -26698,13 +26706,11 @@ const outputTree = (tree, options = {}) => {
         }
         const result = { ...node };
         if (node.children) {
-            result.children = node.children
-                .map(copy)
-                .filter((child) => child !== null);
+            result.children = node.children.map(copy).filter((child) => child !== null);
         }
         if (Array.isArray(node.title)) {
             result.title =
-                options.calloutTitles === false
+                options.callouts === 'body'
                     ? []
                     : node.title.map(copy).filter((child) => child !== null);
         }
@@ -26728,12 +26734,106 @@ const createSection = (node, context = {}) => {
     return new Constructor(node, context);
 };
 
+// Defaults for json output; callers can override individual categories.
+const defaults$3 = {
+    paragraphs: true,
+    headings: true,
+    links: true,
+    embeds: true,
+    tasks: true,
+    lists: true,
+    callouts: true,
+    highlights: true,
+    comments: true,
+    code: true,
+    math: true,
+    tables: true,
+    frontmatter: true,
+    footnotes: true,
+    tags: true,
+    blockIds: true,
+    html: true,
+    quotes: true,
+    thematicBreaks: true,
+    definitions: true
+};
+
 // Nested nodes use the same overrides as sections returned by Page selectors.
 const text$1 = (node, options = {}) => {
     if (!node) {
         return '';
     }
     return createSection(node).text(options);
+};
+// JSON text fields stay plain and use JSON's inclusion policy, not text defaults.
+const jsonText = (node, options = {}) => text$1(node, {
+    ...defaults$3,
+    ...options,
+    headings: 'inline',
+    comments: false,
+    blockIds: false
+});
+
+// Defaults for ast output; callers can override individual categories.
+const defaults$2 = {
+    paragraphs: true,
+    headings: true,
+    links: true,
+    embeds: true,
+    tasks: true,
+    lists: true,
+    callouts: true,
+    highlights: true,
+    comments: true,
+    code: true,
+    math: true,
+    tables: true,
+    frontmatter: true,
+    footnotes: true,
+    tags: true,
+    blockIds: true,
+    html: true,
+    quotes: true,
+    thematicBreaks: true,
+    definitions: true
+};
+
+// Defaults for markdown output; callers can override individual categories.
+const defaults$1 = {
+    paragraphs: true,
+    headings: true,
+    links: true,
+    embeds: true,
+    tasks: true,
+    lists: true,
+    callouts: true,
+    highlights: true,
+    comments: true,
+    code: true,
+    math: true,
+    tables: true,
+    frontmatter: true,
+    footnotes: true,
+    tags: true,
+    blockIds: true,
+    html: true,
+    quotes: true,
+    thematicBreaks: true,
+    definitions: true
+};
+
+// Format a detached tree so output choices never edit the live page.
+const markdownTree = (tree, options) => {
+    const result = outputTree(tree, options);
+    if (result && options.headings === 'inline') {
+        walk(result, (node) => {
+            if (node.type === 'heading') {
+                node.type = 'paragraph';
+                delete node.depth;
+            }
+        });
+    }
+    return result;
 };
 
 /*! js-yaml 5.5.0 https://github.com/nodeca/js-yaml @license MIT */
@@ -29472,7 +29572,7 @@ const definitions = (tree) => {
 
 // Common metadata; specialized sections can extend this output.
 const serialize = (node, options = {}, definitions = new Map()) => {
-    const result = { type: node.type, text: text$1(node, options) };
+    const result = { type: node.type, text: jsonText(node, options) };
     if (node.type === 'yaml') {
         Object.assign(result, properties(node.value));
     }
@@ -29543,11 +29643,11 @@ const serialize = (node, options = {}, definitions = new Map()) => {
     // Flatten cells into rows so consumers need not traverse table nodes.
     if (node.type === 'table') {
         result.align = [...node.align];
-        result.rows = node.children.map((row) => row.children.map((cell) => text$1(cell, options)));
+        result.rows = node.children.map((row) => row.children.map((cell) => jsonText(cell, options)));
     }
     if (node.type === 'list') {
         result.items = node.children.map((item) => ({
-            text: text$1(item, options),
+            text: jsonText(item, options),
             checked: item.checked ?? null
         }));
     }
@@ -29670,6 +29770,30 @@ const edit = (node, changes) => {
     return next;
 };
 
+// Defaults for text output; callers can override individual categories.
+const defaults = {
+    paragraphs: true,
+    headings: 'inline',
+    links: true,
+    embeds: true,
+    tasks: true,
+    lists: true,
+    callouts: true,
+    highlights: true,
+    comments: false,
+    code: true,
+    math: true,
+    tables: true,
+    frontmatter: true,
+    footnotes: true,
+    tags: true,
+    blockIds: false,
+    html: true,
+    quotes: true,
+    thematicBreaks: true,
+    definitions: true
+};
+
 // Wrap live nodes; output methods read detached, filtered views through ast().
 class Section {
     #node;
@@ -29678,11 +29802,16 @@ class Section {
         this.#node = node;
         this.context = context;
     }
+    // Subclass outputs must not inherit another output format's exclusions.
+    get node() {
+        return this.#node;
+    }
     ast(options = {}) {
-        return outputTree(this.#node, options);
+        return outputTree(this.#node, { ...defaults$2, ...options });
     }
     json(options = {}) {
-        const node = this.ast(options);
+        options = { ...defaults$3, ...options };
+        const node = outputTree(this.#node, options);
         if (!node) {
             return null;
         }
@@ -29693,7 +29822,8 @@ class Section {
         return serialize(node, options, references);
     }
     text(options = {}) {
-        const node = this.ast(options);
+        options = { ...defaults, ...options };
+        const node = outputTree(this.#node, options);
         if (!node) {
             return '';
         }
@@ -29719,9 +29849,11 @@ class Section {
         if (node.type === 'tableRow') {
             separator = '\t';
         }
-        return (node.children || [])
-            .map((child) => text$1(child, options))
-            .join(separator);
+        const content = (node.children || []).map((child) => text$1(child, options)).join(separator);
+        if (node.type === 'heading' && options.headings === true) {
+            return '#'.repeat(node.depth) + ' ' + content;
+        }
+        return content;
     }
     #owner() {
         if (!this.context.locate || !this.context.changed || !this.context.page) {
@@ -29788,7 +29920,8 @@ class Link extends Section {
         }
     }
     text(options = {}) {
-        const node = this.ast(options);
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
         if (!node) {
             return '';
         }
@@ -29805,7 +29938,8 @@ class Link extends Section {
 
 class Embed extends Section {
     text(options = {}) {
-        const node = this.ast(options);
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
         if (!node) {
             return '';
         }
@@ -29817,32 +29951,38 @@ class Embed extends Section {
 }
 
 class Callout extends Section {
-    title(options = {}) {
-        return this.json(options)?.title || '';
+    get title() {
+        return this.json()?.title || '';
+    }
+    set title(value) {
+        this.update({ title: value });
     }
     body(options = {}) {
-        return this.text({ ...options, calloutTitles: false });
+        options = { ...defaults, ...options };
+        return this.text({ ...options, callouts: options.callouts === false ? false : 'body' });
     }
     text(options = {}) {
-        const node = this.ast(options);
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
         if (!node) {
             return '';
         }
         const children = [...node.children];
-        if (options.calloutTitles !== false && node.title?.length) {
+        if (options.callouts !== 'body' && node.title?.length) {
             children.unshift({ type: 'paragraph', children: node.title });
         }
         return children.map((child) => text$1(child, options)).join('\n');
     }
     json(options = {}) {
+        options = { ...defaults$3, ...options };
         const result = super.json(options);
         if (!result) {
             return null;
         }
-        const node = this.ast(options);
+        const node = outputTree(this.node, options);
         return {
             ...result,
-            title: text$1({ type: 'paragraph', children: node.title }, options)
+            title: jsonText({ type: 'paragraph', children: node.title }, options)
         };
     }
 }
@@ -29888,7 +30028,7 @@ const select = (tree, predicate) => {
 };
 // Build flat collections from an already-filtered tree in one traversal.
 const treeJson = (tree, options, page) => {
-    const result = { text: text$1(tree, options) };
+    const result = { text: jsonText(tree, options) };
     Object.keys(groups).forEach((key) => {
         result[key] = [];
     });
@@ -29936,25 +30076,23 @@ class Page {
         }));
     }
     ast(options = {}) {
-        return outputTree(this.#tree, options);
+        return outputTree(this.#tree, { ...defaults$2, ...options });
+    }
+    json(options = {}) {
+        options = { ...defaults$3, ...options };
+        return treeJson(outputTree(this.#tree, options), options, this);
     }
     text(options = {}) {
-        return text$1(outputTree(this.#tree, options), options);
+        return text$1(this.#tree, options);
     }
     markdown(options = {}) {
         // Reuse exact source only when neither edits nor exclusions affect the output.
-        const filtered = Object.values(options).includes(false);
+        options = { ...defaults$1, ...options };
+        const filtered = Object.values(options).some((value) => value !== true);
         if (!filtered && !this.#dirty && typeof this.#source === 'string') {
             return this.#source;
         }
-        return stringifyMd(outputTree(this.#tree, options), this.#options);
-    }
-    // Include nested addressable blocks as well as the document's top-level blocks.
-    blocks() {
-        return this.#select((node, parent) => parent === this.#tree || Boolean(node.blockId));
-    }
-    json(options = {}) {
-        return treeJson(outputTree(this.#tree, options), options, this);
+        return stringifyMd(markdownTree(this.#tree, options), this.#options);
     }
     // Parse before insertion so malformed input cannot partially change the tree.
     append(markdown) {

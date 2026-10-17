@@ -4,7 +4,7 @@ import type { AstNode, PageNode, Predicate } from '../../types/ast.ts'
 import { walk } from '../../parse/syntax/_lib.ts'
 import createSection from '../Section/index.ts'
 import groups from '../Section/groups.ts'
-import text from '../out/text.ts'
+import { jsonText as text } from '../out/text/text.ts'
 
 const clearPositions = (tree: AstNode) => {
   // Source positions no longer describe the document after editing.

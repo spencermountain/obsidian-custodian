@@ -11,10 +11,7 @@ test('selectors return specialized sections with common methods', (t) => {
   t.equal(typeof callout.body, 'function')
   t.notEqual(page.embeds()[0].constructor, link.constructor)
   t.notEqual(page.paragraphs()[0].constructor, link.constructor)
-  t.equal(
-    page.blocks().find((item) => item.ast().type === 'callout').constructor,
-    callout.constructor
-  )
+  t.notOk('blocks' in page, 'generic blocks selector is not exposed')
   t.equal(link.target, 'Note')
   t.equal(callout.title, 'Title')
   t.equal(callout.body(), 'Body Other')
@@ -28,7 +25,7 @@ test('selectors return specialized sections with common methods', (t) => {
 test('sections keep shared filtering and detached output', (t) => {
   const page = parsePage('> [!note] [[Title]]\n> Body [[Target]]')
   const section = page.callouts()[0]
-  t.equal(section.text({ calloutTitles: false }), 'Body Target')
+  t.equal(section.text({ callouts: 'body' }), 'Body Target')
   t.equal(section.text({ links: false }), '\nBody ')
   t.equal(section.json({ callouts: false }), null)
   t.equal(section.ast({ callouts: false }), null)
@@ -36,8 +33,8 @@ test('sections keep shared filtering and detached output', (t) => {
   section.ast().children.length = 0
   t.equal(section.body(), 'Body Target')
   t.equal(
-    page.json({ calloutTitles: false }).callouts[0].text,
-    section.text({ calloutTitles: false })
+    page.json({ callouts: true }).callouts[0].text,
+    section.text({ callouts: true })
   )
   t.end()
 })
@@ -73,9 +70,8 @@ test('generic sections render nested specialized nodes and unknown types', (t) =
       }
     ]
   })
-  t.equal(page.blocks()[0].text(), 'Note#Section')
   t.equal(page.text(), 'Note#Section')
-  t.equal(page.blocks()[0].text({ links: false }), '')
+  t.equal(page.text({ links: false }), '')
   t.end()
 })
 

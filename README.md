@@ -117,23 +117,29 @@ Options can contain `gfm` and `math` settings for the corresponding remark plugi
 
 These selection methods return arrays of item handles, in document order:
 
-| Method               | Selects                                                      |
-| -------------------- | ------------------------------------------------------------ |
-| `page.blocks()`      | Top-level blocks and nodes with a block ID.                  |
-| `page.headings()`    | Headings, with their text and depth.                         |
-| `page.paragraphs()`  | Paragraphs, including those inside lists and quotes.         |
-| `page.links()`       | Wikilinks, Markdown links, and reference links.              |
-| `page.embeds()`      | Obsidian embeds, Markdown images, and reference images.      |
-| `page.tasks()`       | List items with a checkbox.                                  |
-| `page.lists()`       | Ordered and unordered lists.                                 |
-| `page.callouts()`    | Callouts, including their title, type, and fold state.       |
-| `page.highlights()`  | Highlighted spans.                                           |
-| `page.comments()`    | Obsidian comments.                                           |
-| `page.code()`        | Code blocks, including Mermaid blocks; excludes inline code. |
-| `page.math()`        | Inline and block math.                                       |
-| `page.tables()`      | Tables, with rows and column alignment.                      |
-| `page.frontmatter()` | YAML frontmatter as raw text.                                |
-| `page.footnotes()`   | Footnote definitions.                                        |
+- `page.headings()` - Headings, with their text and depth.
+  - `heading.depth` - getter/setter
+- `page.paragraphs()` - Paragraphs, including those inside lists and quotes.
+- `page.links()` - Wikilinks, Markdown links, and reference links.
+  - `link.title` - getter/setter
+  - `link.target` - getter/setter
+- `page.embeds()` - Obsidian embeds, Markdown images, and reference images.
+- `page.tasks()` - List items with a checkbox.
+  - `task.checked` - getter/setter
+  - `task.toggle()` - change checked or not
+- `page.lists()` - Ordered and unordered lists.
+- `page.callouts()` - Callouts, including their title, type, and fold state.
+- `page.highlights()` - Highlighted spans.
+  - `highlight.color` - getter/setter for highlighted color
+- `page.comments()` - Obsidian comments.
+  - `comment.text` - getter/setter
+- `page.code()` - Code blocks, including Mermaid blocks; excludes inline code.
+  - `code.language` - getter/setter
+- `page.math()` - Inline and block math.
+- `page.tables()` - Tables, with rows and column alignment.
+- `page.frontmatter()` - YAML frontmatter as raw text.
+  - `frontmatter.json()` - parse YAML
+- `page.footnotes()` - Footnote definitions.
 
 Each selected item offers these methods:
 

@@ -8,7 +8,8 @@ const parsePage = (input: string, options: ParseOptions = {}) => {
   return makePage(tree, source, options)
 }
 
-export type { ParseOptions, OutputOptions, EditChanges, NodeJSON, PageJSON } from './types/api.ts'
+export type { ParseOptions, EditChanges, NodeJSON, PageJSON } from './types/api.ts'
+export type { TextOptions, JsonOptions, MarkdownOptions, AstOptions, HtmlOptions } from './types/options.ts'
 export type { AstNode, PageNode } from './types/ast.ts'
 export type { default as ItemHandle, default as Section } from './API/Section/Section.ts'
 export type { default as Link } from './API/Section/Link.ts'

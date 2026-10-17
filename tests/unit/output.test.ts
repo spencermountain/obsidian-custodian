@@ -7,7 +7,7 @@ test('text extracts formatting, aliases, callout titles, and bodies', (t) => {
   t.equal(page.text(), 'Heading\nHello friend and code.\nA title\nA body')
   t.equal(page.headings()[0].text(), 'Heading')
   t.equal(page.callouts()[0].text(), 'A title\nA body')
-  t.equal(page.callouts()[0].text({ calloutTitles: false }), 'A body')
+  t.equal(page.callouts()[0].text({ callouts: 'body' }), 'A body')
   t.equal(page.text({ callouts: false }), 'Heading\nHello friend and code.')
   t.equal(page.json().text, page.text())
   t.end()
@@ -28,17 +28,17 @@ test('output filters exclude nested content without changing the page', (t) => {
   t.end()
 })
 
-test('callout titles can be excluded from every output', (t) => {
+test('callout body mode is for text and Markdown; structural outputs use booleans', (t) => {
   const page = parsePage('> [!note] [[Title]]\n> [[Body]]')
-  const options = { calloutTitles: false }
-  const json = page.json(options)
+  const options = { callouts: 'body' as const }
   t.equal(page.text(options), 'Body')
-  t.equal(json.callouts[0].title, '')
-  t.deepEqual(json.links.map((link) => link.target), ['Body'])
-  t.deepEqual(page.ast(options).children[0].title, [])
   t.equal(page.markdown(options), '> [!note]\n> [[Body]]\n')
-  t.equal(page.callouts()[0].json(options).title, '')
-  t.deepEqual(page.callouts()[0].ast(options).title, [])
+  t.equal(page.callouts()[0].text(options), 'Body')
+  t.equal(page.json({ callouts: true }).callouts[0].title, 'Title')
+  t.deepEqual(page.json({ callouts: false }).callouts, [])
+  t.deepEqual(page.ast({ callouts: false }).children, [])
+  t.equal(page.callouts()[0].json({ callouts: false }), null)
+  t.equal(page.callouts()[0].ast({ callouts: false }), null)
   t.end()
 })
 

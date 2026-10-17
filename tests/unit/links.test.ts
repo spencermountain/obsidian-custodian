@@ -237,8 +237,8 @@ test('reference links expose their definitions in JSON', (t) => {
 test('reference resolution follows current definitions', (t) => {
   const page = parsePage('[Label][ID]\n\n[id]: https://first.example\n\n[id]: https://second.example')
   t.equal(page.links()[0]?.json().url, 'https://first.example', 'first definition wins')
-  page.blocks().find(item => item.ast().type === 'definition').remove()
-  t.equal(page.links()[0]?.json().url, 'https://second.example', 'removing a definition updates resolution')
-  t.equal(page.json().links[0]?.url, 'https://second.example')
+  page.prepend('[id]: https://new.example')
+  t.equal(page.links()[0]?.json().url, 'https://new.example', 'prepending a definition updates resolution')
+  t.equal(page.json().links[0]?.url, 'https://new.example')
   t.end()
 })

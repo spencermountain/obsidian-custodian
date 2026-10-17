@@ -1,7 +1,18 @@
-export type { TextOptions, JsonOptions, HtmlOptions, AstOptions } from './options.ts'
+export type {
+  TextOptions,
+  JsonOptions,
+  HtmlOptions,
+  AstOptions,
+  MarkdownOptions,
+  OutputOptions
+} from './options.ts'
 
 // Keep API options and JSON payloads open while their shapes are evolving.
-type ParseOptions = Record<string, any>
+interface ParseOptions {
+  gfm?: object
+  math?: object
+  markdown?: object
+}
 
 type EditChanges = Record<string, any>
 type Collection = string

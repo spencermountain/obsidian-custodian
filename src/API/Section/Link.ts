@@ -1,5 +1,7 @@
 import type { TextOptions } from '../../types/api.ts'
 import Section from './Section.ts'
+import outputTree from '../out/ast/output.ts'
+import textDefaults from '../out/text/defaults.ts'
 
 class Link extends Section {
   get title(): string {
@@ -29,7 +31,8 @@ class Link extends Section {
   }
 
   text(options: TextOptions = {}): string {
-    const node = this.ast(options)
+    options = { ...textDefaults, ...options }
+    const node = outputTree(this.node, options)
     if (!node) {
       return ''
     }
