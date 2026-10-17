@@ -19,6 +19,7 @@ const protectHtml = (tree, source) => {
         depth += tag[1] ? -1 : 1
         if (depth === 0) {
           const position = { start: first.position.start, end: last.position.end }
+          // Preserve the exact markup rather than reserializing its parsed children.
           node.children.splice(i, j - i + 1, {
             type: 'html', value: source.slice(position.start.offset, position.end.offset), position
           })

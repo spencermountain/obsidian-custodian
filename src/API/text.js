@@ -1,6 +1,7 @@
 // Extract tree content without trimming, collapsing whitespace, or resolving embeds.
 const text = (node, options = {}) => {
   if (!node) { return '' }
+  // Hidden syntax is opt-in for text, even when it remains in the output tree.
   if (node.type === 'comment' && options.comments !== true) { return '' }
   if (node.type === 'blockId' && options.blockIds !== true) { return '' }
   if (node.type === 'wikiLink' || node.type === 'embed') { return node.alias ?? node.target }
@@ -8,10 +9,12 @@ const text = (node, options = {}) => {
   if (node.type === 'break') { return '\n' }
   if (node.value !== undefined) { return node.value }
 
+  // Treat the title as a first paragraph without changing the callout's children.
   const children = [...(node.children || [])]
   if (node.type === 'callout' && options.calloutTitles !== false && node.title?.length) {
     children.unshift({ type: 'paragraph', children: node.title })
   }
+  // Supply structural separators only; preserve whitespace within text nodes.
   let separator = ''
   if (['root', 'list', 'listItem', 'blockquote', 'callout', 'table'].includes(node.type)) {
     separator = '\n'

@@ -1,0 +1,4 @@
+- [?] Needs clarification
+- [-] Cancelled task
+- [!] Important task
+- [ ] Still incomplete

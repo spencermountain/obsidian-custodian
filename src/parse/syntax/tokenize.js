@@ -1,8 +1,10 @@
 // Tokenize before Markdown decodes escapes or interprets link punctuation.
 const delimited = (name, opening, closing, { multiline = false, flow = false } = {}) => ({
+  // Block comments can span blank lines without starting new Markdown containers.
   concrete: flow,
   name,
   tokenize: function (effects, ok, nok) {
+    // Delimiter progress and code-span state belong to this tokenization attempt.
     let opened = 0
     let closed = 0
     let size = 0
@@ -76,6 +78,7 @@ const delimited = (name, opening, closing, { multiline = false, flow = false } =
           return flow ? end : ok
         }
       } else {
+        // A partial closing delimiter is content if the next character mismatches.
         size += closed + 1
         closed = 0
       }

@@ -1,6 +1,7 @@
 const text = (value, key) => {
   if (typeof value !== 'string') { throw new TypeError(`${key} must be a string`) }
 }
+// Only expose semantic fields; callers cannot replace node types or child arrays.
 const fields = {
   heading: ['text', 'depth'], paragraph: ['text'],
   wikiLink: ['target', 'alias', 'heading', 'block'],
@@ -13,6 +14,7 @@ const fields = {
 
 const edit = (node, changes) => {
   if (!changes || typeof changes !== 'object' || Array.isArray(changes)) { throw new TypeError('Expected an update object') }
+  // Validate the complete patch before the handle commits it to the live node.
   const next = structuredClone(node)
   Object.entries(changes).forEach(([key, value]) => {
     if (!fields[node.type]?.includes(key)) { throw new TypeError(`Cannot update ${key} on ${node.type}`) }
@@ -20,6 +22,7 @@ const edit = (node, changes) => {
       if (!Number.isInteger(value) || value < 1 || value > 6) { throw new RangeError('Heading depth must be 1–6') }
     } else if (key === 'checked') {
       if (typeof value !== 'boolean' || typeof node.checked !== 'boolean') { throw new TypeError('checked requires a task and a boolean') }
+      // Explicit checkbox changes reset custom markers such as [?] to standard ones.
       delete next.taskMarker
     } else if (key === 'fold') {
       if (![null, 'expanded', 'collapsed'].includes(value)) { throw new TypeError('Invalid callout fold') }
@@ -27,6 +30,7 @@ const edit = (node, changes) => {
       text(value, key)
     }
     if (node.type === 'heading' && key === 'text' && /[\r\n]/.test(value)) { throw new TypeError('Heading text must be one line') }
+    // Reject punctuation that could escape the serialized wikilink.
     if (['wikiLink', 'embed'].includes(node.type) && value !== null) {
       if (/[\[\]\r\n|\\]/.test(value) || value.includes('%%') || (key === 'target' && /[#^]/.test(value))) {
         throw new TypeError(`Invalid ${key}`)
@@ -39,10 +43,12 @@ const edit = (node, changes) => {
       if (typeof value !== 'string' || /[\r\n]/.test(value)) { throw new TypeError('Callout title must be one line') }
       next.title = [{ type: 'text', value }]
     } else if (key === 'text') {
+      // Text updates are literal replacements, not Markdown fragments.
       next.children = [{ type: 'text', value }]
       if (node.blockId) { next.children.push({ type: 'blockId', value: node.blockId }) }
     } else { next[key] = value }
   })
+  // Validate relationships after all fields have changed, allowing fragment switches.
   if (next.heading !== undefined && next.heading !== null && next.block !== null) { throw new TypeError('Use either heading or block') }
   if (['wikiLink', 'embed'].includes(node.type) && !next.target && !next.heading && !next.block) { throw new TypeError('A link needs a target or fragment') }
   return next

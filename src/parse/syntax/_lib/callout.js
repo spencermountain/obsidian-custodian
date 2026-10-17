@@ -24,6 +24,7 @@ const callout = (node) => {
   })
   node.type = 'callout'
   node.calloutType = match[1].toLowerCase()
+  // No marker means non-foldable; +/- records the initial expansion state.
   node.fold = null
   if (match[2]) { node.fold = match[2] === '-' ? 'collapsed' : 'expanded' }
   node.title = title

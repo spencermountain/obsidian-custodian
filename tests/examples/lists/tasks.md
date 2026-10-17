@@ -1,0 +1,6 @@
+- [ ] An unfinished task
+- [x] A finished task
+- [X] Another finished task
+- [ ] A parent task
+  - [x] A completed child
+  - [ ] An unfinished child

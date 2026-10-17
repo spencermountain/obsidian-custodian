@@ -6,9 +6,11 @@ const parseMd = (input, options = {}) => {
   if (typeof input !== 'string') {
     throw new TypeError('Markdown must be a string')
   }
+  // Fresh plugin state prevents one parse's settings or source from affecting another.
   const processor = unified().use(remarkParse).use(remarkObsidian, options)
   // parse() builds the tree; runSync() applies callouts and other Obsidian transforms.
   const tree = processor.runSync(processor.parse(input), { value: input })
+  // Keep the source for exact round trips before the page is edited.
   return { tree, source: input }
 }
 

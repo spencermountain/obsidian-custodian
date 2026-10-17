@@ -1,11 +1,12 @@
 import parseMd from '../parse/index.js'
 import stringifyMd from '../parse/stringify.js'
-import outputTree from './output.js'
+import outputTree from './_lib/output.js'
 import text from './text.js'
-import { walk } from '../parse/syntax/_lib.js'
-import { groups, json } from './json.js'
-import createHandle from './_lib.js'
+import { clearPositions, locate, select, treeJson } from './_lib/tree.js'
+import { groups } from './json.js'
+import createHandle from './handle.js'
 
+// Owns document state; parsing and serialization are stateless operations.
 class Page {
   #tree
   #source
@@ -19,6 +20,7 @@ class Page {
     // Each page owns its edits, even when created from the same document.
     this.#tree = structuredClone(tree)
     this.#source = source
+    // Retain settings so inserted fragments and later serialization stay consistent.
     this.#options = {
       ...options,
       gfm: { ...options.gfm },
@@ -29,39 +31,18 @@ class Page {
 
   #changed() {
     this.#dirty = true
-    // Source positions no longer describe the serialized document after editing.
-    walk(this.#tree, (node) => {
-      delete node.position
-    })
+    clearPositions(this.#tree)
   }
 
-  #locate(target) {
-    let found = null
-    walk(this.#tree, (node, parent) => {
-      if (node === target) {
-        found = parent
-      }
-    })
-    if (!found) {
-      throw new Error('This item has been removed or detached')
-    }
-    return found
-  }
-
+  // Handles reference live nodes; output methods return detached views.
   #select(predicate) {
-    const nodes = []
-    walk(this.#tree, (node, parent) => {
-      if (predicate(node, parent)) {
-        nodes.push(
-          createHandle(node, {
-            locate: (target) => this.#locate(target),
-            changed: () => this.#changed(),
-            page: this
-          })
-        )
-      }
-    })
-    return nodes
+    return select(this.#tree, predicate).map((node) =>
+      createHandle(node, {
+        locate: (target) => locate(this.#tree, target),
+        changed: () => this.#changed(),
+        page: this
+      })
+    )
   }
 
   ast(options = {}) {
@@ -73,6 +54,7 @@ class Page {
   }
 
   markdown(options = {}) {
+    // Reuse exact source only when neither edits nor exclusions affect the output.
     const filtered = Object.values(options).includes(false)
     if (!filtered && !this.#dirty && typeof this.#source === 'string') {
       return this.#source
@@ -80,23 +62,16 @@ class Page {
     return stringifyMd(outputTree(this.#tree, options), this.#options)
   }
 
+  // Include nested addressable blocks as well as the document's top-level blocks.
   blocks() {
     return this.#select((node, parent) => parent === this.#tree || Boolean(node.blockId))
   }
 
   json(options = {}) {
-    const tree = outputTree(this.#tree, options)
-    const result = { text: text(tree, options), blocks: [] }
-    Object.keys(groups).forEach((key) => { result[key] = [] })
-    walk(tree, (node, parent) => {
-      if (parent === tree || node.blockId) { result.blocks.push(json(node, options)) }
-      Object.entries(groups).forEach(([key, matches]) => {
-        if (matches(node)) { result[key].push(json(node, options)) }
-      })
-    })
-    return result
+    return treeJson(outputTree(this.#tree, options), options)
   }
 
+  // Parse before insertion so malformed input cannot partially change the tree.
   append(markdown) {
     this.#tree.children.push(...parseMd(markdown, this.#options).tree.children)
     this.#changed()
@@ -109,6 +84,7 @@ class Page {
     return this
   }
 
+  // Selection methods share the same predicates as JSON output and filtering.
   headings() {
     return this.#select(groups.headings)
   }

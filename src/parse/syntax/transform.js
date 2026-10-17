@@ -6,6 +6,7 @@ import { task, blockId, attachBlockIds } from './_lib/blocks.js'
 const transform = (tree, parse, source) => {
   // Collapse HTML before visiting its contents: Obsidian treats those as literal.
   protectHtml(tree, source)
+  // Original source distinguishes escaped markers from decoded text nodes.
   const raw = (node) => source?.slice(node.position?.start.offset, node.position?.end.offset)
 
   walk(tree, (node) => {

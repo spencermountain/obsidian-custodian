@@ -8,6 +8,7 @@ const wiki = (node, parent, state) => {
 }
 
 const highlight = (node, parent, state, info) => {
+  // Give remark the delimiter context so it can escape nested text correctly.
   const content = state.containerPhrasing(node, { ...info, before: '=', after: '=' })
   return `==${content}==`
 }
@@ -25,6 +26,7 @@ const callout = (node, parent, state, info) => {
   let content = `[!${node.calloutType}]${fold}`
   if (title) { content += ` ${title}` }
   if (body) { content += `\n${body}` }
+  // Every line, including blanks and nested blocks, must remain inside the quote.
   return content.split('\n').map((line) => line ? `> ${line}` : '>').join('\n')
 }
 

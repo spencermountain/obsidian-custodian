@@ -19,6 +19,7 @@ const fromMarkdown = () => {
     exit[tokenType] = function (token) {
       const node = this.stack[this.stack.length - 1]
       const raw = this.sliceSerialize(token)
+      // Embeds open with ![[; every other custom delimiter is two characters wide.
       const start = type === 'embed' ? 3 : 2
       node.value = raw.slice(start, -2)
       if (type === 'wikiLink' || type === 'embed') {

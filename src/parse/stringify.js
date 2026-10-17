@@ -3,6 +3,7 @@ import remarkStringify from 'remark-stringify'
 import remarkObsidian from './remark.js'
 
 const stringifyMd = (tree, options = {}) => {
+  // Install output handlers without a parser; this operation only reads the tree.
   const processor = unified()
     .use(remarkStringify, { bullet: '-', ...options.markdown })
     .use(remarkObsidian, options)

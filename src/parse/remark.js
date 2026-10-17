@@ -20,6 +20,7 @@ const obsidianSyntax = function () {
     }
   }
 
+  // Extend the host pipeline instead of replacing its existing syntax handlers.
   const data = this.data()
   data.micromarkExtensions ??= []
   data.fromMarkdownExtensions ??= []
@@ -38,8 +39,10 @@ const obsidianSyntax = function () {
 }
 
 const remarkObsidian = function (options = {}) {
+  // Obsidian strikethrough uses double tildes unless the caller overrides GFM.
   this.use(remarkGfm, { singleTilde: false, ...options.gfm })
   this.use(remarkMath, options.math)
+  // Recognize YAML boundaries but leave property values as raw text.
   this.use(remarkFrontmatter, ['yaml'])
   // Register last so our task-list serializer takes precedence over GFM's.
   this.use(obsidianSyntax)

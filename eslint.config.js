@@ -1,3 +1,4 @@
+// Check maintained sources and tests; generated bundles have their own formatting.
 const config = [{
   ignores: ['builds/**', 'node_modules/**']
 }, {

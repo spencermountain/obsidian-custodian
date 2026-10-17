@@ -6,15 +6,23 @@ const input = `hello [[world]]
 
 const page = parsePage(input)
 
-// Outputs
-const json = page.json()
-console.log(json)
-// const md = page.markdown()
-// console.log(md)
-// const ast = page.ast()
-// console.log(ast)
-//
-// // API
-// page.headings().forEach((heading) => {
-//   console.log(heading.json())
-// })
+console.log(page.json({}))
+console.log(page.text())
+
+/*
+ * blocks
+ * headings
+ * paragraphs
+ * links
+ * embed
+ * tasks
+ * lists
+ * callouts
+ * highlights
+ * comments
+ * code
+ * math
+ * tables
+ * frontmatter
+ * footnotes
+ */

@@ -1,4 +1,4 @@
-/* spencermountain/reluctant-obsidian-parser 0.0.1 MIT */
+/* spencermountain/reluctant-obsidian 0.0.1 MIT */
 'use strict';
 
 /**
@@ -26544,6 +26544,42 @@ const outputTree = (tree, options = {}) => {
   return structuredClone(copy(tree))
 };
 
+const clearPositions = (tree) => {
+  // Source positions no longer describe the document after editing.
+  walk(tree, (node) => { delete node.position; });
+};
+
+const locate = (tree, target) => {
+  let found = null;
+  walk(tree, (node, parent) => {
+    if (node === target) { found = parent; }
+  });
+  if (!found) {
+    throw new Error('This item has been removed or detached')
+  }
+  return found
+};
+
+const select = (tree, predicate) => {
+  const nodes = [];
+  walk(tree, (node, parent) => {
+    if (predicate(node, parent)) { nodes.push(node); }
+  });
+  return nodes
+};
+
+const treeJson = (tree, options) => {
+  const result = { text: text$1(tree, options), blocks: [] };
+  Object.keys(groups).forEach((key) => { result[key] = []; });
+  walk(tree, (node, parent) => {
+    if (parent === tree || node.blockId) { result.blocks.push(json(node, options)); }
+    Object.entries(groups).forEach(([key, matches]) => {
+      if (matches(node)) { result[key].push(json(node, options)); }
+    });
+  });
+  return result
+};
+
 const text = (value, key) => {
   if (typeof value !== 'string') { throw new TypeError(`${key} must be a string`) }
 };
@@ -26647,39 +26683,15 @@ class Page {
 
   #changed() {
     this.#dirty = true;
-    // Source positions no longer describe the serialized document after editing.
-    walk(this.#tree, (node) => {
-      delete node.position;
-    });
-  }
-
-  #locate(target) {
-    let found = null;
-    walk(this.#tree, (node, parent) => {
-      if (node === target) {
-        found = parent;
-      }
-    });
-    if (!found) {
-      throw new Error('This item has been removed or detached')
-    }
-    return found
+    clearPositions(this.#tree);
   }
 
   #select(predicate) {
-    const nodes = [];
-    walk(this.#tree, (node, parent) => {
-      if (predicate(node, parent)) {
-        nodes.push(
-          createHandle(node, {
-            locate: (target) => this.#locate(target),
-            changed: () => this.#changed(),
-            page: this
-          })
-        );
-      }
-    });
-    return nodes
+    return select(this.#tree, predicate).map((node) => createHandle(node, {
+      locate: (target) => locate(this.#tree, target),
+      changed: () => this.#changed(),
+      page: this
+    }))
   }
 
   ast(options = {}) {
@@ -26703,16 +26715,7 @@ class Page {
   }
 
   json(options = {}) {
-    const tree = outputTree(this.#tree, options);
-    const result = { text: text$1(tree, options), blocks: [] };
-    Object.keys(groups).forEach((key) => { result[key] = []; });
-    walk(tree, (node, parent) => {
-      if (parent === tree || node.blockId) { result.blocks.push(json(node, options)); }
-      Object.entries(groups).forEach(([key, matches]) => {
-        if (matches(node)) { result[key].push(json(node, options)); }
-      });
-    });
-    return result
+    return treeJson(outputTree(this.#tree, options), options)
   }
 
   append(markdown) {

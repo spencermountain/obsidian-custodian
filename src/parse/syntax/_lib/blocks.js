@@ -19,6 +19,7 @@ const blockId = (node, raw, hasSource) => {
   // Check the original text too: Markdown has already decoded backslash escapes.
   if (hasSource && !pattern.test(raw(last))) { return }
   last.value = last.value.slice(0, match.index)
+  // Keep a serializable marker as well as metadata for block lookup.
   node.children.push({ type: 'blockId', value: match[1] })
   node.blockId = match[1]
 }

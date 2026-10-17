@@ -1,6 +1,7 @@
 import text from './text.js'
 import { dimensions } from '../parse/syntax/_lib.js'
 
+// Shared category names for selectors, JSON collections, and output exclusions.
 const groups = {
   headings: (node) => node.type === 'heading',
   paragraphs: (node) => node.type === 'paragraph',
@@ -20,6 +21,7 @@ const groups = {
 
 const json = (node, options = {}) => {
   const result = { type: node.type, text: text(node, options) }
+  // Copy public metadata explicitly instead of leaking nested AST internals.
   const fields = [
     'depth',
     'target',
@@ -49,18 +51,21 @@ const json = (node, options = {}) => {
   if (node.position) {
     result.position = structuredClone(node.position)
   }
+  // Direct comment inspection exposes its content even when document text omits it.
   if (node.type === 'comment') {
     result.text = node.value
   }
   if (node.type === 'callout') {
     result.title = text({ children: node.title }, options)
   }
+  // Size hints occupy the alias in embeds and the final alt-text segment in images.
   if (node.type === 'embed') {
     Object.assign(result, dimensions(node.alias ?? ''))
   }
   if (node.type === 'image') {
     Object.assign(result, dimensions((node.alt || '').split('|').at(-1)))
   }
+  // Flatten cells into rows so consumers need not traverse table nodes.
   if (node.type === 'table') {
     result.align = [...node.align]
     result.rows = node.children.map((row) => row.children.map((cell) => text(cell, options)))

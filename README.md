@@ -57,16 +57,25 @@ import reluctantParser from 'reluctant-obsidian'
 const str = `hello [[world]]`
 const page = reluctantParser(str)
 
+// clean plaintext
+console.log(page.text()) // 'hello world'
+
 // get everything
-const json = page.json()
+console.log(page.json())
 /*{
   ... 
   links: [{
     text: 'world',
     type: 'internal'
-  }],
-  ...
+    target: 'world',
+  }]
 }*/
+
+// grab that link and change it
+const link = page.links()[0]
+link.text = 'cruel ' + link.text
+console.log(page.html())
+// 'hello <a href="./world">cruel world</a>'
 ```
 
 #### CLI
@@ -75,13 +84,19 @@ const json = page.json()
 npx reluctant-md path/to/file.md # JSON output
 
 # non-json outputs
-npx reluctant-md --text path/to/file.md #plaintext
+npx reluctant-md --text path/to/file.md
 npx reluctant-md --html path/to/file.md
+
+# common transforms
+npx reluctant-md --lint path/to/file.md
+npx reluctant-md --normalize path/to/file.md
 ```
 
 ### API
 
-`parsePage(markdown, options?)` synchronously returns a page. Options can contain `gfm` and `math` settings for the corresponding remark plugins, and `markdown` settings for remark-stringify.
+`parsePage(markdown, options?)` synchronously returns a page.
+
+Options can contain `gfm` and `math` settings for the corresponding remark plugins, and `markdown` settings for remark-stringify.
 
 | Method                   | Returns                                                                                                   |
 | ------------------------ | --------------------------------------------------------------------------------------------------------- |

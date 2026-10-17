@@ -1,3 +1,4 @@
+// Accept width or width x height hints; ordinary aliases have no dimensions.
 const dimensions = (value = '') => {
   const match = /^(\d+)(?:x(\d+))?$/.exec(value)
   if (!match) { return {} }
@@ -29,6 +30,7 @@ const wikiMarkdown = (node) => {
   return `${node.type === 'embed' ? '!' : ''}[[${value}]]`
 }
 
+// Visit parents first so transforms can replace children before traversal continues.
 const walk = (node, visit, parent = null) => {
   visit(node, parent)
   node.children?.forEach((child) => walk(child, visit, node))
@@ -38,6 +40,7 @@ const walk = (node, visit, parent = null) => {
   }
 }
 
+// Internal text used for block recognition, independent of API output preferences.
 const plainText = (node) => {
   if (node.type === 'comment' || node.type === 'blockId') { return '' }
   if (node.type === 'wikiLink' || node.type === 'embed') { return node.alias ?? node.target }

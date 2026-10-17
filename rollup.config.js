@@ -9,6 +9,7 @@ const pkg = JSON.parse(fs.readFileSync('./package.json').toString())
 
 const banner = `/* spencermountain/${pkg.name} ${pkg.version} ${pkg.license} */`
 
+// Bundle the page API for ESM, CommonJS, and a browser global.
 const main = {
   input: 'src/index.js',
   plugins: [
@@ -52,6 +53,7 @@ const main = {
     }
   ]
 }
+// Keep the remark adapter separate from the Page API and its bundled runtime.
 const remark = {
   input: 'src/remark.js',
   output: [
