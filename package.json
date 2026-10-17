@@ -48,11 +48,11 @@
     "@types/mdast": "^4.0.4",
     "@types/unist": "^3.0.3",
     "@typescript-eslint/parser": "^8.71.2",
-    "eslint": "10.11.0",
+    "eslint": "10.13.0",
     "mdast-util-from-markdown": "^2.1.0",
     "micromark-util-types": "^2.0.3",
     "rollup": "^4.64.7",
-    "tap-dancer": "0.4.2",
+    "tap-dancer": "0.4.4",
     "tape": "^5.10.2",
     "typescript": "^6.0.3"
   },
