@@ -1,34 +1,39 @@
-import renderText from '../text.ts'
-import serialize from '../json.ts'
+import renderText from '../out/text.ts'
+import serialize from '../out/json.ts'
 import { definitions } from '../ast/references.ts'
-import type { MarkdownNode, OutputOptions, EditChanges, NodeJSON } from '../../types/types.ts'
+import type { EditChanges, NodeJSON } from '../../types/api.ts'
+import type { TextOptions, AstOptions, JsonOptions } from '../../types/options.ts'
+
+import type { AstNode } from '../../types/ast.ts'
 import type Page from '../Page.ts'
 import edit from '../ast/edit.ts'
-import outputTree from '../ast/output.ts'
+import outputTree from '../out/output.ts'
 
 interface SectionContext {
-  locate?: (node: MarkdownNode) => MarkdownNode
+  locate?: (node: AstNode) => AstNode
   changed?: () => void
   page?: Page
 }
 
 // Wrap live nodes; output methods read detached, filtered views through ast().
 class Section {
-  #node: MarkdownNode
+  #node: AstNode
   protected context: SectionContext
 
-  constructor(node: MarkdownNode, context: SectionContext = {}) {
+  constructor(node: AstNode, context: SectionContext = {}) {
     this.#node = node
     this.context = context
   }
 
-  ast(options: OutputOptions = {}) {
+  ast(options: AstOptions = {}) {
     return outputTree(this.#node, options)
   }
 
-  json(options: OutputOptions = {}): NodeJSON | null {
+  json(options: JsonOptions = {}): NodeJSON | null {
     const node = this.ast(options)
-    if (!node) { return null }
+    if (!node) {
+      return null
+    }
     let references = new Map()
     if (this.context.page && ['linkReference', 'imageReference'].includes(node.type)) {
       references = definitions(this.context.page.ast(options))
@@ -36,7 +41,7 @@ class Section {
     return serialize(node, options, references)
   }
 
-  text(options: OutputOptions = {}): string {
+  text(options: TextOptions = {}): string {
     const node = this.ast(options)
     if (!node) {
       return ''
@@ -63,9 +68,7 @@ class Section {
     if (node.type === 'tableRow') {
       separator = '\t'
     }
-    return (node.children || [])
-      .map((child) => renderText(child, options))
-      .join(separator)
+    return (node.children || []).map((child) => renderText(child, options)).join(separator)
   }
 
   #owner() {

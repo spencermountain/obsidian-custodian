@@ -1,8 +1,8 @@
-import type { MarkdownNode } from '../../../types/types.ts'
-type Raw = (node: MarkdownNode) => string | undefined
+import type { AstNode } from '../../../types/ast.ts'
+type Raw = (node: AstNode) => string | undefined
 import { plainText } from '../_lib.ts'
 
-const task = (node: MarkdownNode, raw: Raw) => {
+const task = (node: AstNode, raw: Raw) => {
   const first = node.children![0]?.children?.[0]
   const match = first?.type === 'text' && /^\[([^\]\s])\][ \t]+/.exec(first.value!)
   // GFM already handles [x] and [ ]; Obsidian accepts other checked markers.
@@ -13,7 +13,7 @@ const task = (node: MarkdownNode, raw: Raw) => {
   }
 }
 
-const blockId = (node: MarkdownNode, raw: Raw, hasSource: boolean) => {
+const blockId = (node: AstNode, raw: Raw, hasSource: boolean) => {
   const last = node.children!.at(-1)
   const pattern = /(?:^|[ \t\n])\^([a-zA-Z0-9-]+)$/
   const match = last?.type === 'text' && pattern.exec(last.value!)
@@ -30,7 +30,7 @@ const blockId = (node: MarkdownNode, raw: Raw, hasSource: boolean) => {
   node.blockId = match[1]
 }
 
-const attachBlockIds = (node: MarkdownNode) => {
+const attachBlockIds = (node: AstNode) => {
   node.children?.forEach((child, index) => {
     if (child.type !== 'paragraph' || !child.blockId) {
       return

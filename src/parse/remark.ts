@@ -1,6 +1,7 @@
 import type { Processor, Transformer } from 'unified'
 import type { Root } from 'mdast'
-import type { ParseOptions, DocumentNode } from '../types/types.ts'
+import type { ParseOptions } from '../types/api.ts'
+import type { PageNode } from '../types/ast.ts'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import remarkFrontmatter from 'remark-frontmatter'
@@ -38,10 +39,10 @@ const obsidianSyntax = function (this: Processor) {
     if (source === undefined && file.value !== undefined) {
       source = String(file.value)
     }
-    captureSpacing(tree as unknown as DocumentNode)
+    captureSpacing(tree as unknown as PageNode)
     transform(
-      tree as unknown as DocumentNode,
-      (input) => this.parse(input) as unknown as DocumentNode,
+      tree as unknown as PageNode,
+      (input) => this.parse(input) as unknown as PageNode,
       source
     )
   }

@@ -1,8 +1,8 @@
-import type { MarkdownNode } from '../../types/types.ts'
+import type { AstNode } from '../../types/ast.ts'
 import { walk } from './_lib.ts'
 
 // Obsidian leaves Markdown inside HTML elements uninterpreted.
-const protectHtml = (tree: MarkdownNode, source?: string) => {
+const protectHtml = (tree: AstNode, source?: string) => {
   if (source === undefined) {
     return
   }

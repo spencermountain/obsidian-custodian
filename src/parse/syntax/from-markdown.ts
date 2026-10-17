@@ -1,5 +1,5 @@
 import type { Extension, Handle } from 'mdast-util-from-markdown'
-import type { MarkdownNode } from '../../types/types.ts'
+import type { AstNode } from '../../types/ast.ts'
 import { wikiFields } from './_lib.ts'
 
 const types = {
@@ -22,7 +22,7 @@ const fromMarkdown = (): Extension => {
       this.enter({ type, value: '' } as Parameters<typeof this.enter>[0], token)
     }
     exit[tokenType] = function (token) {
-      const node = this.stack[this.stack.length - 1] as unknown as MarkdownNode
+      const node = this.stack[this.stack.length - 1] as unknown as AstNode
       const raw = this.sliceSerialize(token)
       // Delimiter widths differ for embeds, footnotes, and tags.
       const start = type === 'embed' ? 3 : 2

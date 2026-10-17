@@ -1,9 +1,9 @@
 import type { Join } from 'mdast-util-to-markdown'
-import type { MarkdownNode } from '../../../types/types.ts'
+import type { AstNode } from '../../../types/ast.ts'
 import { walk } from '../_lib.ts'
 
 // Capture gaps before transforms remove positions or split callout paragraphs.
-const captureSpacing = (tree: MarkdownNode) => {
+const captureSpacing = (tree: AstNode) => {
   walk(tree, (parent) => {
     if (!['root', 'blockquote', 'list', 'listItem', 'footnoteDefinition'].includes(parent.type)) {
       return
@@ -20,7 +20,7 @@ const captureSpacing = (tree: MarkdownNode) => {
 }
 
 const joinSpacing: Join = (left, right, parent, state) => {
-  const count = (right as unknown as MarkdownNode).data?.blankLinesBefore
+  const count = (right as unknown as AstNode).data?.blankLinesBefore
   if (!(count > 1)) {
     return
   }

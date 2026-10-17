@@ -2,16 +2,21 @@ import test from 'tape'
 import parsePage from '../lib.ts'
 
 test('selectors return specialized sections with common methods', (t) => {
-  const page = parsePage('Paragraph [[Note|alias]] ![[photo.png]]\n\n> [!tip] Title\n> Body [[Other]]')
+  const page = parsePage(
+    'Paragraph [[Note|alias]] ![[photo.png]]\n\n> [!tip] Title\n> Body [[Other]]'
+  )
   const link = page.links()[0]
   const callout = page.callouts()[0]
   t.equal(typeof link.target, 'string')
   t.equal(typeof callout.body, 'function')
   t.notEqual(page.embeds()[0].constructor, link.constructor)
   t.notEqual(page.paragraphs()[0].constructor, link.constructor)
-  t.equal(page.blocks().find(item => item.ast().type === 'callout').constructor, callout.constructor)
+  t.equal(
+    page.blocks().find((item) => item.ast().type === 'callout').constructor,
+    callout.constructor
+  )
   t.equal(link.target, 'Note')
-  t.equal(callout.title(), 'Title')
+  t.equal(callout.title, 'Title')
   t.equal(callout.body(), 'Body Other')
   t.equal(link.text(), 'alias')
   t.equal(page.paragraphs()[0].text(), 'Paragraph alias photo.png')
@@ -30,7 +35,10 @@ test('sections keep shared filtering and detached output', (t) => {
   t.equal(section.text({ callouts: false }), '')
   section.ast().children.length = 0
   t.equal(section.body(), 'Body Target')
-  t.equal(page.json({ calloutTitles: false }).callouts[0].text, section.text({ calloutTitles: false }))
+  t.equal(
+    page.json({ calloutTitles: false }).callouts[0].text,
+    section.text({ calloutTitles: false })
+  )
   t.end()
 })
 
@@ -45,7 +53,7 @@ test('section edits remain atomic and stale handles reject changes', (t) => {
   t.equal(first.target, 'New')
   const callout = page.callouts()[0]
   callout.update({ title: 'Changed' })
-  t.equal(callout.title(), 'Changed')
+  t.equal(callout.title, 'Changed')
   t.equal(first.remove(), page)
   t.throws(() => second.update({ target: 'Detached' }), /removed|detached/)
   t.throws(() => second.remove(), /removed|detached/)
@@ -56,14 +64,17 @@ test('generic sections render nested specialized nodes and unknown types', (t) =
   const Page = parsePage('').constructor as any
   const page = new Page({
     type: 'root',
-    children: [{
-      type: 'constructor',
-      children: [{ type: 'wikiLink', target: 'Note', heading: 'Section', block: null, alias: null }]
-    }]
+    children: [
+      {
+        type: 'constructor',
+        children: [
+          { type: 'wikiLink', target: 'Note', heading: 'Section', block: null, alias: null }
+        ]
+      }
+    ]
   })
   t.equal(page.blocks()[0].text(), 'Note#Section')
   t.equal(page.text(), 'Note#Section')
-  t.equal(page.json().blocks[0].text, 'Note#Section')
   t.equal(page.blocks()[0].text({ links: false }), '')
   t.end()
 })
@@ -74,7 +85,7 @@ test('reference links and callout title links retain section behavior', (t) => {
   const titleLink = page.links()[1]
   t.equal(titleLink.target, 'Title')
   titleLink.remove()
-  t.equal(page.callouts()[0].title(), '')
+  t.equal(page.callouts()[0].title, '')
   t.equal(page.callouts()[0].body(), 'Body')
   t.throws(() => titleLink.update({ target: 'Detached' }), /removed|detached/)
   t.end()

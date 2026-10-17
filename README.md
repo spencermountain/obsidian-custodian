@@ -1,6 +1,6 @@
 <div align="center">
   <div><b>obsidian-custodian</b></div>
-  <div>get reliable JSON from Obsidian markdown</div>
+  <div>parse and edit obsidian markdown syntax</div>
   <div><code>npm install obsidian-custodian</code></div>
   <div align="center">
     <sub>
@@ -8,7 +8,7 @@
       <a href="https://github.com/spencermountain">Spencer Kelly</a>
     </sub>
   </div>
-  <img height="45px" src="https://user-images.githubusercontent.com/399657/68221824-09809d80-ffb8-11e9-9ef0-6ed3574b0ce8.png"/>
+  <img height="50px" src="https://user-images.githubusercontent.com/399657/68221824-09809d80-ffb8-11e9-9ef0-6ed3574b0ce8.png"/>
 </div>
 <!--2nd row-->
 <div align="center">
@@ -26,11 +26,11 @@
 
 Everything is always more complicated than you think,
 
-——but I'll admit, I did shake my head in sanctimonious disbelief, when I found out that **obsidian** does not release or even share details, about their internal markdown parser.
+—but I'll admit, I did shake my head in sanctimonious disbelief, when I found out that **obsidian** does not release or even share details about their markdown parser—
 
-They have people are out there writing notes in their syntax, and it's not currently possible or easy to _get the information back out_ - it's stuck in their ad-hoc markup format.
+They have everyone writing notes in their syntax, and it's not currently possible or easy to _get the information back out_ - it's stuck in their ad-hoc markup language.
 
-Which means that people have to write endless half-baked parsers - and all the plugins that inspect this markdown are slightly buggy and in their own unique ways.
+...which means that people have to write endless half-baked parsers - and all the plugins that inspect this markdown are slightly buggy and in their own unique ways.
 
 This drives me crazy.
 
@@ -38,6 +38,7 @@ What's worse is that it's a JavaScript application, which means they almost-cert
 
 <!-- spacer -->
 <img height="20px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
+<img height="50px" src="https://user-images.githubusercontent.com/399657/68221824-09809d80-ffb8-11e9-9ef0-6ed3574b0ce8.png"/>
 
 Sorry, I know how I sound. I do think details like these are important, and neglecting them is bad-form, and shows up all the time in our craft.
 <!-- spacer -->
@@ -91,6 +92,14 @@ npx obsidian-custodian --html path/to/file.md
 npx obsidian-custodian --lint path/to/file.md
 npx obsidian-custodian --normalize path/to/file.md
 ```
+
+<!-- spacer -->
+<img height="20px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
+
+<img height="50px" src="https://user-images.githubusercontent.com/399657/68221824-09809d80-ffb8-11e9-9ef0-6ed3574b0ce8.png"/>
+
+<!-- spacer -->
+<img height="20px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
 ### API
 
@@ -192,6 +201,9 @@ console.log(String(output))
 ```
 
 Call `runSync()` after `parse()` to apply the Obsidian transforms, such as callout recognition. Pass `gfm` and `math` options to `.use(remarkObsidian, options)`; pass Markdown formatting options to `remarkStringify`. The plugin preserves custom nodes such as `wikiLink`, `embed`, and `callout`; HTML rendering requires handlers for those nodes.
+
+<!-- spacer -->
+<img height="20px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
 ### Features
 

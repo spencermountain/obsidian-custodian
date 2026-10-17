@@ -1,7 +1,7 @@
 {
   "name": "obsidian-custodian",
   "version": "0.0.1",
-  "description": "Obsidian markdown syntax parser",
+  "description": "parse and edit obsidian markdown syntax",
   "repository": "github:spencermountain/obsidian-custodian",
   "author": "Spencer Kelly <spencermountain@gmail.com> (https://spencermountain.dev)",
   "minimumReleaseAge": "1 day",

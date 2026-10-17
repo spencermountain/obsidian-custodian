@@ -1,4 +1,5 @@
-import type { Collection, Predicate } from '../../types/types.ts'
+import type { Collection } from '../../types/api.ts'
+import type { Predicate } from '../../types/ast.ts'
 
 // Shared category names for selectors, JSON collections, and output exclusions.
 const groups: Record<Collection, Predicate> = {

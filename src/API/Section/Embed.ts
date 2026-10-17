@@ -1,8 +1,8 @@
-import type { OutputOptions } from '../../types/types.ts'
+import type { TextOptions } from '../../types/options.ts'
 import Section from './Section.ts'
 
 class Embed extends Section {
-  text(options: OutputOptions = {}): string {
+  text(options: TextOptions = {}): string {
     const node = this.ast(options)
     if (!node) {
       return ''

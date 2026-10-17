@@ -26,8 +26,8 @@ console.log(page.markdown())
 
 /*
  * blocks
- * headings
  * paragraphs
+ * headings
  * links
  * embed
  * tasks

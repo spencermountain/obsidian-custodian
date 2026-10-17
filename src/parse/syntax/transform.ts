@@ -1,15 +1,15 @@
 import colors from './_lib/colors.ts'
-import type { MarkdownNode, DocumentNode } from '../../types/types.ts'
+import type { AstNode, PageNode } from '../../types/ast.ts'
 import protectHtml from './html.ts'
 import { walk } from './_lib.ts'
 import callout from './_lib/callout.ts'
 import { task, blockId, attachBlockIds } from './_lib/blocks.ts'
 
-const transform = (tree: MarkdownNode, parse: (input: string) => DocumentNode, source?: string) => {
+const transform = (tree: AstNode, parse: (input: string) => PageNode, source?: string) => {
   // Collapse HTML before visiting its contents: Obsidian treats those as literal.
   protectHtml(tree, source)
   // Original source distinguishes escaped markers from decoded text nodes.
-  const raw = (node: MarkdownNode) =>
+  const raw = (node: AstNode) =>
     source?.slice(node.position?.start.offset, node.position?.end.offset)
 
   walk(tree, (node) => {

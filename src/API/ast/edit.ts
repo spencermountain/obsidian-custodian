@@ -1,4 +1,5 @@
-import type { MarkdownNode, EditChanges, NodeType } from '../../types/types.ts'
+import type { EditChanges } from '../../types/api.ts'
+import type { AstNode, NodeType } from '../../types/ast.ts'
 const text: (value: unknown, key: string) => asserts value is string = (value, key) => {
   if (typeof value !== 'string') {
     throw new TypeError(`${key} must be a string`)
@@ -23,7 +24,7 @@ const fields: Partial<Record<NodeType, string[]>> = {
   yaml: ['value']
 }
 
-const edit = (node: MarkdownNode, changes: EditChanges) => {
+const edit = (node: AstNode, changes: EditChanges) => {
   if (!changes || typeof changes !== 'object' || Array.isArray(changes)) {
     throw new TypeError('Expected an update object')
   }

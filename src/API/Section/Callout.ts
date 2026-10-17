@@ -1,17 +1,26 @@
-import renderText from '../text.ts'
-import type { OutputOptions } from '../../types/types.ts'
+import renderText from '../out/text.ts'
+import type {
+  TextOptions,
+  JsonOptions,
+  MarkdownOptions,
+  AstOptions,
+  HtmlOptions
+} from '../../types/options.ts'
 import Section from './Section.ts'
 
 class Callout extends Section {
-  title(options: OutputOptions = {}): string {
-    return this.json(options)?.title || ''
+  get title(): string {
+    return this.json()?.title || ''
+  }
+  set title(value: string) {
+    this.update({ title: value })
   }
 
-  body(options: OutputOptions = {}): string {
+  body(options: TextOptions = {}): string {
     return this.text({ ...options, calloutTitles: false })
   }
 
-  text(options: OutputOptions = {}): string {
+  text(options: TextOptions = {}): string {
     const node = this.ast(options)
     if (!node) {
       return ''
@@ -23,7 +32,7 @@ class Callout extends Section {
     return children.map((child) => renderText(child, options)).join('\n')
   }
 
-  json(options: OutputOptions = {}) {
+  json(options: JsonOptions = {}) {
     const result = super.json(options)
     if (!result) {
       return null

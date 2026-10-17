@@ -8,7 +8,9 @@ const definitions = (tree) => {
   walk(tree, (node) => {
     if (node.type === 'definition') {
       const key = normalize(node.identifier)
-      if (!result.has(key)) { result.set(key, node) }
+      if (!result.has(key)) {
+        result.set(key, node)
+      }
     }
   })
   return result

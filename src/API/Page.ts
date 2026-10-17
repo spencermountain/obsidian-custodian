@@ -1,14 +1,16 @@
+import type { ParseOptions, PageJSON } from '../types/api.ts'
 import type {
-  DocumentNode,
-  ParseOptions,
-  OutputOptions,
-  Predicate,
-  PageJSON
-} from '../types/types.ts'
+  TextOptions,
+  JsonOptions,
+  MarkdownOptions,
+  AstOptions,
+  HtmlOptions
+} from '../types/options.ts'
+import type { PageNode, Predicate } from '../types/ast.ts'
 import parseMd from '../parse/index.ts'
 import stringifyMd from '../parse/stringify.ts'
-import outputTree from './ast/output.ts'
-import text from './text.ts'
+import outputTree from './out/output.ts'
+import text from './out/text.ts'
 import { clearPositions, locate, select, treeJson } from './ast/tree.ts'
 import groups from './Section/groups.ts'
 import createSection from './Section/index.ts'
@@ -18,12 +20,12 @@ import type Callout from './Section/Callout.ts'
 
 // Owns document state; parsing and serialization are stateless operations.
 class Page {
-  #tree: DocumentNode
+  #tree: PageNode
   #source: string | undefined
   #options: ParseOptions
   #dirty = false
 
-  constructor(tree: DocumentNode, source?: string, options: ParseOptions = {}) {
+  constructor(tree: PageNode, source?: string, options: ParseOptions = {}) {
     if (tree?.type !== 'root' || !Array.isArray(tree.children)) {
       throw new TypeError('Expected a parsed document root')
     }
@@ -55,30 +57,27 @@ class Page {
     )
   }
 
-  ast(options: OutputOptions = {}): DocumentNode {
-    return outputTree(this.#tree, options) as DocumentNode
+  ast(options: AstOptions = {}): PageNode {
+    return outputTree(this.#tree, options) as PageNode
   }
-
-  text(options: OutputOptions = {}) {
+  json(options: JsonOptions = {}): PageJSON {
+    return treeJson(outputTree(this.#tree, options) as PageNode, options, this)
+  }
+  text(options: TextOptions = {}) {
     return text(outputTree(this.#tree, options), options)
   }
-
-  markdown(options: OutputOptions = {}) {
+  markdown(options: MarkdownOptions = {}) {
     // Reuse exact source only when neither edits nor exclusions affect the output.
     const filtered = Object.values(options).includes(false)
     if (!filtered && !this.#dirty && typeof this.#source === 'string') {
       return this.#source
     }
-    return stringifyMd(outputTree(this.#tree, options) as DocumentNode, this.#options)
+    return stringifyMd(outputTree(this.#tree, options) as PageNode, this.#options)
   }
 
   // Include nested addressable blocks as well as the document's top-level blocks.
   blocks() {
     return this.#select((node, parent) => parent === this.#tree || Boolean(node.blockId))
-  }
-
-  json(options: OutputOptions = {}): PageJSON {
-    return treeJson(outputTree(this.#tree, options) as DocumentNode, options, this)
   }
 
   // Parse before insertion so malformed input cannot partially change the tree.
@@ -142,7 +141,7 @@ class Page {
   }
 }
 
-const makePage = (tree: DocumentNode, source?: string, options?: ParseOptions) =>
+const makePage = (tree: PageNode, source?: string, options?: ParseOptions) =>
   new Page(tree, source, options)
 
 export { makePage }

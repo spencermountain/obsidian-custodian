@@ -1,5 +1,5 @@
-import type { MarkdownNode } from '../../../types/types.ts'
-const callout = (node: MarkdownNode) => {
+import type { AstNode } from '../../../types/ast.ts'
+const callout = (node: AstNode) => {
   const paragraph = node.children![0]
   const first = paragraph?.children?.[0]
   if (first?.type !== 'text') {
@@ -11,8 +11,8 @@ const callout = (node: MarkdownNode) => {
   }
 
   first.value! = first.value!.slice(match[0].length)
-  const title: MarkdownNode[] = []
-  const body: MarkdownNode[] = []
+  const title: AstNode[] = []
+  const body: AstNode[] = []
   let inBody = false
   // The first line is the title; preserve its inline formatting separately.
   paragraph.children!.forEach((child) => {

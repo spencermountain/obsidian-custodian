@@ -1,4 +1,5 @@
-import type { ParseOptions, DocumentNode } from '../types/types.ts'
+import type { ParseOptions } from '../types/api.ts'
+import type { PageNode } from '../types/ast.ts'
 import { unified } from 'unified'
 import remarkParse from 'remark-parse'
 import remarkObsidian from './remark.ts'
@@ -12,7 +13,7 @@ const parseMd = (input: string, options: ParseOptions = {}) => {
   // parse() builds the tree; runSync() applies callouts and other Obsidian transforms.
   const tree = processor.runSync(processor.parse(input), {
     value: input
-  }) as unknown as DocumentNode
+  }) as unknown as PageNode
   // Keep the source for exact round trips before the page is edited.
   return { tree, source: input }
 }

@@ -1,4 +1,4 @@
-import type { ParseOptions } from './types/types.ts'
+import type { ParseOptions } from './types/api.ts'
 import parseMd from './parse/index.ts'
 import { makePage } from './API/Page.ts'
 
@@ -8,15 +8,8 @@ const parsePage = (input: string, options: ParseOptions = {}) => {
   return makePage(tree, source, options)
 }
 
-export type {
-  ParseOptions,
-  OutputOptions,
-  EditChanges,
-  MarkdownNode,
-  DocumentNode,
-  NodeJSON,
-  PageJSON
-} from './types/types.ts'
+export type { ParseOptions, OutputOptions, EditChanges, NodeJSON, PageJSON } from './types/api.ts'
+export type { AstNode, PageNode } from './types/ast.ts'
 export type { default as ItemHandle, default as Section } from './API/Section/Section.ts'
 export type { default as Link } from './API/Section/Link.ts'
 export type { default as Embed } from './API/Section/Embed.ts'

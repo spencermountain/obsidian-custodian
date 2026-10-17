@@ -1,4 +1,4 @@
-import type { MarkdownNode } from '../../types/types.ts'
+import type { AstNode } from '../../types/ast.ts'
 // Accept width or width x height hints; ordinary aliases have no dimensions.
 const dimensions = (value = '') => {
   const match = /^(\d+)(?:x(\d+))?$/.exec(value)
@@ -38,7 +38,7 @@ const wikiFields = (value: string) => {
   return result
 }
 
-const wikiMarkdown = (node: MarkdownNode) => {
+const wikiMarkdown = (node: AstNode) => {
   let value = node.target!
   if (node.heading !== null) {
     value += `#${node.heading}`
@@ -54,9 +54,9 @@ const wikiMarkdown = (node: MarkdownNode) => {
 
 // Visit parents first so transforms can replace children before traversal continues.
 const walk = (
-  node: MarkdownNode,
-  visit: (node: MarkdownNode, parent: MarkdownNode | null) => void,
-  parent: MarkdownNode | null = null
+  node: AstNode,
+  visit: (node: AstNode, parent: AstNode | null) => void,
+  parent: AstNode | null = null
 ): void => {
   visit(node, parent)
   node.children?.forEach((child) => walk(child, visit, node))
@@ -67,7 +67,7 @@ const walk = (
 }
 
 // Internal text used for block recognition, independent of API output preferences.
-const plainText = (node: MarkdownNode): string => {
+const plainText = (node: AstNode): string => {
   if (node.type === 'comment' || node.type === 'blockId') {
     return ''
   }
