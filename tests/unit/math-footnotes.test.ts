@@ -1,4 +1,4 @@
-import { fixture, nodes, values } from '../fixture.js'
+import { fixture, nodes, values } from '../fixture.ts'
 
 fixture('math/inline-math', (t, page) => {
   t.deepEqual(page.math().map((item) => [item.json().type, item.json().value]), [

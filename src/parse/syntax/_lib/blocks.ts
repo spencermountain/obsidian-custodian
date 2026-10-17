@@ -1,6 +1,6 @@
-import type { MarkdownNode } from '../../../types.js'
+import type { MarkdownNode } from '../../../types.ts'
 type Raw = (node: MarkdownNode) => string | undefined
-import { plainText } from '../_lib.js'
+import { plainText } from '../_lib.ts'
 
 const task = (node: MarkdownNode, raw: Raw) => {
   const first = node.children![0]?.children?.[0]

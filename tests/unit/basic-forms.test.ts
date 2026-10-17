@@ -1,4 +1,4 @@
-import { fixture, nodes } from '../fixture.js'
+import { fixture, nodes } from '../fixture.ts'
 
 fixture('basic/emphasis', (t, page) => {
   t.equal(nodes(page, 'emphasis').length, 5, 'five italic spans, including nested ones')

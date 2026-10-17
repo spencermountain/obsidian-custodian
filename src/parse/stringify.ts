@@ -1,8 +1,8 @@
 import type { Root } from 'mdast'
-import type { ParseOptions, DocumentNode } from '../types.js'
+import type { ParseOptions, DocumentNode } from '../types.ts'
 import { unified } from 'unified'
 import remarkStringify from 'remark-stringify'
-import remarkObsidian from './remark.js'
+import remarkObsidian from './remark.ts'
 
 const stringifyMd = (tree: DocumentNode, options: ParseOptions = {}) => {
   // Install output handlers without a parser; this operation only reads the tree.

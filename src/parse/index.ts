@@ -1,7 +1,7 @@
-import type { ParseOptions, DocumentNode } from '../types.js'
+import type { ParseOptions, DocumentNode } from '../types.ts'
 import { unified } from 'unified'
 import remarkParse from 'remark-parse'
-import remarkObsidian from './remark.js'
+import remarkObsidian from './remark.ts'
 
 const parseMd = (input: string, options: ParseOptions = {}) => {
   if (typeof input !== 'string') {

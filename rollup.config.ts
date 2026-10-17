@@ -36,7 +36,8 @@ const main = {
     {
       banner,
       file: 'builds/obsidian-parser.cjs',
-      format: 'cjs', exports: 'default'
+      format: 'cjs',
+      exports: 'default'
     },
     {
       banner,
@@ -60,7 +61,12 @@ const remark = {
   plugins: plugins(),
   output: [
     { file: 'builds/remark/obsidian-parser.mjs', format: 'esm', plugins: [terser()] },
-    { file: 'builds/remark/obsidian-parser.cjs', format: 'cjs', exports: 'default', plugins: [terser()] }
+    {
+      file: 'builds/remark/obsidian-parser.cjs',
+      format: 'cjs',
+      exports: 'default',
+      plugins: [terser()]
+    }
   ]
 }
 

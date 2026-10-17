@@ -1,6 +1,6 @@
-import type { ParseOptions } from './types.js'
-import parseMd from './parse/index.js'
-import { makePage } from './API/Page.js'
+import type { ParseOptions } from './types.ts'
+import parseMd from './parse/index.ts'
+import { makePage } from './API/Page.ts'
 
 // Keep parsing separate from the editable page and retain the original source.
 const parsePage = (input: string, options: ParseOptions = {}) => {
@@ -8,7 +8,15 @@ const parsePage = (input: string, options: ParseOptions = {}) => {
   return makePage(tree, source, options)
 }
 
-export type { ParseOptions, OutputOptions, EditChanges, MarkdownNode, DocumentNode, NodeJSON, PageJSON } from './types.js'
-export type { ItemHandle } from './API/handle.js'
-export type { default as Page } from './API/Page.js'
+export type {
+  ParseOptions,
+  OutputOptions,
+  EditChanges,
+  MarkdownNode,
+  DocumentNode,
+  NodeJSON,
+  PageJSON
+} from './types.ts'
+export type { ItemHandle } from './API/handle.ts'
+export type { default as Page } from './API/Page.ts'
 export default parsePage

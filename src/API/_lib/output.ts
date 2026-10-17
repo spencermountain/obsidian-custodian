@@ -1,5 +1,5 @@
-import type { MarkdownNode, OutputOptions, Collection } from '../../types.js'
-import { groups } from '../json.js'
+import type { MarkdownNode, OutputOptions, Collection } from '../../types.ts'
+import { groups } from '../json.ts'
 
 // The same inclusion flags apply to every output format.
 const includes = (node: MarkdownNode, options: OutputOptions) => {

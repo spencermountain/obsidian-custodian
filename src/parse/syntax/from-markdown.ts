@@ -1,6 +1,6 @@
 import type { Extension, Handle } from 'mdast-util-from-markdown'
-import type { MarkdownNode } from '../../types.js'
-import { wikiFields } from './_lib.js'
+import type { MarkdownNode } from '../../types.ts'
+import { wikiFields } from './_lib.ts'
 
 const types = {
   obsidianLink: 'wikiLink',

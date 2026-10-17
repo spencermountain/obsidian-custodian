@@ -1,8 +1,8 @@
 import type { Handle, Options } from 'mdast-util-to-markdown'
 import type { Paragraph, Blockquote, ListItem } from 'mdast'
-import type { MarkdownNode } from '../../types.js'
+import type { MarkdownNode } from '../../types.ts'
 import { defaultHandlers } from 'mdast-util-to-markdown'
-import { wikiMarkdown } from './_lib.js'
+import { wikiMarkdown } from './_lib.ts'
 
 const wiki: Handle = (node, parent, state) => {
   const value = wikiMarkdown(node as unknown as MarkdownNode)

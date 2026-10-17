@@ -1,4 +1,4 @@
-import type { MarkdownNode } from '../../../types.js'
+import type { MarkdownNode } from '../../../types.ts'
 const callout = (node: MarkdownNode) => {
   const paragraph = node.children![0]
   const first = paragraph?.children?.[0]

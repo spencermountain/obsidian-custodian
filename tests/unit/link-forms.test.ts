@@ -1,4 +1,4 @@
-import { fixture, nodes } from '../fixture.js'
+import { fixture, nodes } from '../fixture.ts'
 
 fixture('links/wiki-alias', (t, page) => {
   t.deepEqual(page.links().map((item) => {

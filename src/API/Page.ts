@@ -1,11 +1,11 @@
-import type { DocumentNode, ParseOptions, OutputOptions, Predicate, PageJSON } from '../types.js'
-import parseMd from '../parse/index.js'
-import stringifyMd from '../parse/stringify.js'
-import outputTree from './_lib/output.js'
-import text from './text.js'
-import { clearPositions, locate, select, treeJson } from './_lib/tree.js'
-import { groups } from './json.js'
-import createHandle from './handle.js'
+import type { DocumentNode, ParseOptions, OutputOptions, Predicate, PageJSON } from '../types.ts'
+import parseMd from '../parse/index.ts'
+import stringifyMd from '../parse/stringify.ts'
+import outputTree from './_lib/output.ts'
+import text from './text.ts'
+import { clearPositions, locate, select, treeJson } from './_lib/tree.ts'
+import { groups } from './json.ts'
+import createHandle from './handle.ts'
 
 // Owns document state; parsing and serialization are stateless operations.
 class Page {

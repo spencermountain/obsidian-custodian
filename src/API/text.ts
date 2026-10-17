@@ -1,4 +1,4 @@
-import type { MarkdownNode, OutputOptions } from '../types.js'
+import type { MarkdownNode, OutputOptions } from '../types.ts'
 // Extract tree content without trimming, collapsing whitespace, or resolving embeds.
 const text = (node: MarkdownNode | null, options: OutputOptions = {}): string => {
   if (!node) { return '' }

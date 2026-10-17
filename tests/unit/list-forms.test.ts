@@ -1,4 +1,4 @@
-import { fixture, nodes } from '../fixture.js'
+import { fixture, nodes } from '../fixture.ts'
 
 fixture('lists/unordered', (t, page) => {
   t.deepEqual(page.lists().map((item) => item.json().ordered), [false, false, false], 'three unordered lists')

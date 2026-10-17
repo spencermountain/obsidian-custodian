@@ -1,8 +1,8 @@
-import type { MarkdownNode, DocumentNode } from '../../types.js'
-import protectHtml from './html.js'
-import { walk } from './_lib.js'
-import callout from './_lib/callout.js'
-import { task, blockId, attachBlockIds } from './_lib/blocks.js'
+import type { MarkdownNode, DocumentNode } from '../../types.ts'
+import protectHtml from './html.ts'
+import { walk } from './_lib.ts'
+import callout from './_lib/callout.ts'
+import { task, blockId, attachBlockIds } from './_lib/blocks.ts'
 
 const transform = (tree: MarkdownNode, parse: (input: string) => DocumentNode, source?: string) => {
   // Collapse HTML before visiting its contents: Obsidian treats those as literal.

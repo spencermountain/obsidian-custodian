@@ -1,9 +1,9 @@
 import test from 'tape'
-import parsePage from '../../src/index.js'
+import parsePage from '../../src/index.ts'
 import { unified } from 'unified'
 import remarkParse from 'remark-parse'
 import remarkStringify from 'remark-stringify'
-import remarkObsidian from '../../src/remark.js'
+import remarkObsidian from '../../src/remark.ts'
 
 test('public API exposes flat, detached JSON and exact untouched Markdown', (t) => {
   const input = '# Hello **world**\r\n\r\nhello [[world]]\r\n\r\n![[path/to/myFile.jpg|500]]'

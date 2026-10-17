@@ -1,5 +1,5 @@
 import test from 'tape'
-import parsePage from '../lib.js'
+import parsePage from '../lib.ts'
 
 // Expected strings describe the output contract, without whitespace normalization.
 test('text extracts formatting, aliases, callout titles, and bodies', (t) => {

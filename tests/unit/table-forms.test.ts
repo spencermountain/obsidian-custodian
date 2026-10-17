@@ -1,4 +1,4 @@
-import { fixture, nodes, values } from '../fixture.js'
+import { fixture, nodes, values } from '../fixture.ts'
 
 fixture('tables/inline-formatting', (t, page) => {
   t.equal(page.tables().length, 1, 'one table')

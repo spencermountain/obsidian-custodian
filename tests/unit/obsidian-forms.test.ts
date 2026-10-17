@@ -1,4 +1,4 @@
-import { fixture, nodes, values } from '../fixture.js'
+import { fixture, nodes, values } from '../fixture.ts'
 
 fixture('blocks/paragraph-block', (t, page) => {
   const block = page.blocks().find((item) => item.json().blockId === 'paragraph-id')

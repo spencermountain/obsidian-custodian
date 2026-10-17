@@ -1,9 +1,9 @@
-import type { MarkdownNode, NodeJSON, OutputOptions, EditChanges } from '../types.js'
-import type Page from './Page.js'
-import { json } from './json.js'
-import edit from './edit.js'
-import outputTree from './_lib/output.js'
-import text from './text.js'
+import type { MarkdownNode, NodeJSON, OutputOptions, EditChanges } from '../types.ts'
+import type Page from './Page.ts'
+import { json } from './json.ts'
+import edit from './edit.ts'
+import outputTree from './_lib/output.ts'
+import text from './text.ts'
 
 interface ItemHandle {
   json(options?: OutputOptions): NodeJSON | null

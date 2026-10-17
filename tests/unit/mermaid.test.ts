@@ -1,6 +1,6 @@
 import test from 'tape'
-import parsePage from '../lib.js'
-import readFile from '../examples/index.js'
+import parsePage from '../lib.ts'
+import readFile from '../examples/index.ts'
 const here = '[mermaid] '
 const examples = [
   ['mermaid', [

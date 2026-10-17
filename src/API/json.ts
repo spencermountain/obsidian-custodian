@@ -1,6 +1,6 @@
-import type { MarkdownNode, NodeJSON, OutputOptions, Collection, Predicate } from '../types.js'
-import text from './text.js'
-import { dimensions } from '../parse/syntax/_lib.js'
+import type { MarkdownNode, NodeJSON, OutputOptions, Collection, Predicate } from '../types.ts'
+import text from './text.ts'
+import { dimensions } from '../parse/syntax/_lib.ts'
 
 // Shared category names for selectors, JSON collections, and output exclusions.
 const groups: Record<Collection, Predicate> = {

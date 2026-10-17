@@ -16,7 +16,8 @@
     "verbatimModuleSyntax": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": false,
-    "noUnusedLocals": true
+    "noUnusedLocals": true,
+    "rewriteRelativeImportExtensions": true
   },
   "include": [
     "src/**/*.ts"

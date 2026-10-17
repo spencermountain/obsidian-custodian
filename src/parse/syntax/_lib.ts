@@ -1,4 +1,4 @@
-import type { MarkdownNode } from '../../types.js'
+import type { MarkdownNode } from '../../types.ts'
 // Accept width or width x height hints; ordinary aliases have no dimensions.
 const dimensions = (value = '') => {
   const match = /^(\d+)(?:x(\d+))?$/.exec(value)

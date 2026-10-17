@@ -1,4 +1,4 @@
-import type { MarkdownNode, EditChanges, NodeType } from '../types.js'
+import type { MarkdownNode, EditChanges, NodeType } from '../types.ts'
 const text: (value: unknown, key: string) => asserts value is string = (value, key) => {
   if (typeof value !== 'string') { throw new TypeError(`${key} must be a string`) }
 }

@@ -13,9 +13,9 @@ If you are generating tests, do so blindly and without research on the codebase.
 
 ### Code style
 
-- Write maintainable javascript, using esmodules
+- Write maintainable typescript, using esmodules
 - Write portable ES2022+ for browers and Node>=18
-- Typescript and jsdoc are typically not required
+- Detailed Typescript internal types are typically not required
 - Add terse comments for maintainability
 - Prefer functions assigned with const, over function declarations
 - Do not use unbracketed if statements

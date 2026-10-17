@@ -1,4 +1,4 @@
-import { fixture, nodes, values } from '../fixture.js'
+import { fixture, nodes, values } from '../fixture.ts'
 
 fixture('code/inline-code', (t, page) => {
   t.deepEqual(values(page, 'inlineCode'), [

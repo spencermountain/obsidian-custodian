@@ -1,13 +1,13 @@
 import type { Processor, Transformer } from 'unified'
 import type { Root } from 'mdast'
-import type { ParseOptions, DocumentNode } from '../types.js'
+import type { ParseOptions, DocumentNode } from '../types.ts'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import remarkFrontmatter from 'remark-frontmatter'
-import syntax from './syntax/tokenize.js'
-import fromMarkdown from './syntax/from-markdown.js'
-import toMarkdown from './syntax/to-markdown.js'
-import transform from './syntax/transform.js'
+import syntax from './syntax/tokenize.ts'
+import fromMarkdown from './syntax/from-markdown.ts'
+import toMarkdown from './syntax/to-markdown.ts'
+import transform from './syntax/transform.ts'
 
 // Unified supplies `this`; arrow functions cannot be used for plugin attachers.
 const obsidianSyntax = function (this: Processor) {

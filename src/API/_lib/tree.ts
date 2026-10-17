@@ -1,7 +1,7 @@
-import type { MarkdownNode, DocumentNode, OutputOptions, Predicate, PageJSON, Collection } from '../../types.js'
-import { walk } from '../../parse/syntax/_lib.js'
-import { groups, json } from '../json.js'
-import text from '../text.js'
+import type { MarkdownNode, DocumentNode, OutputOptions, Predicate, PageJSON, Collection } from '../../types.ts'
+import { walk } from '../../parse/syntax/_lib.ts'
+import { groups, json } from '../json.ts'
+import text from '../text.ts'
 
 const clearPositions = (tree: MarkdownNode) => {
   // Source positions no longer describe the document after editing.
