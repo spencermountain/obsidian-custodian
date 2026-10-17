@@ -11,6 +11,9 @@ const extraGroups = {
 
 // The same inclusion flags apply to every output format.
 const includes = (node: AstNode, options: OutputOptions) => {
+  if (options.footnotes === false && node.type === 'footnoteReference') {
+    return false
+  }
   if (options.blockIds === false && node.type === 'blockId') {
     return false
   }

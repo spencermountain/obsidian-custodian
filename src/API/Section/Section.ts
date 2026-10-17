@@ -1,8 +1,9 @@
 import renderText from '../out/text/text.ts'
+import renderHtml from '../out/html/html.ts'
 import serialize from '../out/json/json.ts'
 import { definitions } from '../ast/references.ts'
 import type { EditChanges, NodeJSON } from '../../types/api.ts'
-import type { TextOptions, AstOptions, JsonOptions } from '../../types/options.ts'
+import type { TextOptions, AstOptions, JsonOptions, HtmlOptions } from '../../types/options.ts'
 
 import type { AstNode } from '../../types/ast.ts'
 import type Page from '../Page.ts'
@@ -35,6 +36,10 @@ class Section {
 
   ast(options: AstOptions = {}) {
     return outputTree(this.#node, { ...astDefaults, ...options })
+  }
+
+  html(options: HtmlOptions = {}): string {
+    return renderHtml(this.#node, options, this.context.page?.ast())
   }
 
   json(options: JsonOptions = {}): NodeJSON | null {

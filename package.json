@@ -32,7 +32,11 @@
   },
   "dependencies": {
     "@rollup/plugin-terser": "^1.0.0",
+    "hast-util-raw": "^9.1.0",
+    "hast-util-sanitize": "^5.0.2",
+    "hast-util-to-html": "^9.0.5",
     "js-yaml": "^5.5.0",
+    "mdast-util-to-hast": "^13.2.1",
     "mdast-util-to-markdown": "^2.2.0",
     "remark-frontmatter": "^5.0.0",
     "remark-gfm": "^4.0.1",

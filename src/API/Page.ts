@@ -1,10 +1,11 @@
 import type { ParseOptions, PageJSON } from '../types/api.ts'
-import type { TextOptions, JsonOptions, MarkdownOptions, AstOptions } from '../types/options.ts'
+import type { TextOptions, JsonOptions, MarkdownOptions, AstOptions, HtmlOptions } from '../types/options.ts'
 import type { PageNode, Predicate } from '../types/ast.ts'
 import parseMd from '../parse/index.ts'
 import stringifyMd from '../parse/stringify.ts'
 import outputTree from './out/ast/output.ts'
 import text from './out/text/text.ts'
+import html from './out/html/html.ts'
 import astDefaults from './out/ast/defaults.ts'
 import jsonDefaults from './out/json/defaults.ts'
 import markdownDefaults from './out/markdown/defaults.ts'
@@ -64,6 +65,9 @@ class Page {
   }
   text(options: TextOptions = {}) {
     return text(this.#tree, options)
+  }
+  html(options: HtmlOptions = {}) {
+    return html(this.#tree, options)
   }
   markdown(options: MarkdownOptions = {}) {
     // Reuse exact source only when neither edits nor exclusions affect the output.

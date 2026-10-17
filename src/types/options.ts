@@ -35,7 +35,7 @@ interface MarkdownOptions extends Omit<AstOptions, 'headings' | 'callouts'> {
   callouts?: boolean | 'body'
 }
 
-// Reserved for the future HTML renderer; no HTML output method yet.
+// HTML uses the same inclusion keys with its own presentation modes.
 interface HtmlOptions extends Omit<AstOptions, 'headings' | 'callouts'> {
   headings?: boolean | 'inline'
   callouts?: boolean | 'body'

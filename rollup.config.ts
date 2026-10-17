@@ -47,7 +47,7 @@ const main = {
       plugins: [
         terser(),
         sizeCheck({
-          expect: 225, // Includes YAML property parsing; sizes in kb
+          expect: 450, // Includes YAML and HTML parsing/sanitization; sizes in kb
           warn: 15, // acceptable change (+/-)
           throw: 50 // unacceptable change (+/-)
         })
