@@ -1,3 +1,4 @@
+import category from '../category.ts'
 import { walk } from '../../../../parse/syntax/_lib.ts'
 import { normalize } from '../../../ast/references.ts'
 import { createSection } from '../../registry.ts'
@@ -19,10 +20,9 @@ const render = (root, options) => {
     root,
     notes,
     inlineCount: 0,
-    options,
     definitions,
     footnotes: null,
-    render: (node, parent = null): string => createSection(node).html(options, state, parent),
+    render: (node, parent = null): string => createSection(node, { html: state, parent }).html(options[category(node)]),
     all: (node, separator = ''): string => (node.children || [])
       .map(child => state.render(child, node))
       .filter(value => value !== '')

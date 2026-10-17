@@ -10,7 +10,8 @@ const register = (type: string, Constructor: typeof Section) => {
 }
 
 const createSection = (node: AstNode, context: SectionContext = {}): Section => {
-  const Constructor = classes.get(node.type) || classes.get('*')
+  const type = node.type === 'listItem' && typeof node.checked === 'boolean' ? 'task' : node.type
+  const Constructor = classes.get(type) || classes.get('*')
   return new Constructor(node, context)
 }
 

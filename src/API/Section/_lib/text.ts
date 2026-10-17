@@ -1,3 +1,5 @@
+import category from './category.ts'
+import defaults from '../../out/text.ts'
 import type { TextOptions, JsonOptions } from '../../../types/api.ts'
 import type { AstNode } from '../../../types/ast.ts'
 import { createSection } from '../registry.ts'
@@ -8,7 +10,8 @@ const text = (node: AstNode | null, options: TextOptions = {}): string => {
   if (!node) {
     return ''
   }
-  return createSection(node).text(options)
+  const resolved = { ...defaults, ...options }
+  return createSection(node, { text: resolved }).text(resolved[category(node)])
 }
 
 // JSON text fields stay plain and use JSON's inclusion policy, not text defaults.

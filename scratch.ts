@@ -20,7 +20,7 @@ const input = `hello [[world#cool]]
 
 const page = parsePage(input)
 page.links()[1].title = 'farming'
-console.log(page.html())
+console.log(page.json())
 // console.log(page.json({}))
 // console.log(page.embeds()[0].text())
 

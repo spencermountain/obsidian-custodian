@@ -18718,7 +18718,7 @@ function checkListItemIndent(state) {
  * @returns {string}
  *   Serialized markdown.
  */
-function listItem$1(node, parent, state, info) {
+function listItem$2(node, parent, state, info) {
   const listItemIndent = checkListItemIndent(state);
   let bullet = state.bulletCurrent || checkBullet(state);
 
@@ -19026,7 +19026,7 @@ const handle = {
   link,
   linkReference,
   list,
-  listItem: listItem$1,
+  listItem: listItem$2,
   paragraph,
   root,
   strong,
@@ -26338,7 +26338,7 @@ const callout$1 = (raw, parent, state, info) => {
         .map((line) => (line ? `> ${line}` : '>'))
         .join('\n');
 };
-const listItem = (raw, parent, state, info) => {
+const listItem$1 = (raw, parent, state, info) => {
     const node = raw;
     const content = handle.listItem(node, parent, state, info);
     if (typeof node.checked !== 'boolean') {
@@ -26363,7 +26363,7 @@ const handlers = {
     blockId: (node) => ` ^${node.value}`,
     highlight,
     callout: callout$1,
-    listItem
+    listItem: listItem$1
 };
 const toMarkdown = () => ({
     join: [joinSpacing],
@@ -26727,18 +26727,50 @@ const outputTree = (tree, options = {}) => {
     return structuredClone(copy(tree));
 };
 
+const extra = {
+    html: 'html', blockId: 'blockIds', footnoteReference: 'footnotes',
+    blockquote: 'quotes', thematicBreak: 'thematicBreaks', definition: 'definitions'
+};
+// Shared section methods use the same category as page output options.
+const category = (node) => Object.entries(groups).find(([, matches]) => matches(node, null))?.[0] || extra[node.type] || '';
+
+// Defaults for text output; callers can override individual categories.
+const defaults$4 = {
+    paragraphs: true,
+    headings: true,
+    links: 'text',
+    embeds: false,
+    tasks: true,
+    lists: true,
+    callouts: 'body',
+    highlights: 'text',
+    comments: false,
+    code: true,
+    math: true,
+    tables: false,
+    frontmatter: false,
+    footnotes: true,
+    tags: true,
+    blockIds: false,
+    html: false,
+    quotes: true,
+    thematicBreaks: true,
+    definitions: true
+};
+
 // Shared by the factory and renderers, without importing subclasses into their base.
 const classes = new Map();
 const register = (type, Constructor) => {
     classes.set(type, Constructor);
 };
 const createSection = (node, context = {}) => {
-    const Constructor = classes.get(node.type) || classes.get('*');
+    const type = node.type === 'listItem' && typeof node.checked === 'boolean' ? 'task' : node.type;
+    const Constructor = classes.get(type) || classes.get('*');
     return new Constructor(node, context);
 };
 
 // Defaults for json output; callers can override individual categories.
-const defaults$4 = {
+const defaults$3 = {
     paragraphs: true,
     headings: true,
     links: true,
@@ -26766,11 +26798,12 @@ const text$2 = (node, options = {}) => {
     if (!node) {
         return '';
     }
-    return createSection(node).text(options);
+    const resolved = { ...defaults$4, ...options };
+    return createSection(node, { text: resolved }).text(resolved[category(node)]);
 };
 // JSON text fields stay plain and use JSON's inclusion policy, not text defaults.
 const jsonText = (node, options = {}) => text$2(node, {
-    ...defaults$4,
+    ...defaults$3,
     ...options,
     headings: 'inline',
     comments: false,
@@ -26778,7 +26811,7 @@ const jsonText = (node, options = {}) => text$2(node, {
 });
 
 // Defaults for html output; callers can override individual categories.
-const defaults$3 = {
+const defaults$2 = {
     paragraphs: true,
     headings: true,
     links: true,
@@ -26942,10 +26975,9 @@ const render = (root, options) => {
         root,
         notes,
         inlineCount: 0,
-        options,
         definitions,
         footnotes: null,
-        render: (node, parent = null) => createSection(node).html(options, state, parent),
+        render: (node, parent = null) => createSection(node, { html: state, parent }).html(options[category(node)]),
         all: (node, separator = '') => (node.children || [])
             .map(child => state.render(child, node))
             .filter(value => value !== '')
@@ -26959,7 +26991,7 @@ const render = (root, options) => {
 
 // Render detached nodes directly; no HTML parser or processor is retained.
 const html = (tree, options = {}, context) => {
-    options = { ...defaults$3, ...options };
+    options = { ...defaults$2, ...options };
     const filtered = outputTree(tree, options);
     if (!filtered) {
         return '';
@@ -26969,7 +27001,7 @@ const html = (tree, options = {}, context) => {
 };
 
 // Defaults for ast output; callers can override individual categories.
-const defaults$2 = {
+const defaults$1 = {
     paragraphs: true,
     headings: true,
     links: true,
@@ -26993,7 +27025,7 @@ const defaults$2 = {
 };
 
 // Defaults for markdown output; callers can override individual categories.
-const defaults$1 = {
+const defaults = {
     paragraphs: true,
     headings: true,
     links: true,
@@ -27018,7 +27050,7 @@ const defaults$1 = {
 
 // Format a detached tree so output choices never edit the live page.
 const markdownTree = (tree, options) => {
-    return createSection(tree).markdownNode(options);
+    return createSection(tree, { markdown: options }).markdownNode(options[category(tree)]);
 };
 
 const text = (value, key) => {
@@ -27137,30 +27169,6 @@ const edit = (node, changes) => {
     return next;
 };
 
-// Defaults for text output; callers can override individual categories.
-const defaults = {
-    paragraphs: true,
-    headings: true,
-    links: 'text',
-    embeds: false,
-    tasks: true,
-    lists: true,
-    callouts: 'body',
-    highlights: 'text',
-    comments: false,
-    code: true,
-    math: true,
-    tables: false,
-    frontmatter: false,
-    footnotes: true,
-    tags: true,
-    blockIds: false,
-    html: false,
-    quotes: true,
-    thematicBreaks: true,
-    definitions: true
-};
-
 // Shared ownership, detached views, and metadata. Known syntax renders in subclasses.
 class Section {
     #node;
@@ -27172,19 +27180,50 @@ class Section {
     get node() {
         return this.#node;
     }
-    ast(options = {}) {
-        return outputTree(this.#node, { ...defaults$2, ...options });
+    get category() { return category(this.#node); }
+    ast(setting) {
+        if (setting === false) {
+            return null;
+        }
+        const options = { [this.category]: setting ?? defaults$1[this.category] };
+        return outputTree(this.#node, { ...defaults$1, ...options });
     }
-    json(options = {}) {
-        options = { ...defaults$4, ...options };
-        const node = outputTree(this.#node, options);
+    textNode(setting) {
+        if (setting === false) {
+            return null;
+        }
+        const options = { ...defaults$4, ...this.context.text };
+        if (setting !== undefined) {
+            options[this.category] = setting;
+        }
+        return outputTree(this.#node, options);
+    }
+    renderText(node) {
+        return text$2(node, this.context.text);
+    }
+    jsonNode(setting) {
+        if (setting === false) {
+            return null;
+        }
+        const options = { ...defaults$3, ...this.context.json };
+        if (setting !== undefined) {
+            options[this.category] = setting;
+        }
+        return outputTree(this.#node, options);
+    }
+    jsonText(node) {
+        return jsonText(node, this.context.json);
+    }
+    definition() {
+        const page = this.context.page;
+        return page && definitions(page.ast({ ...defaults$3, ...this.context.json })).get(normalize(this.#node.identifier));
+    }
+    json(setting) {
+        const node = this.jsonNode(setting);
         if (!node) {
             return null;
         }
-        const result = {
-            type: node.type,
-            text: this.text({ ...options, headings: 'inline', comments: false, blockIds: false })
-        };
+        const result = { type: node.type, text: this.jsonText(node) };
         if (node.blockId !== undefined) {
             result.blockId = node.blockId;
         }
@@ -27194,39 +27233,52 @@ class Section {
         return result;
     }
     // Unknown plugin nodes keep a useful fallback without knowing any syntax types.
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.#node, options);
+    text(setting) {
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
         if (node.value !== undefined) {
             return node.value;
         }
-        return (node.children || []).map(child => text$2(child, options)).join('');
+        return (node.children || []).map(child => this.renderText(child)).join('');
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const state = this.context.html;
         if (!state) {
+            const options = { ...defaults$2 };
+            if (setting !== undefined) {
+                options[this.category] = setting;
+            }
             return html(this.#node, options, this.context.page?.ast());
         }
         return this.#node.value == null ? state.all(this.#node) : text$1(this.#node.value);
     }
     // Markdown syntax remains delegated to remark; subclasses can change their node.
-    markdown(options = {}) {
-        const node = this.markdownNode(options);
+    markdown(setting) {
+        const node = this.markdownNode(setting);
         return node ? stringifyMd(node) : '';
     }
-    markdownNode(options = {}) {
-        options = { ...defaults$1, ...options };
+    markdownNode(setting) {
+        if (setting === false) {
+            return null;
+        }
+        const options = { ...defaults, ...this.context.markdown };
+        if (setting !== undefined) {
+            options[this.category] = setting;
+        }
         const node = outputTree(this.#node, options);
         if (!node) {
             return null;
         }
         if (node.children) {
-            node.children = node.children.map(child => createSection(child).markdownNode(options)).filter(Boolean);
+            node.children = node.children.map(child => markdownTree(child, options)).filter(Boolean);
         }
         if (Array.isArray(node.title)) {
-            node.title = node.title.map(child => createSection(child).markdownNode(options)).filter(Boolean);
+            node.title = node.title.map(child => markdownTree(child, options)).filter(Boolean);
         }
         return node;
     }
@@ -27267,20 +27319,23 @@ class Section {
 }
 
 class Root extends Section {
-    json(options = {}) {
-        return super.json(options);
+    json(setting) {
+        return super.json(setting);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
-        return (node.children || []).map(child => text$2(child, options)).join('\n');
+        return (node.children || []).map(child => this.renderText(child)).join('\n');
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         return state.all(node, '\n');
@@ -27288,20 +27343,23 @@ class Root extends Section {
 }
 
 class Paragraph extends Section {
-    json(options = {}) {
-        return super.json(options);
+    json(setting) {
+        return super.json(setting);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
-        return (node.children || []).map(child => text$2(child, options)).join('');
+        return (node.children || []).map(child => this.renderText(child)).join('');
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         return element('p', {}, state.all(node));
@@ -27322,34 +27380,36 @@ const metadata = (result, node, fields) => {
 };
 
 class Heading extends Section {
-    markdownNode(options = {}) {
-        options = { ...defaults$1, ...options };
-        const node = super.markdownNode(options);
-        if (node && options.headings === 'inline') {
+    markdownNode(setting = defaults.headings) {
+        const node = super.markdownNode(setting);
+        if (node && setting === 'inline') {
             node.type = 'paragraph';
             delete node.depth;
         }
         return node;
     }
-    json(options = {}) {
-        return metadata(super.json(options), this.node, ['depth']);
+    json(setting) {
+        return metadata(super.json(setting), this.node, ['depth']);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
-        const content = (node.children || []).map(child => text$2(child, options)).join('');
-        return options.headings === true ? '#'.repeat(node.depth) + ' ' + content : content;
+        const content = (node.children || []).map(child => this.renderText(child)).join('');
+        return (setting ?? defaults$4.headings) === true ? '#'.repeat(node.depth) + ' ' + content : content;
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         const content = state.all(node);
-        if (options.headings === 'inline') {
+        if (setting === 'inline') {
             return content;
         }
         const depth = Number.isInteger(node.depth) && node.depth >= 1 && node.depth <= 6 ? node.depth : 1;
@@ -27369,20 +27429,23 @@ class Heading extends Section {
 }
 
 class Text extends Section {
-    json(options = {}) {
-        return metadata(super.json(options), this.node, ['value']);
+    json(setting) {
+        return metadata(super.json(setting), this.node, ['value']);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
         return node.value ?? '';
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         return text$1(node.value);
@@ -27390,20 +27453,23 @@ class Text extends Section {
 }
 
 class Html extends Section {
-    json(options = {}) {
-        return metadata(super.json(options), this.node, ['value']);
+    json(setting) {
+        return metadata(super.json(setting), this.node, ['value']);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
         return node.value ?? '';
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         return text$1(node.value);
@@ -27411,20 +27477,23 @@ class Html extends Section {
 }
 
 class Emphasis extends Section {
-    json(options = {}) {
-        return super.json(options);
+    json(setting) {
+        return super.json(setting);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
-        return (node.children || []).map(child => text$2(child, options)).join('');
+        return (node.children || []).map(child => this.renderText(child)).join('');
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         return element('em', {}, state.all(node));
@@ -27432,20 +27501,23 @@ class Emphasis extends Section {
 }
 
 class Strong extends Section {
-    json(options = {}) {
-        return super.json(options);
+    json(setting) {
+        return super.json(setting);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
-        return (node.children || []).map(child => text$2(child, options)).join('');
+        return (node.children || []).map(child => this.renderText(child)).join('');
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         return element('strong', {}, state.all(node));
@@ -27453,20 +27525,23 @@ class Strong extends Section {
 }
 
 class Strikethrough extends Section {
-    json(options = {}) {
-        return super.json(options);
+    json(setting) {
+        return super.json(setting);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
-        return (node.children || []).map(child => text$2(child, options)).join('');
+        return (node.children || []).map(child => this.renderText(child)).join('');
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         return element('del', {}, state.all(node));
@@ -27474,20 +27549,23 @@ class Strikethrough extends Section {
 }
 
 class InlineCode extends Section {
-    json(options = {}) {
-        return metadata(super.json(options), this.node, ['value']);
+    json(setting) {
+        return metadata(super.json(setting), this.node, ['value']);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
         return node.value ?? '';
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         return element('code', {}, text$1(node.value));
@@ -27495,20 +27573,23 @@ class InlineCode extends Section {
 }
 
 class Code extends Section {
-    json(options = {}) {
-        return metadata(super.json(options), this.node, ['value', 'lang', 'meta']);
+    json(setting) {
+        return metadata(super.json(setting), this.node, ['value', 'lang', 'meta']);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
         return node.value ?? '';
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         const language = (node.lang || '').split(/\s/)[0];
@@ -27517,20 +27598,23 @@ class Code extends Section {
 }
 
 class Break extends Section {
-    json(options = {}) {
-        return super.json(options);
+    json(setting) {
+        return super.json(setting);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
         return '\n';
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         this.node;
         return element('br') + '\n';
@@ -27538,20 +27622,23 @@ class Break extends Section {
 }
 
 class ThematicBreak extends Section {
-    json(options = {}) {
-        return super.json(options);
+    json(setting) {
+        return super.json(setting);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
-        return (node.children || []).map(child => text$2(child, options)).join('');
+        return (node.children || []).map(child => this.renderText(child)).join('');
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         this.node;
         return element('hr');
@@ -27559,20 +27646,23 @@ class ThematicBreak extends Section {
 }
 
 class Quote extends Section {
-    json(options = {}) {
-        return super.json(options);
+    json(setting) {
+        return super.json(setting);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
-        return (node.children || []).map(child => text$2(child, options)).join('\n');
+        return (node.children || []).map(child => this.renderText(child)).join('\n');
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         return element('blockquote', {}, state.all(node, '\n'));
@@ -27580,26 +27670,29 @@ class Quote extends Section {
 }
 
 class List extends Section {
-    json(options = {}) {
-        const result = metadata(super.json(options), this.node, ['ordered', 'start']);
+    json(setting) {
+        const result = metadata(super.json(setting), this.node, ['ordered', 'start']);
         if (!result) {
             return null;
         }
-        const node = outputTree(this.node, { ...defaults$4, ...options });
-        result.items = node.children.map(item => ({ text: jsonText(item, options), checked: item.checked ?? null }));
+        const node = this.jsonNode(setting);
+        result.items = node.children.map(item => ({ text: this.jsonText(item), checked: item.checked ?? null }));
         return result;
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
-        return (node.children || []).map(child => text$2(child, options)).join('\n');
+        return (node.children || []).map(child => this.renderText(child)).join('\n');
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         const tasks = node.children.some(child => typeof child.checked === 'boolean');
@@ -27614,65 +27707,86 @@ class List extends Section {
     }
 }
 
+// Tight lists omit paragraph wrappers; loose lists retain their block structure.
+const listItem = (node, state, parent, prefix = '') => {
+    const loose = parent?.spread || parent?.children?.some(child => child.spread);
+    return (node.children || []).map((child, index) => {
+        const before = index === 0 ? prefix : '';
+        if (child.type === 'paragraph') {
+            const content = before + state.all(child);
+            return loose ? element('p', {}, content) : content;
+        }
+        return before + state.render(child, node);
+    }).join('\n');
+};
+
 class ListItem extends Section {
-    json(options = {}) {
-        return metadata(super.json(options), this.node, ['checked', 'taskMarker']);
+    json(setting) {
+        return super.json(setting);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
-        return (node.children || []).map(child => text$2(child, options)).join('\n');
+        return (node.children || []).map(child => this.renderText(child)).join('\n');
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
+        const parent = this.context.parent;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
-        const node = this.node;
-        const properties = {};
-        let checkbox = '';
-        if (typeof node.checked === 'boolean') {
-            properties.className = 'task-list-item';
-            checkbox = element('input', { type: 'checkbox', disabled: true, checked: node.checked }) + ' ';
+        return element('li', {}, listItem(this.node, state, parent));
+    }
+}
+
+// Tasks share list-item structure while owning checkbox state and presentation.
+class Task extends ListItem {
+    get checked() { return this.node.checked; }
+    set checked(value) { this.update({ checked: value }); }
+    json(setting) {
+        return metadata(super.json(setting), this.node, ['checked', 'taskMarker']);
+    }
+    html(setting) {
+        const state = this.context.html;
+        if (!state) {
+            return super.html(setting);
         }
-        // Tight lists omit paragraph wrappers; loose lists retain their block structure.
-        const loose = parent?.spread || parent?.children?.some(child => child.spread);
-        const children = (node.children || []).map((child, index) => {
-            const prefix = index === 0 ? checkbox : '';
-            if (child.type === 'paragraph') {
-                const content = prefix + state.all(child);
-                return loose ? element('p', {}, content) : content;
-            }
-            return prefix + state.render(child, node);
-        });
-        return element('li', properties, children.join('\n'));
+        const checkbox = element('input', { type: 'checkbox', disabled: true, checked: this.checked }) + ' ';
+        const content = listItem(this.node, state, this.context.parent, checkbox);
+        return element('li', { className: 'task-list-item' }, content);
     }
 }
 
 class Table extends Section {
-    json(options = {}) {
-        const result = super.json(options);
+    json(setting) {
+        const result = super.json(setting);
         if (!result) {
             return null;
         }
-        const node = outputTree(this.node, { ...defaults$4, ...options });
+        const node = this.jsonNode(setting);
         result.align = [...node.align];
-        result.rows = node.children.map(row => row.children.map(cell => jsonText(cell, options)));
+        result.rows = node.children.map(row => row.children.map(cell => this.jsonText(cell)));
         return result;
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
-        return (node.children || []).map(child => text$2(child, options)).join('\n');
+        return (node.children || []).map(child => this.renderText(child)).join('\n');
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         const rows = (node.children || []).map(row => state.render(row, node));
@@ -27683,20 +27797,24 @@ class Table extends Section {
 }
 
 class TableRow extends Section {
-    json(options = {}) {
-        return super.json(options);
+    json(setting) {
+        return super.json(setting);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
-        return (node.children || []).map(child => text$2(child, options)).join('\t');
+        return (node.children || []).map(child => this.renderText(child)).join('\t');
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
+        const parent = this.context.parent;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         const header = parent?.children?.indexOf(node) === 0;
@@ -27708,20 +27826,24 @@ class TableRow extends Section {
 }
 
 class TableCell extends Section {
-    json(options = {}) {
-        return super.json(options);
+    json(setting) {
+        return super.json(setting);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
-        return (node.children || []).map(child => text$2(child, options)).join('');
+        return (node.children || []).map(child => this.renderText(child)).join('');
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
+        const parent = this.context.parent;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         const align = parent?.align;
@@ -27742,20 +27864,23 @@ class Link extends Section {
     set target(value) {
         this.update({ url: value });
     }
-    json(options = {}) {
-        return metadata(super.json(options), this.node, ['url', 'title']);
+    json(setting) {
+        return metadata(super.json(setting), this.node, ['url', 'title']);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
-        return (node.children || []).map(child => text$2(child, options)).join('');
+        return (node.children || []).map(child => this.renderText(child)).join('');
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         return element('a', { href: url(node.url), title: node.title }, state.all(node));
@@ -27778,12 +27903,14 @@ class WikiLink extends Link {
     set title(value) { this.update({ alias: value }); }
     get target() { return this.node.target ?? ''; }
     set target(value) { this.update({ target: value }); }
-    json(options = {}) {
-        return metadata(super.json(options), this.node, ['target', 'alias', 'heading', 'block']);
+    json(setting) {
+        return metadata(super.json(setting), this.node, ['target', 'alias', 'heading', 'block']);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
@@ -27793,9 +27920,10 @@ class WikiLink extends Link {
         const fragment = node.heading ?? (node.block ? '^' + node.block : '');
         return node.target + (node.target && fragment ? '#' : '') + fragment;
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         const target = destination(node);
@@ -27812,16 +27940,15 @@ class LinkReference extends Link {
     set target(value) {
         this.update({ url: value, title: this.json()?.title ?? null });
     }
-    json(options = {}) {
+    json(setting) {
         if (this.node.type !== 'linkReference') {
-            return super.json(options);
+            return super.json(setting);
         }
-        const result = metadata(super.json(options), this.node, ['identifier', 'label']);
+        const result = metadata(super.json(setting), this.node, ['identifier', 'label']);
         if (!result) {
             return null;
         }
-        const page = this.context.page;
-        const definition = page && definitions(page.ast({ ...defaults$4, ...options })).get(normalize(this.node.identifier));
+        const definition = this.definition();
         if (definition) {
             result.url = definition.url;
             if (definition.title != null) {
@@ -27830,20 +27957,23 @@ class LinkReference extends Link {
         }
         return result;
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
-        return (node.children || []).map(child => text$2(child, options)).join('');
+        return (node.children || []).map(child => this.renderText(child)).join('');
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         if (this.node.type !== 'linkReference') {
-            return super.html(options, state, parent);
+            return super.html(setting);
         }
         const node = this.node;
         const definition = state.definitions.get(normalize(node.identifier));
@@ -27851,13 +27981,13 @@ class LinkReference extends Link {
             return state.all(node);
         }
         const resolved = { ...node, url: definition.url, title: definition.title };
-        return new Link(resolved).html(options, state);
+        return new Link(resolved, this.context).html(setting);
     }
 }
 
 class Embed extends Section {
-    json(options = {}) {
-        const result = metadata(super.json(options), this.node, ['target', 'alias', 'heading', 'block']);
+    json(setting) {
+        const result = metadata(super.json(setting), this.node, ['target', 'alias', 'heading', 'block']);
         if (!result) {
             return null;
         }
@@ -27874,17 +28004,20 @@ class Embed extends Section {
         }
         return result;
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
         return node.alias ?? node.target;
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         if (/\.(?:avif|bmp|gif|jpe?g|png|svg|webp)$/i.test(node.target)) {
@@ -27905,25 +28038,28 @@ class Embed extends Section {
 }
 
 class Image extends Section {
-    json(options = {}) {
-        const result = metadata(super.json(options), this.node, ['url', 'alt', 'title']);
+    json(setting) {
+        const result = metadata(super.json(setting), this.node, ['url', 'alt', 'title']);
         if (!result) {
             return null;
         }
         Object.assign(result, dimensions((this.node.alt || '').split('|').at(-1)));
         return result;
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
         return node.alt || '';
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         const parts = (node.alt || '').split('|');
@@ -27937,13 +28073,12 @@ class Image extends Section {
 }
 
 class ImageReference extends Image {
-    json(options = {}) {
-        const result = metadata(super.json(options), this.node, ['identifier', 'label', 'alt']);
+    json(setting) {
+        const result = metadata(super.json(setting), this.node, ['identifier', 'label', 'alt']);
         if (!result) {
             return null;
         }
-        const page = this.context.page;
-        const definition = page && definitions(page.ast({ ...defaults$4, ...options })).get(normalize(this.node.identifier));
+        const definition = this.definition();
         if (definition) {
             result.url = definition.url;
             if (definition.title != null) {
@@ -27952,17 +28087,20 @@ class ImageReference extends Image {
         }
         return result;
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
         return node.alt || '';
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         const definition = state.definitions.get(normalize(node.identifier));
@@ -27970,41 +28108,43 @@ class ImageReference extends Image {
             return text$1(node.alt || '');
         }
         const resolved = { ...node, url: definition.url, title: definition.title };
-        return new Image(resolved).html(options, state);
+        return new Image(resolved, this.context).html(setting);
     }
 }
 
 class Callout extends Section {
     get title() { return this.json()?.title || ''; }
     set title(value) { this.update({ title: value }); }
-    body(options = {}) {
-        options = { ...defaults, ...options };
-        return this.text({ ...options, callouts: options.callouts === false ? false : 'body' });
+    body(include = true) {
+        return this.text(include === false ? false : 'body');
     }
-    json(options = {}) {
-        const result = metadata(super.json(options), this.node, ['calloutType', 'fold']);
+    json(setting) {
+        const result = metadata(super.json(setting), this.node, ['calloutType', 'fold']);
         if (!result) {
             return null;
         }
-        const node = outputTree(this.node, { ...defaults$4, ...options });
-        result.title = jsonText({ type: 'paragraph', children: node.title }, options);
+        const node = this.jsonNode(setting);
+        result.title = this.jsonText({ type: 'paragraph', children: node.title });
         return result;
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
         const children = [...node.children];
-        if (options.callouts !== 'body' && node.title?.length) {
+        if (setting !== 'body' && node.title?.length) {
             children.unshift({ type: 'paragraph', children: node.title });
         }
-        return children.map(child => text$2(child, options)).join('\n');
+        return children.map(child => this.renderText(child)).join('\n');
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         const title = state.all({ type: 'paragraph', children: node.title || [] });
@@ -28025,20 +28165,23 @@ class Callout extends Section {
 }
 
 class Definition extends Section {
-    json(options = {}) {
-        return metadata(super.json(options), this.node, ['url', 'title', 'identifier', 'label']);
+    json(setting) {
+        return metadata(super.json(setting), this.node, ['url', 'title', 'identifier', 'label']);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
-        return (node.children || []).map(child => text$2(child, options)).join('');
+        return (node.children || []).map(child => this.renderText(child)).join('');
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         this.node;
         return '';
@@ -28046,20 +28189,23 @@ class Definition extends Section {
 }
 
 class FootnoteDefinition extends Section {
-    json(options = {}) {
-        return metadata(super.json(options), this.node, ['identifier', 'label']);
+    json(setting) {
+        return metadata(super.json(setting), this.node, ['identifier', 'label']);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
-        return (node.children || []).map(child => text$2(child, options)).join('');
+        return (node.children || []).map(child => this.renderText(child)).join('');
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         this.node;
         return '';
@@ -28067,20 +28213,23 @@ class FootnoteDefinition extends Section {
 }
 
 class FootnoteReference extends Section {
-    json(options = {}) {
-        return metadata(super.json(options), this.node, ['identifier', 'label']);
+    json(setting) {
+        return metadata(super.json(setting), this.node, ['identifier', 'label']);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
-        return (node.children || []).map(child => text$2(child, options)).join('');
+        return (node.children || []).map(child => this.renderText(child)).join('');
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         const reference = state.footnotes.reference(node);
@@ -28097,20 +28246,23 @@ class FootnoteReference extends Section {
 }
 
 class InlineFootnote extends Section {
-    json(options = {}) {
-        return super.json(options);
+    json(setting) {
+        return super.json(setting);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
-        return (node.children || []).map(child => text$2(child, options)).join('');
+        return (node.children || []).map(child => this.renderText(child)).join('');
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         let identifier = 'obsidian-inline-' + ++state.inlineCount;
@@ -28127,20 +28279,23 @@ class InlineFootnote extends Section {
 }
 
 class Highlight extends Section {
-    json(options = {}) {
-        return metadata(super.json(options), this.node, ['color']);
+    json(setting) {
+        return metadata(super.json(setting), this.node, ['color']);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
-        return (node.children || []).map(child => text$2(child, options)).join('');
+        return (node.children || []).map(child => this.renderText(child)).join('');
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         return element('mark', { dataColor: node.color }, state.all(node));
@@ -28148,20 +28303,23 @@ class Highlight extends Section {
 }
 
 class Tag extends Section {
-    json(options = {}) {
-        return metadata(super.json(options), this.node, ['value']);
+    json(setting) {
+        return metadata(super.json(setting), this.node, ['value']);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
         return '#' + node.value;
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         return element('span', { className: 'tag' }, text$1('#' + node.value));
@@ -28169,24 +28327,27 @@ class Tag extends Section {
 }
 
 class Comment extends Section {
-    json(options = {}) {
-        const result = metadata(super.json(options), this.node, ['value']);
+    json(setting) {
+        const result = metadata(super.json(setting), this.node, ['value']);
         if (result) {
             result.text = this.node.value;
         }
         return result;
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
         return node.value ?? '';
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         // Escape markup and double hyphens so content cannot end the HTML comment.
@@ -28195,20 +28356,23 @@ class Comment extends Section {
 }
 
 class BlockId extends Section {
-    json(options = {}) {
-        return metadata(super.json(options), this.node, ['value']);
+    json(setting) {
+        return metadata(super.json(setting), this.node, ['value']);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
         return node.value ?? '';
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         return element('span', { id: 'user-content-block-' + node.value });
@@ -30935,21 +31099,24 @@ const properties = (value) => {
 };
 
 class Frontmatter extends Section {
-    json(options = {}) {
-        const result = metadata(super.json(options), this.node, ['value']);
+    json(setting) {
+        const result = metadata(super.json(setting), this.node, ['value']);
         return result ? Object.assign(result, properties(this.node.value)) : null;
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
         return node.value ?? '';
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         return element('pre', {}, element('code', { className: 'language-yaml' }, text$1(node.value)));
@@ -30957,20 +31124,23 @@ class Frontmatter extends Section {
 }
 
 let Math$1 = class Math extends Section {
-    json(options = {}) {
-        return metadata(super.json(options), this.node, ['value', 'meta']);
+    json(setting) {
+        return metadata(super.json(setting), this.node, ['value', 'meta']);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
         return node.value ?? '';
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         return element('pre', {}, element('code', { className: 'language-math math-display' }, text$1(node.value)));
@@ -30978,20 +31148,23 @@ let Math$1 = class Math extends Section {
 };
 
 class InlineMath extends Section {
-    json(options = {}) {
-        return metadata(super.json(options), this.node, ['value']);
+    json(setting) {
+        return metadata(super.json(setting), this.node, ['value']);
     }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
+    text(setting) {
+        if (setting === false) {
+            return '';
+        }
+        const node = this.textNode(setting);
         if (!node) {
             return '';
         }
         return node.value ?? '';
     }
-    html(options = {}, state, parent) {
+    html(setting) {
+        const state = this.context.html;
         if (!state) {
-            return super.html(options);
+            return super.html(setting);
         }
         const node = this.node;
         return element('code', { className: 'language-math math-inline' }, text$1(node.value));
@@ -31014,6 +31187,7 @@ register('thematicBreak', ThematicBreak);
 register('blockquote', Quote);
 register('list', List);
 register('listItem', ListItem);
+register('task', Task);
 register('table', Table);
 register('tableRow', TableRow);
 register('tableCell', TableCell);
@@ -31074,7 +31248,7 @@ const treeJson = (tree, options, page) => {
     walk(tree, (node) => {
         Object.entries(groups).forEach(([key, matches]) => {
             if (matches(node, null)) {
-                result[key].push(createSection(node, { page }).json(options));
+                result[key].push(createSection(node, { page, json: options }).json());
             }
         });
     });
@@ -31115,10 +31289,10 @@ class Page {
         }));
     }
     ast(options = {}) {
-        return outputTree(this.#tree, { ...defaults$2, ...options });
+        return outputTree(this.#tree, { ...defaults$1, ...options });
     }
     json(options = {}) {
-        options = { ...defaults$4, ...options };
+        options = { ...defaults$3, ...options };
         return treeJson(outputTree(this.#tree, options), options, this);
     }
     text(options = {}) {
@@ -31129,7 +31303,7 @@ class Page {
     }
     markdown(options = {}) {
         // Reuse exact source only when neither edits nor exclusions affect the output.
-        options = { ...defaults$1, ...options };
+        options = { ...defaults, ...options };
         const filtered = Object.values(options).some((value) => value !== true);
         if (!filtered && !this.#dirty && typeof this.#source === 'string') {
             return this.#source;

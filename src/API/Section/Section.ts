@@ -1,8 +1,11 @@
+import category from './_lib/category.ts'
+import htmlDefaults from '../out/html.ts'
 import renderHtml from './_lib/html.ts'
-import renderText from './_lib/text.ts'
-import { createSection } from './registry.ts'
+import renderText, { jsonText } from './_lib/text.ts'
+import markdownTree from './_lib/markdown.ts'
+import { definitions, normalize } from '../ast/references.ts'
 import type { EditChanges, NodeJSON } from '../../types/api.ts'
-import type { TextOptions, AstOptions, JsonOptions, HtmlOptions, MarkdownOptions } from '../../types/options.ts'
+import type { TextOptions, JsonOptions, MarkdownOptions } from '../../types/options.ts'
 import type { AstNode } from '../../types/ast.ts'
 import type Page from '../Page.ts'
 import edit from '../ast/edit.ts'
@@ -18,6 +21,12 @@ interface SectionContext {
   locate?: (node: AstNode) => AstNode
   changed?: () => void
   page?: Page
+  // Output contexts belong to temporary render sections, never live editing handles.
+  text?: TextOptions
+  json?: JsonOptions
+  markdown?: MarkdownOptions
+  html?: any
+  parent?: AstNode
 }
 
 // Shared ownership, detached views, and metadata. Known syntax renders in subclasses.
@@ -34,52 +43,86 @@ class Section {
     return this.#node
   }
 
-  ast(options: AstOptions = {}) {
+  protected get category(): string { return category(this.#node) }
+
+  ast(setting?: boolean) {
+    if (setting === false) { return null }
+    const options = { [this.category]: setting ?? astDefaults[this.category] }
     return outputTree(this.#node, { ...astDefaults, ...options })
   }
 
-  json(options: JsonOptions = {}): NodeJSON | null {
-    options = { ...jsonDefaults, ...options }
-    const node = outputTree(this.#node, options)
+  protected textNode(setting?: boolean | string) {
+    if (setting === false) { return null }
+    const options = { ...textDefaults, ...this.context.text }
+    if (setting !== undefined) { options[this.category] = setting }
+    return outputTree(this.#node, options)
+  }
+
+  protected renderText(node: AstNode): string {
+    return renderText(node, this.context.text)
+  }
+
+  protected jsonNode(setting?: boolean) {
+    if (setting === false) { return null }
+    const options = { ...jsonDefaults, ...this.context.json }
+    if (setting !== undefined) { options[this.category] = setting }
+    return outputTree(this.#node, options)
+  }
+
+  protected jsonText(node: AstNode): string {
+    return jsonText(node, this.context.json)
+  }
+
+  protected definition() {
+    const page = this.context.page
+    return page && definitions(page.ast({ ...jsonDefaults, ...this.context.json })).get(normalize(this.#node.identifier))
+  }
+
+  json(setting?: boolean): NodeJSON | null {
+    const node = this.jsonNode(setting)
     if (!node) { return null }
-    const result: NodeJSON = {
-      type: node.type,
-      text: this.text({ ...options, headings: 'inline', comments: false, blockIds: false })
-    }
+    const result: NodeJSON = { type: node.type, text: this.jsonText(node) }
     if (node.blockId !== undefined) { result.blockId = node.blockId }
     if (node.position) { result.position = structuredClone(node.position) }
     return result
   }
 
   // Unknown plugin nodes keep a useful fallback without knowing any syntax types.
-  text(options: TextOptions = {}): string {
-    options = { ...textDefaults, ...options }
-    const node = outputTree(this.#node, options)
+  text(setting?: boolean | 'inline' | 'body' | 'text'): string {
+    const node = this.textNode(setting)
     if (!node) { return '' }
     if (node.value !== undefined) { return node.value }
-    return (node.children || []).map(child => renderText(child, options)).join('')
+    return (node.children || []).map(child => this.renderText(child)).join('')
   }
 
-  html(options: HtmlOptions = {}, state?: any, parent?: AstNode): string {
-    if (!state) { return renderHtml(this.#node, options, this.context.page?.ast()) }
+  html(setting?: boolean | 'inline' | 'body'): string {
+    if (setting === false) { return '' }
+    const state = this.context.html
+    if (!state) {
+      const options = { ...htmlDefaults }
+      if (setting !== undefined) { options[this.category] = setting }
+      return renderHtml(this.#node, options, this.context.page?.ast())
+    }
     return this.#node.value == null ? state.all(this.#node) : escape(this.#node.value)
   }
 
   // Markdown syntax remains delegated to remark; subclasses can change their node.
-  markdown(options: MarkdownOptions = {}): string {
-    const node = this.markdownNode(options)
+  markdown(setting?: boolean | 'inline' | 'body'): string {
+    const node = this.markdownNode(setting)
     return node ? stringify(node as any) : ''
   }
 
-  markdownNode(options: MarkdownOptions = {}): AstNode | null {
-    options = { ...markdownDefaults, ...options }
+  markdownNode(setting?: boolean | 'inline' | 'body'): AstNode | null {
+    if (setting === false) { return null }
+    const options = { ...markdownDefaults, ...this.context.markdown }
+    if (setting !== undefined) { options[this.category] = setting }
     const node = outputTree(this.#node, options)
     if (!node) { return null }
     if (node.children) {
-      node.children = node.children.map(child => createSection(child).markdownNode(options)).filter(Boolean)
+      node.children = node.children.map(child => markdownTree(child, options)).filter(Boolean)
     }
     if (Array.isArray(node.title)) {
-      node.title = node.title.map(child => createSection(child).markdownNode(options)).filter(Boolean)
+      node.title = node.title.map(child => markdownTree(child, options)).filter(Boolean)
     }
     return node
   }

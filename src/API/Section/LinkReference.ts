@@ -1,12 +1,8 @@
 import Link from './Link.ts'
-import type { TextOptions, JsonOptions, HtmlOptions } from '../../types/options.ts'
-import outputTree from '../ast/output.ts'
-import textDefaults from '../out/text.ts'
-import jsonDefaults from '../out/json.ts'
-import renderText from './_lib/text.ts'
+import type { TextOptions } from '../../types/options.ts'
 import metadata from './_lib/metadata.ts'
 import { url } from './_lib/html/elements.ts'
-import { definitions, normalize } from '../ast/references.ts'
+import { normalize } from '../ast/references.ts'
 
 class LinkReference extends Link {
   get target(): string { return this.json()?.url ?? '' }
@@ -14,12 +10,11 @@ class LinkReference extends Link {
     this.update({ url: value, title: this.json()?.title ?? null })
   }
 
-  json(options: JsonOptions = {}) {
-    if (this.node.type !== 'linkReference') { return super.json(options) }
-    const result = metadata(super.json(options), this.node, ['identifier', 'label'])
+  json(setting?: boolean) {
+    if (this.node.type !== 'linkReference') { return super.json(setting) }
+    const result = metadata(super.json(setting), this.node, ['identifier', 'label'])
     if (!result) { return null }
-    const page = this.context.page
-    const definition = page && definitions(page.ast({ ...jsonDefaults, ...options })).get(normalize(this.node.identifier))
+    const definition = this.definition()
     if (definition) {
       result.url = definition.url
       if (definition.title != null) { result.title = definition.title }
@@ -27,21 +22,22 @@ class LinkReference extends Link {
     return result
   }
 
-  text(options: TextOptions = {}): string {
-    options = { ...textDefaults, ...options }
-    const node = outputTree(this.node, options)
+  text(setting?: TextOptions['links']): string {
+    if (setting === false) { return '' }
+    const node = this.textNode(setting)
     if (!node) { return '' }
-    return (node.children || []).map(child => renderText(child, options)).join('')
+    return (node.children || []).map(child => this.renderText(child)).join('')
   }
 
-  html(options: HtmlOptions = {}, state?: any, parent?: any): string {
-    if (!state) { return super.html(options) }
-    if (this.node.type !== 'linkReference') { return super.html(options, state, parent) }
+  html(setting?: boolean): string {
+    const state = this.context.html
+    if (!state) { return super.html(setting) }
+    if (this.node.type !== 'linkReference') { return super.html(setting) }
     const node = this.node
     const definition = state.definitions.get(normalize(node.identifier))
     if (!definition) { return state.all(node) }
     const resolved = { ...node, url: definition.url, title: definition.title }
-    return new Link(resolved).html(options, state)
+    return new Link(resolved, this.context).html(setting)
   }
 }
 

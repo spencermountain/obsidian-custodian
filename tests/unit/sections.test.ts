@@ -16,8 +16,8 @@ test('selectors return specialized sections with common methods', (t) => {
   t.equal(callout.title, 'Title')
   t.equal(callout.body(), 'Body Other')
   t.equal(link.text(), 'alias')
-  t.equal(page.paragraphs()[0].text({ embeds: true }), 'Paragraph alias photo.png')
-  t.equal(page.json().callouts[0].text, callout.text({ callouts: true }))
+  t.equal(page.paragraphs()[0].text(), 'Paragraph alias ')
+  t.equal(page.json().callouts[0].text, callout.text(true))
   t.equal(page.text({ embeds: true, callouts: true }), 'Paragraph alias photo.png\nTitle\nBody Other')
   t.end()
 })
@@ -25,16 +25,16 @@ test('selectors return specialized sections with common methods', (t) => {
 test('sections keep shared filtering and detached output', (t) => {
   const page = parsePage('> [!note] [[Title]]\n> Body [[Target]]')
   const section = page.callouts()[0]
-  t.equal(section.text({ callouts: 'body' }), 'Body Target')
-  t.equal(section.text({ links: false, callouts: true }), '\nBody ')
-  t.equal(section.json({ callouts: false }), null)
-  t.equal(section.ast({ callouts: false }), null)
-  t.equal(section.text({ callouts: false }), '')
+  t.equal(section.text('body'), 'Body Target')
+  t.equal(page.text({ links: false, callouts: true }), '\nBody ')
+  t.equal(section.json(false), null)
+  t.equal(section.ast(false), null)
+  t.equal(section.text(false), '')
   section.ast().children.length = 0
   t.equal(section.body(), 'Body Target')
   t.equal(
     page.json({ callouts: true }).callouts[0].text,
-    section.text({ callouts: true })
+    section.text(true)
   )
   t.end()
 })

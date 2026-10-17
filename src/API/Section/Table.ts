@@ -1,30 +1,26 @@
 import Section from './Section.ts'
-import type { TextOptions, JsonOptions, HtmlOptions } from '../../types/options.ts'
-import outputTree from '../ast/output.ts'
-import textDefaults from '../out/text.ts'
-import jsonDefaults from '../out/json.ts'
-import renderText, { jsonText } from './_lib/text.ts'
 import { element } from './_lib/html/elements.ts'
 
 class Table extends Section {
-  json(options: JsonOptions = {}) {
-    const result = super.json(options)
+  json(setting?: boolean) {
+    const result = super.json(setting)
     if (!result) { return null }
-    const node = outputTree(this.node, { ...jsonDefaults, ...options })
+    const node = this.jsonNode(setting)
     result.align = [...node.align]
-    result.rows = node.children.map(row => row.children.map(cell => jsonText(cell, options)))
+    result.rows = node.children.map(row => row.children.map(cell => this.jsonText(cell)))
     return result
   }
 
-  text(options: TextOptions = {}): string {
-    options = { ...textDefaults, ...options }
-    const node = outputTree(this.node, options)
+  text(setting?: boolean): string {
+    if (setting === false) { return '' }
+    const node = this.textNode(setting)
     if (!node) { return '' }
-    return (node.children || []).map(child => renderText(child, options)).join('\n')
+    return (node.children || []).map(child => this.renderText(child)).join('\n')
   }
 
-  html(options: HtmlOptions = {}, state?: any, parent?: any): string {
-    if (!state) { return super.html(options) }
+  html(setting?: boolean): string {
+    const state = this.context.html
+    if (!state) { return super.html(setting) }
     const node = this.node
     const rows = (node.children || []).map(row => state.render(row, node))
     const header = rows.length ? element('thead', {}, rows[0]) : ''

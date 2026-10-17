@@ -1,8 +1,5 @@
 import Section from './Section.ts'
-import type { TextOptions, JsonOptions, HtmlOptions } from '../../types/options.ts'
-import outputTree from '../ast/output.ts'
-import textDefaults from '../out/text.ts'
-import renderText from './_lib/text.ts'
+import type { TextOptions } from '../../types/options.ts'
 import metadata from './_lib/metadata.ts'
 import { element, url } from './_lib/html/elements.ts'
 
@@ -19,19 +16,20 @@ class Link extends Section {
     this.update({ url: value })
   }
 
-  json(options: JsonOptions = {}) {
-    return metadata(super.json(options), this.node, ['url', 'title'])
+  json(setting?: boolean) {
+    return metadata(super.json(setting), this.node, ['url', 'title'])
   }
 
-  text(options: TextOptions = {}): string {
-    options = { ...textDefaults, ...options }
-    const node = outputTree(this.node, options)
+  text(setting?: TextOptions['links']): string {
+    if (setting === false) { return '' }
+    const node = this.textNode(setting)
     if (!node) { return '' }
-    return (node.children || []).map(child => renderText(child, options)).join('')
+    return (node.children || []).map(child => this.renderText(child)).join('')
   }
 
-  html(options: HtmlOptions = {}, state?: any, parent?: any): string {
-    if (!state) { return super.html(options) }
+  html(setting?: boolean): string {
+    const state = this.context.html
+    if (!state) { return super.html(setting) }
     const node = this.node
     return element('a', { href: url(node.url), title: node.title }, state.all(node))
   }

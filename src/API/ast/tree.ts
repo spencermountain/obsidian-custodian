@@ -47,7 +47,7 @@ const treeJson = (tree: PageNode, options: JsonOptions, page: Page): PageJSON =>
   walk(tree, (node) => {
     Object.entries(groups).forEach(([key, matches]) => {
       if (matches(node, null)) {
-        result[key as Collection].push(createSection(node, { page }).json(options))
+        result[key as Collection].push(createSection(node, { page, json: options }).json())
       }
     })
   })

@@ -1,43 +1,24 @@
 import Section from './Section.ts'
-import type { TextOptions, JsonOptions, HtmlOptions } from '../../types/options.ts'
-import outputTree from '../ast/output.ts'
-import textDefaults from '../out/text.ts'
-import renderText from './_lib/text.ts'
-import metadata from './_lib/metadata.ts'
+import listItem from './_lib/listItem.ts'
 import { element } from './_lib/html/elements.ts'
 
 class ListItem extends Section {
-  json(options: JsonOptions = {}) {
-    return metadata(super.json(options), this.node, ['checked', 'taskMarker'])
+  json(setting?: boolean) {
+    return super.json(setting)
   }
 
-  text(options: TextOptions = {}): string {
-    options = { ...textDefaults, ...options }
-    const node = outputTree(this.node, options)
+  text(setting?: boolean): string {
+    if (setting === false) { return '' }
+    const node = this.textNode(setting)
     if (!node) { return '' }
-    return (node.children || []).map(child => renderText(child, options)).join('\n')
+    return (node.children || []).map(child => this.renderText(child)).join('\n')
   }
 
-  html(options: HtmlOptions = {}, state?: any, parent?: any): string {
-    if (!state) { return super.html(options) }
-    const node = this.node
-    const properties: Record<string, any> = {}
-    let checkbox = ''
-    if (typeof node.checked === 'boolean') {
-      properties.className = 'task-list-item'
-      checkbox = element('input', { type: 'checkbox', disabled: true, checked: node.checked }) + ' '
-    }
-    // Tight lists omit paragraph wrappers; loose lists retain their block structure.
-    const loose = parent?.spread || parent?.children?.some(child => child.spread)
-    const children = (node.children || []).map((child, index) => {
-      const prefix = index === 0 ? checkbox : ''
-      if (child.type === 'paragraph') {
-        const content = prefix + state.all(child)
-        return loose ? element('p', {}, content) : content
-      }
-      return prefix + state.render(child, node)
-    })
-    return element('li', properties, children.join('\n'))
+  html(setting?: boolean): string {
+    const state = this.context.html
+    const parent = this.context.parent
+    if (!state) { return super.html(setting) }
+    return element('li', {}, listItem(this.node, state, parent))
   }
 }
 

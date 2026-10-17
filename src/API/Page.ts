@@ -14,7 +14,7 @@ import { clearPositions, locate, select, treeJson } from './ast/tree.ts'
 import groups from './Section/groups.ts'
 import createSection from './Section/index.ts'
 import type {
-  Heading, Paragraph, Link, Embed, Image, ImageReference, ListItem, List, Callout,
+  Heading, Paragraph, Link, Embed, Image, ImageReference, Task, List, Callout,
   Highlight, Comment, Code, Math as MathSection, InlineMath, Table, Frontmatter,
   Tag, FootnoteDefinition, InlineFootnote
 } from './Section/types.ts'
@@ -108,7 +108,7 @@ class Page {
     return this.#select(groups.embeds) as (Embed | Image | ImageReference)[]
   }
   tasks() {
-    return this.#select(groups.tasks) as ListItem[]
+    return this.#select(groups.tasks) as Task[]
   }
   lists() {
     return this.#select(groups.lists) as List[]

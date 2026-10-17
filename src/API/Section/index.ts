@@ -14,6 +14,7 @@ import ThematicBreak from './ThematicBreak.ts'
 import Quote from './Quote.ts'
 import List from './List.ts'
 import ListItem from './ListItem.ts'
+import Task from './Task.ts'
 import Table from './Table.ts'
 import TableRow from './TableRow.ts'
 import TableCell from './TableCell.ts'
@@ -53,6 +54,7 @@ register('thematicBreak', ThematicBreak)
 register('blockquote', Quote)
 register('list', List)
 register('listItem', ListItem)
+register('task', Task)
 register('table', Table)
 register('tableRow', TableRow)
 register('tableCell', TableCell)
