@@ -65,7 +65,7 @@ test('self-closing nested HTML does not expose Markdown', (t) => {
   const input = '<span>before<span />**literal** [[Hidden]]</span>'
   const page = parsePage(input)
   t.equal(page.links().length, 0)
-  t.equal(page.text(), input)
+  t.equal(page.text({ html: true }), input)
   page.append('')
   t.equal(parsePage(page.markdown()).links().length, 0)
   t.end()

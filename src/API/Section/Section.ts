@@ -1,17 +1,18 @@
-import renderText from '../out/text/text.ts'
-import renderHtml from '../out/html/html.ts'
-import serialize from '../out/json/json.ts'
-import { definitions } from '../ast/references.ts'
+import renderHtml from './_lib/html.ts'
+import renderText from './_lib/text.ts'
+import { createSection } from './registry.ts'
 import type { EditChanges, NodeJSON } from '../../types/api.ts'
-import type { TextOptions, AstOptions, JsonOptions, HtmlOptions } from '../../types/options.ts'
-
+import type { TextOptions, AstOptions, JsonOptions, HtmlOptions, MarkdownOptions } from '../../types/options.ts'
 import type { AstNode } from '../../types/ast.ts'
 import type Page from '../Page.ts'
 import edit from '../ast/edit.ts'
-import outputTree from '../out/ast/output.ts'
-import astDefaults from '../out/ast/defaults.ts'
-import jsonDefaults from '../out/json/defaults.ts'
-import textDefaults from '../out/text/defaults.ts'
+import outputTree from '../ast/output.ts'
+import stringify from '../../parse/stringify.ts'
+import astDefaults from '../out/ast.ts'
+import jsonDefaults from '../out/json.ts'
+import textDefaults from '../out/text.ts'
+import markdownDefaults from '../out/markdown.ts'
+import { text as escape } from './_lib/html/elements.ts'
 
 interface SectionContext {
   locate?: (node: AstNode) => AstNode
@@ -19,7 +20,7 @@ interface SectionContext {
   page?: Page
 }
 
-// Wrap live nodes; output methods read detached, filtered views through ast().
+// Shared ownership, detached views, and metadata. Known syntax renders in subclasses.
 class Section {
   #node: AstNode
   protected context: SectionContext
@@ -29,7 +30,6 @@ class Section {
     this.context = context
   }
 
-  // Subclass outputs must not inherit another output format's exclusions.
   protected get node(): AstNode {
     return this.#node
   }
@@ -38,56 +38,50 @@ class Section {
     return outputTree(this.#node, { ...astDefaults, ...options })
   }
 
-  html(options: HtmlOptions = {}): string {
-    return renderHtml(this.#node, options, this.context.page?.ast())
-  }
-
   json(options: JsonOptions = {}): NodeJSON | null {
     options = { ...jsonDefaults, ...options }
     const node = outputTree(this.#node, options)
-    if (!node) {
-      return null
+    if (!node) { return null }
+    const result: NodeJSON = {
+      type: node.type,
+      text: this.text({ ...options, headings: 'inline', comments: false, blockIds: false })
     }
-    let references = new Map()
-    if (this.context.page && ['linkReference', 'imageReference'].includes(node.type)) {
-      references = definitions(this.context.page.ast(options))
-    }
-    return serialize(node, options, references)
+    if (node.blockId !== undefined) { result.blockId = node.blockId }
+    if (node.position) { result.position = structuredClone(node.position) }
+    return result
   }
 
+  // Unknown plugin nodes keep a useful fallback without knowing any syntax types.
   text(options: TextOptions = {}): string {
     options = { ...textDefaults, ...options }
     const node = outputTree(this.#node, options)
-    if (!node) {
-      return ''
+    if (!node) { return '' }
+    if (node.value !== undefined) { return node.value }
+    return (node.children || []).map(child => renderText(child, options)).join('')
+  }
+
+  html(options: HtmlOptions = {}, state?: any, parent?: AstNode): string {
+    if (!state) { return renderHtml(this.#node, options, this.context.page?.ast()) }
+    return this.#node.value == null ? state.all(this.#node) : escape(this.#node.value)
+  }
+
+  // Markdown syntax remains delegated to remark; subclasses can change their node.
+  markdown(options: MarkdownOptions = {}): string {
+    const node = this.markdownNode(options)
+    return node ? stringify(node as any) : ''
+  }
+
+  markdownNode(options: MarkdownOptions = {}): AstNode | null {
+    options = { ...markdownDefaults, ...options }
+    const node = outputTree(this.#node, options)
+    if (!node) { return null }
+    if (node.children) {
+      node.children = node.children.map(child => createSection(child).markdownNode(options)).filter(Boolean)
     }
-    if (node.type === 'comment' && options.comments !== true) {
-      return ''
+    if (Array.isArray(node.title)) {
+      node.title = node.title.map(child => createSection(child).markdownNode(options)).filter(Boolean)
     }
-    if (node.type === 'blockId' && options.blockIds !== true) {
-      return ''
-    }
-    if (node.type === 'tag') {
-      return '#' + node.value
-    }
-    if (node.type === 'break') {
-      return '\n'
-    }
-    if (node.value !== undefined) {
-      return node.value
-    }
-    let separator = ''
-    if (['root', 'list', 'listItem', 'blockquote', 'table'].includes(node.type)) {
-      separator = '\n'
-    }
-    if (node.type === 'tableRow') {
-      separator = '\t'
-    }
-    const content = (node.children || []).map((child) => renderText(child, options)).join(separator)
-    if (node.type === 'heading' && options.headings === true) {
-      return '#'.repeat(node.depth) + ' ' + content
-    }
-    return content
+    return node
   }
 
   #owner() {

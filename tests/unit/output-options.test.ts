@@ -4,7 +4,7 @@ import parsePage from '../lib.ts'
 test('heading modes apply to page and section text without mutating the document', (t) => {
   const source = '## Foo\n\nBody'
   const page = parsePage(source)
-  t.equal(page.text(), 'Foo\nBody', 'text defaults to inline headings')
+  t.equal(page.text(), '## Foo\nBody', 'text defaults to heading markers')
   t.equal(page.text({ headings: true }), '## Foo\nBody', 'true keeps heading markers')
   t.equal(page.text({ headings: false }), 'Body', 'false excludes headings')
   t.equal(page.text({ headings: 'inline' }), 'Foo\nBody', 'inline keeps only heading text')

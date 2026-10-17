@@ -135,7 +135,7 @@ test('basic/setext-headings', (t) => {
   const page = parsePage(input)
   t.equal(page.markdown(), input, 'untouched source is preserved')
 
-  t.deepEqual(page.headings().map((item) => [item.json().depth, item.text()]), [
+  t.deepEqual(page.headings().map((item) => [item.json().depth, item.text({ headings: 'inline' })]), [
     [1, 'A level-one heading'], [2, 'A level-two heading']
   ], 'setext heading levels')
   t.equal(nodes(page, 'thematicBreak').length, 0, 'heading underline is not a rule')
@@ -150,7 +150,7 @@ test('basic/setext-headings - serialized and reparsed', (t) => {
   original.append('')
   const page = parsePage(original.markdown())
 
-  t.deepEqual(page.headings().map((item) => [item.json().depth, item.text()]), [
+  t.deepEqual(page.headings().map((item) => [item.json().depth, item.text({ headings: 'inline' })]), [
     [1, 'A level-one heading'], [2, 'A level-two heading']
   ], 'setext heading levels')
   t.equal(nodes(page, 'thematicBreak').length, 0, 'heading underline is not a rule')
@@ -239,7 +239,7 @@ test('basic/front-matter-properties', (t) => {
     'tags: [notes, examples]', 'published: false', 'rating: 3', 'summary: |',
     '  A description on', '  multiple lines.'
   ].join('\n'), 'YAML values and indentation remain raw')
-  t.deepEqual(page.headings().map((item) => item.text()), ['A note with properties'], 'heading after YAML')
+  t.deepEqual(page.headings().map((item) => item.text({ headings: 'inline' })), ['A note with properties'], 'heading after YAML')
   t.equal(page.lists().length, 0, 'YAML arrays are not Markdown lists')
   t.deepEqual(page.paragraphs().map((item) => item.text()), ['The YAML above is metadata, not a Markdown list.'], 'body after YAML')
   t.end()
@@ -258,7 +258,7 @@ test('basic/front-matter-properties - serialized and reparsed', (t) => {
     'tags: [notes, examples]', 'published: false', 'rating: 3', 'summary: |',
     '  A description on', '  multiple lines.'
   ].join('\n'), 'YAML values and indentation remain raw')
-  t.deepEqual(page.headings().map((item) => item.text()), ['A note with properties'], 'heading after YAML')
+  t.deepEqual(page.headings().map((item) => item.text({ headings: 'inline' })), ['A note with properties'], 'heading after YAML')
   t.equal(page.lists().length, 0, 'YAML arrays are not Markdown lists')
   t.deepEqual(page.paragraphs().map((item) => item.text()), ['The YAML above is metadata, not a Markdown list.'], 'body after YAML')
   t.end()

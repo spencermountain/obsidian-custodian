@@ -3,19 +3,21 @@ import type { TextOptions, JsonOptions, MarkdownOptions, AstOptions, HtmlOptions
 import type { PageNode, Predicate } from '../types/ast.ts'
 import parseMd from '../parse/index.ts'
 import stringifyMd from '../parse/stringify.ts'
-import outputTree from './out/ast/output.ts'
-import text from './out/text/text.ts'
-import html from './out/html/html.ts'
-import astDefaults from './out/ast/defaults.ts'
-import jsonDefaults from './out/json/defaults.ts'
-import markdownDefaults from './out/markdown/defaults.ts'
-import markdownTree from './out/markdown/markdown.ts'
+import outputTree from './ast/output.ts'
+import text from './Section/_lib/text.ts'
+import html from './Section/_lib/html.ts'
+import astDefaults from './out/ast.ts'
+import jsonDefaults from './out/json.ts'
+import markdownDefaults from './out/markdown.ts'
+import markdownTree from './Section/_lib/markdown.ts'
 import { clearPositions, locate, select, treeJson } from './ast/tree.ts'
 import groups from './Section/groups.ts'
 import createSection from './Section/index.ts'
-import type Link from './Section/Link.ts'
-import type Embed from './Section/Embed.ts'
-import type Callout from './Section/Callout.ts'
+import type {
+  Heading, Paragraph, Link, Embed, Image, ImageReference, ListItem, List, Callout,
+  Highlight, Comment, Code, Math as MathSection, InlineMath, Table, Frontmatter,
+  Tag, FootnoteDefinition, InlineFootnote
+} from './Section/types.ts'
 
 // Owns document state; parsing and serialization are stateless operations.
 class Page {
@@ -94,49 +96,49 @@ class Page {
 
   // Selection methods share the same predicates as JSON output and filtering.
   headings() {
-    return this.#select(groups.headings)
+    return this.#select(groups.headings) as Heading[]
   }
   paragraphs() {
-    return this.#select(groups.paragraphs)
+    return this.#select(groups.paragraphs) as Paragraph[]
   }
   links() {
     return this.#select(groups.links) as Link[]
   }
   embeds() {
-    return this.#select(groups.embeds) as Embed[]
+    return this.#select(groups.embeds) as (Embed | Image | ImageReference)[]
   }
   tasks() {
-    return this.#select(groups.tasks)
+    return this.#select(groups.tasks) as ListItem[]
   }
   lists() {
-    return this.#select(groups.lists)
+    return this.#select(groups.lists) as List[]
   }
   callouts() {
     return this.#select(groups.callouts) as Callout[]
   }
   highlights() {
-    return this.#select(groups.highlights)
+    return this.#select(groups.highlights) as Highlight[]
   }
   comments() {
-    return this.#select(groups.comments)
+    return this.#select(groups.comments) as Comment[]
   }
   code() {
-    return this.#select(groups.code)
+    return this.#select(groups.code) as Code[]
   }
   math() {
-    return this.#select(groups.math)
+    return this.#select(groups.math) as (MathSection | InlineMath)[]
   }
   tables() {
-    return this.#select(groups.tables)
+    return this.#select(groups.tables) as Table[]
   }
   frontmatter() {
-    return this.#select(groups.frontmatter)
+    return this.#select(groups.frontmatter) as Frontmatter[]
   }
   tags() {
-    return this.#select(groups.tags)
+    return this.#select(groups.tags) as Tag[]
   }
   footnotes() {
-    return this.#select(groups.footnotes)
+    return this.#select(groups.footnotes) as (FootnoteDefinition | InlineFootnote)[]
   }
 }
 

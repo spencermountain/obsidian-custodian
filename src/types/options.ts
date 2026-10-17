@@ -1,44 +1,98 @@
 // Structural outputs only include or exclude each category.
 interface AstOptions {
-  paragraphs?: boolean
-  headings?: boolean
-  links?: boolean
-  embeds?: boolean
-  tasks?: boolean
-  lists?: boolean
-  callouts?: boolean
-  highlights?: boolean
-  comments?: boolean
-  code?: boolean
-  math?: boolean
-  tables?: boolean
-  frontmatter?: boolean
-  footnotes?: boolean
-  tags?: boolean
   blockIds?: boolean
-  html?: boolean
-  quotes?: boolean
-  thematicBreaks?: boolean
+  callouts?: boolean
+  code?: boolean
+  comments?: boolean
   definitions?: boolean
+  embeds?: boolean
+  footnotes?: boolean
+  frontmatter?: boolean
+  headings?: boolean
+  highlights?: boolean
+  html?: boolean
+  links?: boolean
+  lists?: boolean
+  math?: boolean
+  paragraphs?: boolean
+  quotes?: boolean
+  tables?: boolean
+  tags?: boolean
+  tasks?: boolean
+  thematicBreaks?: boolean
 }
 
 type JsonOptions = AstOptions
 
 // Add format-specific modes here as their renderers gain support.
-interface TextOptions extends Omit<AstOptions, 'headings' | 'callouts'> {
+interface TextOptions {
+  links?: boolean | 'text'
   headings?: boolean | 'inline'
+  highlights?: boolean | 'text'
   callouts?: boolean | 'body'
+  blockIds?: boolean
+  code?: boolean
+  comments?: boolean
+  definitions?: boolean
+  embeds?: boolean
+  footnotes?: boolean
+  frontmatter?: boolean
+  html?: boolean
+  lists?: boolean
+  math?: boolean
+  paragraphs?: boolean
+  quotes?: boolean
+  tables?: boolean
+  tags?: boolean
+  tasks?: boolean
+  thematicBreaks?: boolean
 }
 
-interface MarkdownOptions extends Omit<AstOptions, 'headings' | 'callouts'> {
+interface MarkdownOptions {
   headings?: boolean | 'inline'
   callouts?: boolean | 'body'
+  blockIds?: boolean
+  code?: boolean
+  comments?: boolean
+  definitions?: boolean
+  embeds?: boolean
+  footnotes?: boolean
+  frontmatter?: boolean
+  highlights?: boolean
+  html?: boolean
+  links?: boolean
+  lists?: boolean
+  math?: boolean
+  paragraphs?: boolean
+  quotes?: boolean
+  tables?: boolean
+  tags?: boolean
+  tasks?: boolean
+  thematicBreaks?: boolean
 }
 
 // HTML uses the same inclusion keys with its own presentation modes.
-interface HtmlOptions extends Omit<AstOptions, 'headings' | 'callouts'> {
+interface HtmlOptions {
   headings?: boolean | 'inline'
   callouts?: boolean | 'body'
+  blockIds?: boolean
+  code?: boolean
+  comments?: boolean
+  definitions?: boolean
+  embeds?: boolean
+  footnotes?: boolean
+  frontmatter?: boolean
+  highlights?: boolean
+  html?: boolean
+  links?: boolean
+  lists?: boolean
+  math?: boolean
+  paragraphs?: boolean
+  quotes?: boolean
+  tables?: boolean
+  tags?: boolean
+  tasks?: boolean
+  thematicBreaks?: boolean
 }
 
 type OutputOptions = TextOptions | MarkdownOptions | JsonOptions | AstOptions | HtmlOptions

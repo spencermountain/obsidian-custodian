@@ -4,12 +4,12 @@ import parsePage from '../lib.ts'
 // Expected strings describe the output contract, without whitespace normalization.
 test('text extracts formatting, aliases, callout titles, and bodies', (t) => {
   const page = parsePage('# **Heading**\n\nHello [[Note|friend]] and `code`.\n\n> [!note] A title\n> A body')
-  t.equal(page.text(), 'Heading\nHello friend and code.\nA title\nA body')
-  t.equal(page.headings()[0].text(), 'Heading')
-  t.equal(page.callouts()[0].text(), 'A title\nA body')
+  t.equal(page.text({ headings: 'inline', callouts: true }), 'Heading\nHello friend and code.\nA title\nA body')
+  t.equal(page.headings()[0].text({ headings: 'inline' }), 'Heading')
+  t.equal(page.callouts()[0].text({ callouts: true }), 'A title\nA body')
   t.equal(page.callouts()[0].text({ callouts: 'body' }), 'A body')
-  t.equal(page.text({ callouts: false }), 'Heading\nHello friend and code.')
-  t.equal(page.json().text, page.text())
+  t.equal(page.text({ callouts: false, headings: 'inline' }), 'Heading\nHello friend and code.')
+  t.equal(page.json().text, page.text({ headings: 'inline', callouts: true }))
   t.end()
 })
 
@@ -66,14 +66,14 @@ test('all content can be excluded and selected items can be omitted', (t) => {
   t.equal(item.json(options), null)
   t.equal(item.ast(options), null)
   item.update({ title: 'Still editable' })
-  t.equal(item.text(), 'Still editable\nA body')
+  t.equal(item.text({ callouts: true }), 'Still editable\nA body')
   t.end()
 })
 
 test('tables and literal sections have predictable text and inclusion flags', (t) => {
   const page = parsePage('---\ntitle: Example\n---\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\n```js\nlet x = 1\n```')
-  t.equal(page.text(), 'title: Example\nA\tB\n1\t2\nlet x = 1')
-  t.equal(page.text({ frontmatter: false, code: false }), 'A\tB\n1\t2')
+  t.equal(page.text({ frontmatter: true, tables: true }), 'title: Example\nA\tB\n1\t2\nlet x = 1')
+  t.equal(page.text({ frontmatter: false, code: false, tables: true }), 'A\tB\n1\t2')
   t.equal(page.text({ frontmatter: false, code: false, tables: false }), '')
   const snapshot = page.ast({ code: false })
   snapshot.children.length = 0

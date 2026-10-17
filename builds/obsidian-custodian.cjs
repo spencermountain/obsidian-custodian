@@ -12420,7 +12420,7 @@ function tokenizeThematicBreak(effects, ok, nok) {
 
 
 /** @type {Construct} */
-const list$3 = {
+const list$2 = {
   continuation: {
     tokenize: tokenizeListContinuation
   },
@@ -12569,7 +12569,7 @@ function tokenizeListContinuation(effects, ok, nok) {
     self.interrupt = undefined;
     // Always populated by defaults.
 
-    return factorySpace(effects, effects.attempt(list$3, ok, nok), "linePrefix", self.parser.constructs.disable.null.includes('codeIndented') ? undefined : 4)(code);
+    return factorySpace(effects, effects.attempt(list$2, ok, nok), "linePrefix", self.parser.constructs.disable.null.includes('codeIndented') ? undefined : 4)(code);
   }
 }
 
@@ -13079,19 +13079,19 @@ function resolveAllLineSuffixes(events, context) {
 
 /** @satisfies {Extension['document']} */
 const document = {
-  [42]: list$3,
-  [43]: list$3,
-  [45]: list$3,
-  [48]: list$3,
-  [49]: list$3,
-  [50]: list$3,
-  [51]: list$3,
-  [52]: list$3,
-  [53]: list$3,
-  [54]: list$3,
-  [55]: list$3,
-  [56]: list$3,
-  [57]: list$3,
+  [42]: list$2,
+  [43]: list$2,
+  [45]: list$2,
+  [48]: list$2,
+  [49]: list$2,
+  [50]: list$2,
+  [51]: list$2,
+  [52]: list$2,
+  [53]: list$2,
+  [54]: list$2,
+  [55]: list$2,
+  [56]: list$2,
+  [57]: list$2,
   [62]: blockQuote
 };
 
@@ -16724,7 +16724,7 @@ function markdownTable(table, options) {
     }
 
     while (++columnIndex < table[rowIndex].length) {
-      const cell = serialize$2(table[rowIndex][columnIndex]);
+      const cell = serialize$1(table[rowIndex][columnIndex]);
 
       if (settings.alignDelimiters !== false) {
         const size = stringLength(cell);
@@ -16897,7 +16897,7 @@ function markdownTable(table, options) {
  * @returns {string}
  *   Result.
  */
-function serialize$2(value) {
+function serialize$1(value) {
   return value === null || value === undefined ? '' : String(value)
 }
 
@@ -17121,12 +17121,12 @@ function configure(base, extension) {
 
         /* c8 ignore next 4 */
         case 'unsafe': {
-          list$2(base[key], extension[key]);
+          list$1(base[key], extension[key]);
           break
         }
 
         case 'join': {
-          list$2(base[key], extension[key]);
+          list$1(base[key], extension[key]);
           break
         }
 
@@ -17158,7 +17158,7 @@ function configure(base, extension) {
  * @returns {undefined}
  *   Nothing.
  */
-function list$2(left, right) {
+function list$1(left, right) {
   if (right) {
     left.push(...right);
   }
@@ -17950,7 +17950,7 @@ function htmlPeek() {
  */
 
 
-image$1.peek = imagePeek;
+image.peek = imagePeek;
 
 /**
  * Serialize an image node.
@@ -17966,7 +17966,7 @@ image$1.peek = imagePeek;
  * @returns {string}
  *   Serialized markdown.
  */
-function image$1(node, _, state, info) {
+function image(node, _, state, info) {
   const quote = checkQuote(state);
   const suffix = quote === '"' ? 'Quote' : 'Apostrophe';
   const exit = state.enter('image');
@@ -18248,7 +18248,7 @@ function formatLinkAsAutolink(node, state) {
  */
 
 
-link$1.peek = linkPeek;
+link.peek = linkPeek;
 
 /**
  * Serialize a link node.
@@ -18264,7 +18264,7 @@ link$1.peek = linkPeek;
  * @returns {string}
  *   Serialized markdown.
  */
-function link$1(node, _, state, info) {
+function link(node, _, state, info) {
   const quote = checkQuote(state);
   const suffix = quote === '"' ? 'Quote' : 'Apostrophe';
   const tracker = state.createTracker(info);
@@ -18588,7 +18588,7 @@ function checkRule(state) {
  * @returns {string}
  *   Serialized markdown.
  */
-function list$1(node, parent, state, info) {
+function list(node, parent, state, info) {
   const exit = state.enter('list');
   const bulletCurrent = state.bulletCurrent;
   /** @type {string} */
@@ -18718,7 +18718,7 @@ function checkListItemIndent(state) {
  * @returns {string}
  *   Serialized markdown.
  */
-function listItem$2(node, parent, state, info) {
+function listItem$1(node, parent, state, info) {
   const listItemIndent = checkListItemIndent(state);
   let bullet = state.bulletCurrent || checkBullet(state);
 
@@ -19020,13 +19020,13 @@ const handle = {
   hardBreak,
   heading,
   html: html$1,
-  image: image$1,
+  image,
   imageReference,
   inlineCode,
-  link: link$1,
+  link,
   linkReference,
-  list: list$1,
-  listItem: listItem$2,
+  list,
+  listItem: listItem$1,
   paragraph,
   root,
   strong,
@@ -19719,7 +19719,7 @@ function check(tokens, before, after) {
  *   Serialized result.
  */
 function containerPhrasing(parent, state, info) {
-  return serialize$1(phrasing(parent, state, info), info.before, info.after)
+  return serialize(phrasing(parent, state, info), info.before, info.after)
 }
 
 /**
@@ -20017,7 +20017,7 @@ function phrasing(parent, state, info) {
 
       // To do: does this work to reset tracker?
       tracker = state.createTracker(info);
-      tracker.move(serialize$1(results, info.before, info.after));
+      tracker.move(serialize(results, info.before, info.after));
     }
 
     /** @type {(Handle & {attention?: Attention | undefined}) | undefined} */
@@ -20035,7 +20035,7 @@ function phrasing(parent, state, info) {
         before: sequence,
         after: sequence
       });
-      tracker.move(serialize$1(inside, sequence, sequence));
+      tracker.move(serialize(inside, sequence, sequence));
       tracker.move(sequence);
       exit();
       results.push({children: inside, sequences});
@@ -20162,7 +20162,7 @@ function render$1(items, chosen, before, after) {
  * @returns {string}
  *   Serialized markdown.
  */
-function serialize$1(items, before, after) {
+function serialize(items, before, after) {
   /** @type {Map<AttentionResult, string>} */
   let chosen = new Map();
   const initial = render$1(items, chosen, before, after);
@@ -26312,7 +26312,7 @@ const highlight = (node, parent, state, info) => {
     const emoji = Object.keys(colors).find((marker) => colors[marker] === node.color) || '';
     return `==${emoji}${content}==`;
 };
-const callout$2 = (raw, parent, state, info) => {
+const callout$1 = (raw, parent, state, info) => {
     const node = raw;
     let fold = '';
     if (node.fold) {
@@ -26338,7 +26338,7 @@ const callout$2 = (raw, parent, state, info) => {
         .map((line) => (line ? `> ${line}` : '>'))
         .join('\n');
 };
-const listItem$1 = (raw, parent, state, info) => {
+const listItem = (raw, parent, state, info) => {
     const node = raw;
     const content = handle.listItem(node, parent, state, info);
     if (typeof node.checked !== 'boolean') {
@@ -26354,7 +26354,7 @@ const inlineFootnote = (node, parent, state, info) => {
     exit();
     return `^[${content}]`;
 };
-const handlers$1 = {
+const handlers = {
     inlineFootnote,
     tag: (node) => '#' + node.value,
     wikiLink: wiki,
@@ -26362,8 +26362,8 @@ const handlers$1 = {
     comment: (node) => `%%${node.value}%%`,
     blockId: (node) => ` ^${node.value}`,
     highlight,
-    callout: callout$2,
-    listItem: listItem$1
+    callout: callout$1,
+    listItem
 };
 const toMarkdown = () => ({
     join: [joinSpacing],
@@ -26376,7 +26376,7 @@ const toMarkdown = () => ({
         { character: '%', after: '%' },
         { character: '^', before: '(?:^|\\s)', after: '[A-Za-z0-9-]+(?:$|\\n)' }
     ],
-    handlers: handlers$1
+    handlers
 });
 
 // Obsidian leaves Markdown inside HTML elements uninterpreted.
@@ -26424,7 +26424,7 @@ const protectHtml = (tree, source) => {
     });
 };
 
-const callout$1 = (node) => {
+const callout = (node) => {
     const paragraph = node.children[0];
     const first = paragraph?.children?.[0];
     if (first?.type !== 'text') {
@@ -26545,7 +26545,7 @@ const transform = (tree, parse, source) => {
             });
         }
         if (node.type === 'blockquote' && !raw(node)?.match(/^>\s*\\/)) {
-            callout$1(node);
+            callout(node);
         }
         if (node.type === 'listItem') {
             task(node, raw);
@@ -26757,7 +26757,7 @@ const defaults$4 = {
     blockIds: true,
     html: true,
     quotes: true,
-    thematicBreaks: true,
+    thematicBreaks: false,
     definitions: true
 };
 
@@ -26787,7 +26787,7 @@ const defaults$3 = {
     lists: true,
     callouts: true,
     highlights: true,
-    comments: false,
+    comments: true,
     code: true,
     math: true,
     tables: true,
@@ -26801,7 +26801,7 @@ const defaults$3 = {
     definitions: true
 };
 
-// Convert inline notes to standard footnotes so numbering and backlinks are shared.
+// Supply section renders with document definitions without rendering unrelated content.
 const prepare = (tree, context) => {
     let children = [tree];
     if (tree.type === 'root' || tree.type === 'footnoteDefinition') {
@@ -26817,37 +26817,6 @@ const prepare = (tree, context) => {
         children = [...children, ...definitions];
     }
     const root = { type: 'root', children };
-    const identifiers = new Set();
-    const headingTargets = new Set();
-    walk(root, (node) => {
-        if (node.identifier) {
-            identifiers.add(String(node.identifier).toUpperCase());
-        }
-        if (node.type === 'wikiLink' && !node.target && node.heading) {
-            headingTargets.add(node.heading);
-        }
-    });
-    const notes = [];
-    let next = 0;
-    walk(root, (node) => {
-        if (node.type === 'heading' && headingTargets.has(plainText(node))) {
-            node.data = { ...node.data, hProperties: { ...node.data?.hProperties, id: plainText(node) } };
-        }
-        if (node.type !== 'inlineFootnote') {
-            return;
-        }
-        let identifier = 'obsidian-inline-' + ++next;
-        for (; identifiers.has(identifier.toUpperCase()); identifier = 'obsidian-inline-' + ++next) {
-            // Skip identifiers already used by named footnotes.
-        }
-        identifiers.add(identifier.toUpperCase());
-        const content = node.children || [];
-        notes.push({ type: 'footnoteDefinition', identifier, children: [{ type: 'paragraph', children: content }] });
-        node.type = 'footnoteReference';
-        node.identifier = identifier;
-        delete node.children;
-    });
-    root.children.push(...notes);
     return root;
 };
 
@@ -26906,167 +26875,6 @@ const url = (value = '', image = false) => {
     return value;
 };
 
-const destination = (node) => {
-    let value = node.target || '';
-    if (node.heading != null) {
-        value += '#' + node.heading;
-    }
-    else if (node.block != null) {
-        value += '#^' + node.block;
-    }
-    return value;
-};
-const wikiLink = (state, node, className = 'internal-link') => {
-    const target = destination(node);
-    let href = encodeURI(target);
-    if (!node.target && node.block) {
-        href = '#block-' + encodeURIComponent(node.block);
-    }
-    return element('a', { href: url(href), className, dataHref: target }, text$1(node.alias ?? target));
-};
-const embed = (state, node) => {
-    if (/\.(?:avif|bmp|gif|jpe?g|png|svg|webp)$/i.test(node.target)) {
-        const size = dimensions(node.alias ?? '');
-        return element('img', {
-            src: url(encodeURI(destination(node)), true),
-            alt: Object.keys(size).length ? node.target : node.alias ?? node.target,
-            ...size
-        });
-    }
-    return wikiLink(state, node, 'internal-embed');
-};
-const image = (state, node) => {
-    const parts = (node.alt || '').split('|');
-    const size = dimensions(parts.at(-1));
-    let alt = node.alt || '';
-    if (parts.length > 1 && Object.keys(size).length) {
-        alt = parts.slice(0, -1).join('|');
-    }
-    return element('img', { src: url(node.url, true), alt, title: node.title, ...size });
-};
-const link = (state, node) => element('a', {
-    href: url(node.url), title: node.title
-}, state.all(node));
-const reference = (state, node) => {
-    const definition = state.definitions.get(normalize(node.identifier));
-    if (!definition) {
-        return node.type === 'imageReference' ? text$1(node.alt || '') : state.all(node);
-    }
-    const resolved = { ...node, url: definition.url, title: definition.title };
-    return node.type === 'imageReference' ? image(state, resolved) : link(state, resolved);
-};
-
-const table = (state, node) => {
-    const rows = (node.children || []).map((row, index) => {
-        const cells = row.children.map((cell, column) => {
-            const align = node.align?.[column];
-            const properties = ['left', 'center', 'right'].includes(align) ? { align } : {};
-            return element(index === 0 ? 'th' : 'td', properties, state.all(cell));
-        });
-        return element('tr', {}, cells);
-    });
-    const header = rows.length ? element('thead', {}, rows[0]) : '';
-    const body = rows.length > 1 ? element('tbody', {}, rows.slice(1)) : '';
-    return element('table', {}, header + body);
-};
-const list = (state, node) => {
-    const tasks = node.children.some(child => typeof child.checked === 'boolean');
-    const properties = {};
-    if (tasks) {
-        properties.className = 'contains-task-list';
-    }
-    if (node.ordered && node.start !== 1 && node.start != null) {
-        properties.start = node.start;
-    }
-    return element(node.ordered ? 'ol' : 'ul', properties, state.all(node));
-};
-const listItem = (state, node, parent) => {
-    const properties = {};
-    let checkbox = '';
-    if (typeof node.checked === 'boolean') {
-        properties.className = 'task-list-item';
-        checkbox = element('input', { type: 'checkbox', disabled: true, checked: node.checked }) + ' ';
-    }
-    // Tight lists omit paragraph wrappers; loose lists retain their block structure.
-    const loose = parent?.spread || parent?.children?.some(child => child.spread);
-    const children = (node.children || []).map((child, index) => {
-        const prefix = index === 0 ? checkbox : '';
-        if (child.type === 'paragraph') {
-            const content = prefix + state.all(child);
-            return loose ? element('p', {}, content) : content;
-        }
-        return prefix + state.render(child, node);
-    });
-    return element('li', properties, children.join('\n'));
-};
-
-const callout = (state, node) => {
-    const title = state.all({ type: 'paragraph', children: node.title || [] });
-    const body = element('div', { className: ['callout-content'] }, state.all(node));
-    const properties = { className: ['callout'], dataCallout: node.calloutType };
-    if (node.fold) {
-        return element('details', { ...properties, open: node.fold === 'expanded' }, [
-            element('summary', { className: ['callout-title'] }, title.length ? title : [text$1(node.calloutType)]),
-            body
-        ]);
-    }
-    const children = [body];
-    if (title.length) {
-        children.unshift(element('div', { className: ['callout-title'] }, title));
-    }
-    return element('div', properties, children);
-};
-
-const literal = (node, language) => element('pre', {}, element('code', { className: language ? 'language-' + language : undefined }, text$1(node.value)));
-const handlers = {
-    root: (state, node) => state.all(node, '\n'),
-    text: (state, node) => text$1(node.value),
-    // Raw markup is literal text, never interpreted as renderer-owned HTML.
-    html: (state, node) => text$1(node.value),
-    paragraph: (state, node) => element('p', {}, state.all(node)),
-    heading: (state, node) => {
-        const content = state.all(node);
-        if (state.options.headings === 'inline') {
-            return content;
-        }
-        const depth = Number.isInteger(node.depth) && node.depth >= 1 && node.depth <= 6 ? node.depth : 1;
-        const id = node.data?.hProperties?.id;
-        return element('h' + depth, { id: id == null ? undefined : 'user-content-' + id }, content);
-    },
-    emphasis: (state, node) => element('em', {}, state.all(node)),
-    strong: (state, node) => element('strong', {}, state.all(node)),
-    delete: (state, node) => element('del', {}, state.all(node)),
-    inlineCode: (state, node) => element('code', {}, text$1(node.value)),
-    code: (state, node) => literal(node, (node.lang || '').split(/\s/)[0]),
-    break: () => element('br') + '\n',
-    thematicBreak: () => element('hr'),
-    blockquote: (state, node) => element('blockquote', {}, state.all(node, '\n')),
-    list,
-    listItem,
-    table,
-    tableRow: (state, node) => element('tr', {}, state.all(node)),
-    tableCell: (state, node) => element('td', {}, state.all(node)),
-    link,
-    image,
-    linkReference: reference,
-    imageReference: reference,
-    wikiLink,
-    embed,
-    callout,
-    definition: () => '',
-    footnoteDefinition: () => '',
-    footnoteReference: (state, node) => state.footnotes.reference(node),
-    highlight: (state, node) => element('mark', { dataColor: node.color }, state.all(node)),
-    tag: (state, node) => element('span', { className: 'tag' }, text$1('#' + node.value)),
-    comment: (state, node) => element('span', { className: 'obsidian-comment' }, text$1(node.value)),
-    blockId: (state, node) => element('span', { id: 'user-content-block-' + node.value }),
-    yaml: (state, node) => literal(node, 'yaml'),
-    math: (state, node) => element('pre', {}, element('code', {
-        className: 'language-math math-display'
-    }, text$1(node.value))),
-    inlineMath: (state, node) => element('code', { className: 'language-math math-inline' }, text$1(node.value))
-};
-
 // Number notes on first use, with a distinct backlink for each reference.
 const footnotes = (definitions, render) => {
     const order = [];
@@ -27079,19 +26887,18 @@ const footnotes = (definitions, render) => {
     const reference = (node) => {
         const key = normalize(node.identifier);
         if (!definitions.has(key)) {
-            return text$1('[^' + node.identifier + ']');
+            return null;
         }
         if (!counts.has(key)) {
             order.push(key);
         }
         const count = (counts.get(key) || 0) + 1;
         counts.set(key, count);
-        return element('sup', {}, element('a', {
+        return {
             href: '#' + encodeURIComponent('user-content-fn-' + id(key)),
             id: referenceId(key, count),
-            'data-footnote-ref': '',
-            'aria-describedby': 'user-content-footnote-label'
-        }, String(order.indexOf(key) + 1)));
+            number: order.indexOf(key) + 1
+        };
     };
     const footer = () => {
         if (!order.length) {
@@ -27132,15 +26939,13 @@ const render = (root, options) => {
         }
     });
     const state = {
+        root,
+        notes,
+        inlineCount: 0,
         options,
         definitions,
         footnotes: null,
-        render: (node, parent = null) => {
-            if (Object.hasOwn(handlers, node.type)) {
-                return handlers[node.type](state, node, parent);
-            }
-            return node.value == null ? state.all(node) : text$1(node.value);
-        },
+        render: (node, parent = null) => createSection(node).html(options, state, parent),
         all: (node, separator = '') => (node.children || [])
             .map(child => state.render(child, node))
             .filter(value => value !== '')
@@ -27213,17 +27018,1202 @@ const defaults$1 = {
 
 // Format a detached tree so output choices never edit the live page.
 const markdownTree = (tree, options) => {
-    const result = outputTree(tree, options);
-    if (result && options.headings === 'inline') {
-        walk(result, (node) => {
-            if (node.type === 'heading') {
-                node.type = 'paragraph';
-                delete node.depth;
-            }
-        });
+    return createSection(tree).markdownNode(options);
+};
+
+const text = (value, key) => {
+    if (typeof value !== 'string') {
+        throw new TypeError(`${key} must be a string`);
     }
+};
+// Only expose semantic fields; callers cannot replace node types or child arrays.
+const fields = {
+    heading: ['text', 'depth'],
+    paragraph: ['text'],
+    wikiLink: ['target', 'alias', 'heading', 'block'],
+    embed: ['target', 'alias', 'heading', 'block'],
+    link: ['url', 'text', 'title'],
+    linkReference: ['text', 'url', 'title'],
+    image: ['url', 'alt', 'title'],
+    listItem: ['checked'],
+    callout: ['title', 'calloutType', 'fold'],
+    code: ['value', 'lang', 'meta'],
+    math: ['value'],
+    inlineMath: ['value'],
+    comment: ['value'],
+    highlight: ['text'],
+    yaml: ['value']
+};
+const edit = (node, changes) => {
+    if (!changes || typeof changes !== 'object' || Array.isArray(changes)) {
+        throw new TypeError('Expected an update object');
+    }
+    // Validate the complete patch before the handle commits it to the live node.
+    const next = structuredClone(node);
+    Object.entries(changes).forEach(([key, value]) => {
+        if (!fields[node.type]?.includes(key)) {
+            throw new TypeError(`Cannot update ${key} on ${node.type}`);
+        }
+        if (key === 'depth') {
+            if (typeof value !== 'number' || !Number.isInteger(value) || value < 1 || value > 6) {
+                throw new RangeError('Heading depth must be 1–6');
+            }
+        }
+        else if (key === 'checked') {
+            if (typeof value !== 'boolean' || typeof node.checked !== 'boolean') {
+                throw new TypeError('checked requires a task and a boolean');
+            }
+            // Explicit checkbox changes reset custom markers such as [?] to standard ones.
+            delete next.taskMarker;
+        }
+        else if (key === 'fold') {
+            if (![null, 'expanded', 'collapsed'].includes(value)) {
+                throw new TypeError('Invalid callout fold');
+            }
+        }
+        else if (value !== null ||
+            !['alias', 'heading', 'block', 'title', 'lang', 'meta'].includes(key)) {
+            text(value, key);
+        }
+        if (typeof value === 'string' &&
+            node.type === 'heading' &&
+            key === 'text' &&
+            /[\r\n]/.test(value)) {
+            throw new TypeError('Heading text must be one line');
+        }
+        // Reject punctuation that could escape the serialized wikilink.
+        if (['wikiLink', 'embed'].includes(node.type) && typeof value === 'string') {
+            if (/[\[\]\r\n|\\]/.test(value) ||
+                value.includes('%%') ||
+                (key === 'target' && /[#^]/.test(value))) {
+                throw new TypeError(`Invalid ${key}`);
+            }
+            if (key === 'block' && !/^[A-Za-z0-9-]+$/.test(value)) {
+                throw new TypeError('Invalid block identifier');
+            }
+        }
+        if (key === 'calloutType' && typeof value === 'string' && !/^[\w-]+$/.test(value)) {
+            throw new TypeError('Invalid calloutType');
+        }
+        if (node.type === 'comment' && typeof value === 'string' && value.includes('%%')) {
+            throw new TypeError('Comment value cannot contain %%');
+        }
+        if (node.type === 'callout' && key === 'title') {
+            if (typeof value !== 'string' || /[\r\n]/.test(value)) {
+                throw new TypeError('Callout title must be one line');
+            }
+            next.title = [{ type: 'text', value }];
+        }
+        else if (key === 'text') {
+            text(value, key);
+            // Text updates are literal replacements, not Markdown fragments.
+            next.children = [{ type: 'text', value }];
+            // An explicit reference keeps the destination when its visible label changes.
+            if (node.type === 'linkReference') {
+                next.referenceType = 'full';
+            }
+            if (node.blockId) {
+                next.children.push({ type: 'blockId', value: node.blockId });
+            }
+        }
+        else {
+            Object.assign(next, { [key]: value });
+        }
+    });
+    // Give an edited reference its own destination without changing shared definitions.
+    if (node.type === 'linkReference' && Object.hasOwn(changes, 'url')) {
+        next.type = 'link';
+        delete next.identifier;
+        delete next.label;
+        delete next.referenceType;
+    }
+    // Validate relationships after all fields have changed, allowing fragment switches.
+    if (next.heading !== undefined && next.heading !== null && next.block !== null) {
+        throw new TypeError('Use either heading or block');
+    }
+    if (['wikiLink', 'embed'].includes(node.type) && !next.target && !next.heading && !next.block) {
+        throw new TypeError('A link needs a target or fragment');
+    }
+    return next;
+};
+
+// Defaults for text output; callers can override individual categories.
+const defaults = {
+    paragraphs: true,
+    headings: true,
+    links: 'text',
+    embeds: false,
+    tasks: true,
+    lists: true,
+    callouts: 'body',
+    highlights: 'text',
+    comments: false,
+    code: true,
+    math: true,
+    tables: false,
+    frontmatter: false,
+    footnotes: true,
+    tags: true,
+    blockIds: false,
+    html: false,
+    quotes: true,
+    thematicBreaks: true,
+    definitions: true
+};
+
+// Shared ownership, detached views, and metadata. Known syntax renders in subclasses.
+class Section {
+    #node;
+    context;
+    constructor(node, context = {}) {
+        this.#node = node;
+        this.context = context;
+    }
+    get node() {
+        return this.#node;
+    }
+    ast(options = {}) {
+        return outputTree(this.#node, { ...defaults$2, ...options });
+    }
+    json(options = {}) {
+        options = { ...defaults$4, ...options };
+        const node = outputTree(this.#node, options);
+        if (!node) {
+            return null;
+        }
+        const result = {
+            type: node.type,
+            text: this.text({ ...options, headings: 'inline', comments: false, blockIds: false })
+        };
+        if (node.blockId !== undefined) {
+            result.blockId = node.blockId;
+        }
+        if (node.position) {
+            result.position = structuredClone(node.position);
+        }
+        return result;
+    }
+    // Unknown plugin nodes keep a useful fallback without knowing any syntax types.
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.#node, options);
+        if (!node) {
+            return '';
+        }
+        if (node.value !== undefined) {
+            return node.value;
+        }
+        return (node.children || []).map(child => text$2(child, options)).join('');
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return html(this.#node, options, this.context.page?.ast());
+        }
+        return this.#node.value == null ? state.all(this.#node) : text$1(this.#node.value);
+    }
+    // Markdown syntax remains delegated to remark; subclasses can change their node.
+    markdown(options = {}) {
+        const node = this.markdownNode(options);
+        return node ? stringifyMd(node) : '';
+    }
+    markdownNode(options = {}) {
+        options = { ...defaults$1, ...options };
+        const node = outputTree(this.#node, options);
+        if (!node) {
+            return null;
+        }
+        if (node.children) {
+            node.children = node.children.map(child => createSection(child).markdownNode(options)).filter(Boolean);
+        }
+        if (Array.isArray(node.title)) {
+            node.title = node.title.map(child => createSection(child).markdownNode(options)).filter(Boolean);
+        }
+        return node;
+    }
+    #owner() {
+        if (!this.context.locate || !this.context.changed || !this.context.page) {
+            throw new Error('This section is not attached to a page');
+        }
+        return this.context;
+    }
+    update(changes) {
+        const owner = this.#owner();
+        owner.locate(this.#node);
+        const next = edit(this.#node, changes);
+        // Preserve identity so other sections referencing this node stay valid.
+        Object.keys(this.#node).forEach((key) => {
+            Reflect.deleteProperty(this.#node, key);
+        });
+        Object.assign(this.#node, next);
+        owner.changed();
+        return this;
+    }
+    remove() {
+        const owner = this.#owner();
+        const parent = owner.locate(this.#node);
+        const children = parent.children?.includes(this.#node) ? parent.children : parent.title;
+        const index = children.indexOf(this.#node);
+        const following = children[index + 1];
+        children.splice(index, 1);
+        // Remove a standalone identifier along with the block it labels.
+        if (this.#node.blockId &&
+            following?.type === 'paragraph' &&
+            following.blockId === this.#node.blockId) {
+            children.splice(index, 1);
+        }
+        owner.changed();
+        return owner.page;
+    }
+}
+
+class Root extends Section {
+    json(options = {}) {
+        return super.json(options);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return (node.children || []).map(child => text$2(child, options)).join('\n');
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        return state.all(node, '\n');
+    }
+}
+
+class Paragraph extends Section {
+    json(options = {}) {
+        return super.json(options);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return (node.children || []).map(child => text$2(child, options)).join('');
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        return element('p', {}, state.all(node));
+    }
+}
+
+// Copy only the fields owned by a section, leaving AST children private.
+const metadata = (result, node, fields) => {
+    if (!result) {
+        return null;
+    }
+    fields.forEach(key => {
+        if (node[key] !== undefined && (key !== 'title' || typeof node.title === 'string')) {
+            result[key] = structuredClone(node[key]);
+        }
+    });
     return result;
 };
+
+class Heading extends Section {
+    markdownNode(options = {}) {
+        options = { ...defaults$1, ...options };
+        const node = super.markdownNode(options);
+        if (node && options.headings === 'inline') {
+            node.type = 'paragraph';
+            delete node.depth;
+        }
+        return node;
+    }
+    json(options = {}) {
+        return metadata(super.json(options), this.node, ['depth']);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        const content = (node.children || []).map(child => text$2(child, options)).join('');
+        return options.headings === true ? '#'.repeat(node.depth) + ' ' + content : content;
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        const content = state.all(node);
+        if (options.headings === 'inline') {
+            return content;
+        }
+        const depth = Number.isInteger(node.depth) && node.depth >= 1 && node.depth <= 6 ? node.depth : 1;
+        // Only add heading anchors when this document links to them.
+        if (!state.headingTargets) {
+            state.headingTargets = new Set();
+            walk(state.root, child => {
+                if (child.type === 'wikiLink' && !child.target && child.heading) {
+                    state.headingTargets.add(child.heading);
+                }
+            });
+        }
+        const label = plainText(node);
+        const id = state.headingTargets.has(label) ? label : node.data?.hProperties?.id;
+        return element('h' + depth, { id: id == null ? undefined : 'user-content-' + id }, content);
+    }
+}
+
+class Text extends Section {
+    json(options = {}) {
+        return metadata(super.json(options), this.node, ['value']);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return node.value ?? '';
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        return text$1(node.value);
+    }
+}
+
+class Html extends Section {
+    json(options = {}) {
+        return metadata(super.json(options), this.node, ['value']);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return node.value ?? '';
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        return text$1(node.value);
+    }
+}
+
+class Emphasis extends Section {
+    json(options = {}) {
+        return super.json(options);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return (node.children || []).map(child => text$2(child, options)).join('');
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        return element('em', {}, state.all(node));
+    }
+}
+
+class Strong extends Section {
+    json(options = {}) {
+        return super.json(options);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return (node.children || []).map(child => text$2(child, options)).join('');
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        return element('strong', {}, state.all(node));
+    }
+}
+
+class Strikethrough extends Section {
+    json(options = {}) {
+        return super.json(options);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return (node.children || []).map(child => text$2(child, options)).join('');
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        return element('del', {}, state.all(node));
+    }
+}
+
+class InlineCode extends Section {
+    json(options = {}) {
+        return metadata(super.json(options), this.node, ['value']);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return node.value ?? '';
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        return element('code', {}, text$1(node.value));
+    }
+}
+
+class Code extends Section {
+    json(options = {}) {
+        return metadata(super.json(options), this.node, ['value', 'lang', 'meta']);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return node.value ?? '';
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        const language = (node.lang || '').split(/\s/)[0];
+        return element('pre', {}, element('code', { className: language ? 'language-' + language : undefined }, text$1(node.value)));
+    }
+}
+
+class Break extends Section {
+    json(options = {}) {
+        return super.json(options);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return '\n';
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        this.node;
+        return element('br') + '\n';
+    }
+}
+
+class ThematicBreak extends Section {
+    json(options = {}) {
+        return super.json(options);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return (node.children || []).map(child => text$2(child, options)).join('');
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        this.node;
+        return element('hr');
+    }
+}
+
+class Quote extends Section {
+    json(options = {}) {
+        return super.json(options);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return (node.children || []).map(child => text$2(child, options)).join('\n');
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        return element('blockquote', {}, state.all(node, '\n'));
+    }
+}
+
+class List extends Section {
+    json(options = {}) {
+        const result = metadata(super.json(options), this.node, ['ordered', 'start']);
+        if (!result) {
+            return null;
+        }
+        const node = outputTree(this.node, { ...defaults$4, ...options });
+        result.items = node.children.map(item => ({ text: jsonText(item, options), checked: item.checked ?? null }));
+        return result;
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return (node.children || []).map(child => text$2(child, options)).join('\n');
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        const tasks = node.children.some(child => typeof child.checked === 'boolean');
+        const properties = {};
+        if (tasks) {
+            properties.className = 'contains-task-list';
+        }
+        if (node.ordered && node.start !== 1 && node.start != null) {
+            properties.start = node.start;
+        }
+        return element(node.ordered ? 'ol' : 'ul', properties, state.all(node));
+    }
+}
+
+class ListItem extends Section {
+    json(options = {}) {
+        return metadata(super.json(options), this.node, ['checked', 'taskMarker']);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return (node.children || []).map(child => text$2(child, options)).join('\n');
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        const properties = {};
+        let checkbox = '';
+        if (typeof node.checked === 'boolean') {
+            properties.className = 'task-list-item';
+            checkbox = element('input', { type: 'checkbox', disabled: true, checked: node.checked }) + ' ';
+        }
+        // Tight lists omit paragraph wrappers; loose lists retain their block structure.
+        const loose = parent?.spread || parent?.children?.some(child => child.spread);
+        const children = (node.children || []).map((child, index) => {
+            const prefix = index === 0 ? checkbox : '';
+            if (child.type === 'paragraph') {
+                const content = prefix + state.all(child);
+                return loose ? element('p', {}, content) : content;
+            }
+            return prefix + state.render(child, node);
+        });
+        return element('li', properties, children.join('\n'));
+    }
+}
+
+class Table extends Section {
+    json(options = {}) {
+        const result = super.json(options);
+        if (!result) {
+            return null;
+        }
+        const node = outputTree(this.node, { ...defaults$4, ...options });
+        result.align = [...node.align];
+        result.rows = node.children.map(row => row.children.map(cell => jsonText(cell, options)));
+        return result;
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return (node.children || []).map(child => text$2(child, options)).join('\n');
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        const rows = (node.children || []).map(row => state.render(row, node));
+        const header = rows.length ? element('thead', {}, rows[0]) : '';
+        const body = rows.length > 1 ? element('tbody', {}, rows.slice(1)) : '';
+        return element('table', {}, header + body);
+    }
+}
+
+class TableRow extends Section {
+    json(options = {}) {
+        return super.json(options);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return (node.children || []).map(child => text$2(child, options)).join('\t');
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        const header = parent?.children?.indexOf(node) === 0;
+        const cells = (node.children || []).map((cell, column) => state.render(cell, {
+            type: 'tableRow', header, align: parent?.align?.[column]
+        }));
+        return element('tr', {}, cells);
+    }
+}
+
+class TableCell extends Section {
+    json(options = {}) {
+        return super.json(options);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return (node.children || []).map(child => text$2(child, options)).join('');
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        const align = parent?.align;
+        const properties = ['left', 'center', 'right'].includes(align) ? { align } : {};
+        return element(parent?.header ? 'th' : 'td', properties, state.all(node));
+    }
+}
+
+class Link extends Section {
+    get title() { return this.text(); }
+    set title(value) {
+        this.update({ text: value });
+    }
+    get target() {
+        const node = this.json();
+        return node.url ?? '';
+    }
+    set target(value) {
+        this.update({ url: value });
+    }
+    json(options = {}) {
+        return metadata(super.json(options), this.node, ['url', 'title']);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return (node.children || []).map(child => text$2(child, options)).join('');
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        return element('a', { href: url(node.url), title: node.title }, state.all(node));
+    }
+}
+
+const destination = (node) => {
+    let value = node.target || '';
+    if (node.heading != null) {
+        value += '#' + node.heading;
+    }
+    else if (node.block != null) {
+        value += '#^' + node.block;
+    }
+    return value;
+};
+
+class WikiLink extends Link {
+    get title() { return this.text(); }
+    set title(value) { this.update({ alias: value }); }
+    get target() { return this.node.target ?? ''; }
+    set target(value) { this.update({ target: value }); }
+    json(options = {}) {
+        return metadata(super.json(options), this.node, ['target', 'alias', 'heading', 'block']);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        if (node.alias != null) {
+            return node.alias;
+        }
+        const fragment = node.heading ?? (node.block ? '^' + node.block : '');
+        return node.target + (node.target && fragment ? '#' : '') + fragment;
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        const target = destination(node);
+        let href = encodeURI(target);
+        if (!node.target && node.block) {
+            href = '#block-' + encodeURIComponent(node.block);
+        }
+        return element('a', { href: url(href), className: 'internal-link', dataHref: target }, text$1(node.alias ?? target));
+    }
+}
+
+class LinkReference extends Link {
+    get target() { return this.json()?.url ?? ''; }
+    set target(value) {
+        this.update({ url: value, title: this.json()?.title ?? null });
+    }
+    json(options = {}) {
+        if (this.node.type !== 'linkReference') {
+            return super.json(options);
+        }
+        const result = metadata(super.json(options), this.node, ['identifier', 'label']);
+        if (!result) {
+            return null;
+        }
+        const page = this.context.page;
+        const definition = page && definitions(page.ast({ ...defaults$4, ...options })).get(normalize(this.node.identifier));
+        if (definition) {
+            result.url = definition.url;
+            if (definition.title != null) {
+                result.title = definition.title;
+            }
+        }
+        return result;
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return (node.children || []).map(child => text$2(child, options)).join('');
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        if (this.node.type !== 'linkReference') {
+            return super.html(options, state, parent);
+        }
+        const node = this.node;
+        const definition = state.definitions.get(normalize(node.identifier));
+        if (!definition) {
+            return state.all(node);
+        }
+        const resolved = { ...node, url: definition.url, title: definition.title };
+        return new Link(resolved).html(options, state);
+    }
+}
+
+class Embed extends Section {
+    json(options = {}) {
+        const result = metadata(super.json(options), this.node, ['target', 'alias', 'heading', 'block']);
+        if (!result) {
+            return null;
+        }
+        Object.assign(result, dimensions(this.node.alias ?? ''));
+        if (/\.pdf$/i.test(this.node.target)) {
+            const params = new URLSearchParams(this.node.heading || '');
+            const fields = ['page', 'height'];
+            fields.forEach(key => {
+                const value = params.get(key);
+                if (value && /^[1-9]\d*$/.test(value)) {
+                    result[key] = Number(value);
+                }
+            });
+        }
+        return result;
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return node.alias ?? node.target;
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        if (/\.(?:avif|bmp|gif|jpe?g|png|svg|webp)$/i.test(node.target)) {
+            const size = dimensions(node.alias ?? '');
+            return element('img', {
+                src: url(encodeURI(destination(node)), true),
+                alt: Object.keys(size).length ? node.target : node.alias ?? node.target,
+                ...size
+            });
+        }
+        const target = destination(node);
+        let href = encodeURI(target);
+        if (!node.target && node.block) {
+            href = '#block-' + encodeURIComponent(node.block);
+        }
+        return element('a', { href: url(href), className: 'internal-embed', dataHref: target }, text$1(node.alias ?? target));
+    }
+}
+
+class Image extends Section {
+    json(options = {}) {
+        const result = metadata(super.json(options), this.node, ['url', 'alt', 'title']);
+        if (!result) {
+            return null;
+        }
+        Object.assign(result, dimensions((this.node.alt || '').split('|').at(-1)));
+        return result;
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return node.alt || '';
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        const parts = (node.alt || '').split('|');
+        const size = dimensions(parts.at(-1));
+        let alt = node.alt || '';
+        if (parts.length > 1 && Object.keys(size).length) {
+            alt = parts.slice(0, -1).join('|');
+        }
+        return element('img', { src: url(node.url, true), alt, title: node.title, ...size });
+    }
+}
+
+class ImageReference extends Image {
+    json(options = {}) {
+        const result = metadata(super.json(options), this.node, ['identifier', 'label', 'alt']);
+        if (!result) {
+            return null;
+        }
+        const page = this.context.page;
+        const definition = page && definitions(page.ast({ ...defaults$4, ...options })).get(normalize(this.node.identifier));
+        if (definition) {
+            result.url = definition.url;
+            if (definition.title != null) {
+                result.title = definition.title;
+            }
+        }
+        return result;
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return node.alt || '';
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        const definition = state.definitions.get(normalize(node.identifier));
+        if (!definition) {
+            return text$1(node.alt || '');
+        }
+        const resolved = { ...node, url: definition.url, title: definition.title };
+        return new Image(resolved).html(options, state);
+    }
+}
+
+class Callout extends Section {
+    get title() { return this.json()?.title || ''; }
+    set title(value) { this.update({ title: value }); }
+    body(options = {}) {
+        options = { ...defaults, ...options };
+        return this.text({ ...options, callouts: options.callouts === false ? false : 'body' });
+    }
+    json(options = {}) {
+        const result = metadata(super.json(options), this.node, ['calloutType', 'fold']);
+        if (!result) {
+            return null;
+        }
+        const node = outputTree(this.node, { ...defaults$4, ...options });
+        result.title = jsonText({ type: 'paragraph', children: node.title }, options);
+        return result;
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        const children = [...node.children];
+        if (options.callouts !== 'body' && node.title?.length) {
+            children.unshift({ type: 'paragraph', children: node.title });
+        }
+        return children.map(child => text$2(child, options)).join('\n');
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        const title = state.all({ type: 'paragraph', children: node.title || [] });
+        const body = element('div', { className: ['callout-content'] }, state.all(node));
+        const properties = { className: ['callout'], dataCallout: node.calloutType };
+        if (node.fold) {
+            return element('details', { ...properties, open: node.fold === 'expanded' }, [
+                element('summary', { className: ['callout-title'] }, title.length ? title : [text$1(node.calloutType)]),
+                body
+            ]);
+        }
+        const children = [body];
+        if (title.length) {
+            children.unshift(element('div', { className: ['callout-title'] }, title));
+        }
+        return element('div', properties, children);
+    }
+}
+
+class Definition extends Section {
+    json(options = {}) {
+        return metadata(super.json(options), this.node, ['url', 'title', 'identifier', 'label']);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return (node.children || []).map(child => text$2(child, options)).join('');
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        this.node;
+        return '';
+    }
+}
+
+class FootnoteDefinition extends Section {
+    json(options = {}) {
+        return metadata(super.json(options), this.node, ['identifier', 'label']);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return (node.children || []).map(child => text$2(child, options)).join('');
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        this.node;
+        return '';
+    }
+}
+
+class FootnoteReference extends Section {
+    json(options = {}) {
+        return metadata(super.json(options), this.node, ['identifier', 'label']);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return (node.children || []).map(child => text$2(child, options)).join('');
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        const reference = state.footnotes.reference(node);
+        if (!reference) {
+            return text$1('[^' + node.identifier + ']');
+        }
+        return element('sup', {}, element('a', {
+            href: reference.href,
+            id: reference.id,
+            'data-footnote-ref': '',
+            'aria-describedby': 'user-content-footnote-label'
+        }, String(reference.number)));
+    }
+}
+
+class InlineFootnote extends Section {
+    json(options = {}) {
+        return super.json(options);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return (node.children || []).map(child => text$2(child, options)).join('');
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        let identifier = 'obsidian-inline-' + ++state.inlineCount;
+        for (; state.notes.has(normalize(identifier)); identifier = 'obsidian-inline-' + ++state.inlineCount) {
+            // Keep generated identifiers distinct from named notes.
+        }
+        state.notes.set(normalize(identifier), {
+            type: 'footnoteDefinition',
+            identifier,
+            children: [{ type: 'paragraph', children: node.children || [] }]
+        });
+        return state.render({ type: 'footnoteReference', identifier });
+    }
+}
+
+class Highlight extends Section {
+    json(options = {}) {
+        return metadata(super.json(options), this.node, ['color']);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return (node.children || []).map(child => text$2(child, options)).join('');
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        return element('mark', { dataColor: node.color }, state.all(node));
+    }
+}
+
+class Tag extends Section {
+    json(options = {}) {
+        return metadata(super.json(options), this.node, ['value']);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return '#' + node.value;
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        return element('span', { className: 'tag' }, text$1('#' + node.value));
+    }
+}
+
+class Comment extends Section {
+    json(options = {}) {
+        const result = metadata(super.json(options), this.node, ['value']);
+        if (result) {
+            result.text = this.node.value;
+        }
+        return result;
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return node.value ?? '';
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        // Escape markup and double hyphens so content cannot end the HTML comment.
+        return '<!-- ' + text$1(node.value).replace(/--/g, '-&#45;') + ' -->';
+    }
+}
+
+class BlockId extends Section {
+    json(options = {}) {
+        return metadata(super.json(options), this.node, ['value']);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return node.value ?? '';
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        return element('span', { id: 'user-content-block-' + node.value });
+    }
+}
 
 /*! js-yaml 5.5.0 https://github.com/nodeca/js-yaml @license MIT */
 //#region src/tag.ts
@@ -29944,357 +30934,10 @@ const properties = (value) => {
     }
 };
 
-// Common metadata; specialized sections can extend this output.
-const serialize = (node, options = {}, definitions = new Map()) => {
-    const result = { type: node.type, text: jsonText(node, options) };
-    if (node.type === 'yaml') {
-        Object.assign(result, properties(node.value));
-    }
-    if (['linkReference', 'imageReference'].includes(node.type)) {
-        const definition = definitions.get(normalize(node.identifier));
-        if (definition) {
-            result.url = definition.url;
-            if (definition.title != null) {
-                result.title = definition.title;
-            }
-        }
-    }
-    // Copy public metadata explicitly instead of leaking nested AST internals.
-    const fields = [
-        'depth',
-        'target',
-        'alias',
-        'heading',
-        'block',
-        'url',
-        'alt',
-        'checked',
-        'taskMarker',
-        'ordered',
-        'start',
-        'lang',
-        'meta',
-        'value',
-        'identifier',
-        'label',
-        'blockId',
-        'calloutType',
-        'fold',
-        'color'
-    ];
-    fields.forEach((key) => {
-        if (node[key] !== undefined) {
-            Object.assign(result, { [key]: node[key] });
-        }
-    });
-    if (typeof node.title === 'string') {
-        result.title = node.title;
-    }
-    if (node.position) {
-        result.position = structuredClone(node.position);
-    }
-    // Direct comment inspection exposes its content even when document text omits it.
-    if (node.type === 'comment') {
-        result.text = node.value;
-    }
-    // Size hints occupy the alias in embeds and the final alt-text segment in images.
-    if (node.type === 'embed') {
-        Object.assign(result, dimensions(node.alias ?? ''));
-        if (/\.pdf$/i.test(node.target)) {
-            const params = new URLSearchParams(node.heading || '');
-            const fields = ['page', 'height'];
-            fields.forEach((key) => {
-                const value = params.get(key);
-                if (value && /^[1-9]\d*$/.test(value)) {
-                    result[key] = Number(value);
-                }
-            });
-        }
-    }
-    if (node.type === 'image') {
-        Object.assign(result, dimensions((node.alt || '').split('|').at(-1)));
-    }
-    // Flatten cells into rows so consumers need not traverse table nodes.
-    if (node.type === 'table') {
-        result.align = [...node.align];
-        result.rows = node.children.map((row) => row.children.map((cell) => jsonText(cell, options)));
-    }
-    if (node.type === 'list') {
-        result.items = node.children.map((item) => ({
-            text: jsonText(item, options),
-            checked: item.checked ?? null
-        }));
-    }
-    return result;
-};
-
-const text = (value, key) => {
-    if (typeof value !== 'string') {
-        throw new TypeError(`${key} must be a string`);
-    }
-};
-// Only expose semantic fields; callers cannot replace node types or child arrays.
-const fields = {
-    heading: ['text', 'depth'],
-    paragraph: ['text'],
-    wikiLink: ['target', 'alias', 'heading', 'block'],
-    embed: ['target', 'alias', 'heading', 'block'],
-    link: ['url', 'text', 'title'],
-    linkReference: ['text', 'url', 'title'],
-    image: ['url', 'alt', 'title'],
-    listItem: ['checked'],
-    callout: ['title', 'calloutType', 'fold'],
-    code: ['value', 'lang', 'meta'],
-    math: ['value'],
-    inlineMath: ['value'],
-    comment: ['value'],
-    highlight: ['text'],
-    yaml: ['value']
-};
-const edit = (node, changes) => {
-    if (!changes || typeof changes !== 'object' || Array.isArray(changes)) {
-        throw new TypeError('Expected an update object');
-    }
-    // Validate the complete patch before the handle commits it to the live node.
-    const next = structuredClone(node);
-    Object.entries(changes).forEach(([key, value]) => {
-        if (!fields[node.type]?.includes(key)) {
-            throw new TypeError(`Cannot update ${key} on ${node.type}`);
-        }
-        if (key === 'depth') {
-            if (typeof value !== 'number' || !Number.isInteger(value) || value < 1 || value > 6) {
-                throw new RangeError('Heading depth must be 1–6');
-            }
-        }
-        else if (key === 'checked') {
-            if (typeof value !== 'boolean' || typeof node.checked !== 'boolean') {
-                throw new TypeError('checked requires a task and a boolean');
-            }
-            // Explicit checkbox changes reset custom markers such as [?] to standard ones.
-            delete next.taskMarker;
-        }
-        else if (key === 'fold') {
-            if (![null, 'expanded', 'collapsed'].includes(value)) {
-                throw new TypeError('Invalid callout fold');
-            }
-        }
-        else if (value !== null ||
-            !['alias', 'heading', 'block', 'title', 'lang', 'meta'].includes(key)) {
-            text(value, key);
-        }
-        if (typeof value === 'string' &&
-            node.type === 'heading' &&
-            key === 'text' &&
-            /[\r\n]/.test(value)) {
-            throw new TypeError('Heading text must be one line');
-        }
-        // Reject punctuation that could escape the serialized wikilink.
-        if (['wikiLink', 'embed'].includes(node.type) && typeof value === 'string') {
-            if (/[\[\]\r\n|\\]/.test(value) ||
-                value.includes('%%') ||
-                (key === 'target' && /[#^]/.test(value))) {
-                throw new TypeError(`Invalid ${key}`);
-            }
-            if (key === 'block' && !/^[A-Za-z0-9-]+$/.test(value)) {
-                throw new TypeError('Invalid block identifier');
-            }
-        }
-        if (key === 'calloutType' && typeof value === 'string' && !/^[\w-]+$/.test(value)) {
-            throw new TypeError('Invalid calloutType');
-        }
-        if (node.type === 'comment' && typeof value === 'string' && value.includes('%%')) {
-            throw new TypeError('Comment value cannot contain %%');
-        }
-        if (node.type === 'callout' && key === 'title') {
-            if (typeof value !== 'string' || /[\r\n]/.test(value)) {
-                throw new TypeError('Callout title must be one line');
-            }
-            next.title = [{ type: 'text', value }];
-        }
-        else if (key === 'text') {
-            text(value, key);
-            // Text updates are literal replacements, not Markdown fragments.
-            next.children = [{ type: 'text', value }];
-            // An explicit reference keeps the destination when its visible label changes.
-            if (node.type === 'linkReference') {
-                next.referenceType = 'full';
-            }
-            if (node.blockId) {
-                next.children.push({ type: 'blockId', value: node.blockId });
-            }
-        }
-        else {
-            Object.assign(next, { [key]: value });
-        }
-    });
-    // Give an edited reference its own destination without changing shared definitions.
-    if (node.type === 'linkReference' && Object.hasOwn(changes, 'url')) {
-        next.type = 'link';
-        delete next.identifier;
-        delete next.label;
-        delete next.referenceType;
-    }
-    // Validate relationships after all fields have changed, allowing fragment switches.
-    if (next.heading !== undefined && next.heading !== null && next.block !== null) {
-        throw new TypeError('Use either heading or block');
-    }
-    if (['wikiLink', 'embed'].includes(node.type) && !next.target && !next.heading && !next.block) {
-        throw new TypeError('A link needs a target or fragment');
-    }
-    return next;
-};
-
-// Defaults for text output; callers can override individual categories.
-const defaults = {
-    paragraphs: true,
-    headings: 'inline',
-    links: true,
-    embeds: true,
-    tasks: true,
-    lists: true,
-    callouts: true,
-    highlights: true,
-    comments: false,
-    code: true,
-    math: true,
-    tables: true,
-    frontmatter: true,
-    footnotes: true,
-    tags: true,
-    blockIds: false,
-    html: true,
-    quotes: true,
-    thematicBreaks: true,
-    definitions: true
-};
-
-// Wrap live nodes; output methods read detached, filtered views through ast().
-class Section {
-    #node;
-    context;
-    constructor(node, context = {}) {
-        this.#node = node;
-        this.context = context;
-    }
-    // Subclass outputs must not inherit another output format's exclusions.
-    get node() {
-        return this.#node;
-    }
-    ast(options = {}) {
-        return outputTree(this.#node, { ...defaults$2, ...options });
-    }
-    html(options = {}) {
-        return html(this.#node, options, this.context.page?.ast());
-    }
+class Frontmatter extends Section {
     json(options = {}) {
-        options = { ...defaults$4, ...options };
-        const node = outputTree(this.#node, options);
-        if (!node) {
-            return null;
-        }
-        let references = new Map();
-        if (this.context.page && ['linkReference', 'imageReference'].includes(node.type)) {
-            references = definitions(this.context.page.ast(options));
-        }
-        return serialize(node, options, references);
-    }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.#node, options);
-        if (!node) {
-            return '';
-        }
-        if (node.type === 'comment' && options.comments !== true) {
-            return '';
-        }
-        if (node.type === 'blockId' && options.blockIds !== true) {
-            return '';
-        }
-        if (node.type === 'tag') {
-            return '#' + node.value;
-        }
-        if (node.type === 'break') {
-            return '\n';
-        }
-        if (node.value !== undefined) {
-            return node.value;
-        }
-        let separator = '';
-        if (['root', 'list', 'listItem', 'blockquote', 'table'].includes(node.type)) {
-            separator = '\n';
-        }
-        if (node.type === 'tableRow') {
-            separator = '\t';
-        }
-        const content = (node.children || []).map((child) => text$2(child, options)).join(separator);
-        if (node.type === 'heading' && options.headings === true) {
-            return '#'.repeat(node.depth) + ' ' + content;
-        }
-        return content;
-    }
-    #owner() {
-        if (!this.context.locate || !this.context.changed || !this.context.page) {
-            throw new Error('This section is not attached to a page');
-        }
-        return this.context;
-    }
-    update(changes) {
-        const owner = this.#owner();
-        owner.locate(this.#node);
-        const next = edit(this.#node, changes);
-        // Preserve identity so other sections referencing this node stay valid.
-        Object.keys(this.#node).forEach((key) => {
-            Reflect.deleteProperty(this.#node, key);
-        });
-        Object.assign(this.#node, next);
-        owner.changed();
-        return this;
-    }
-    remove() {
-        const owner = this.#owner();
-        const parent = owner.locate(this.#node);
-        const children = parent.children?.includes(this.#node) ? parent.children : parent.title;
-        const index = children.indexOf(this.#node);
-        const following = children[index + 1];
-        children.splice(index, 1);
-        // Remove a standalone identifier along with the block it labels.
-        if (this.#node.blockId &&
-            following?.type === 'paragraph' &&
-            following.blockId === this.#node.blockId) {
-            children.splice(index, 1);
-        }
-        owner.changed();
-        return owner.page;
-    }
-}
-
-class Link extends Section {
-    get title() {
-        return this.text();
-    }
-    set title(value) {
-        if (this.ast().type === 'wikiLink') {
-            this.update({ alias: value });
-        }
-        else {
-            this.update({ text: value });
-        }
-    }
-    get target() {
-        const node = this.json();
-        return node.target ?? node.url ?? '';
-    }
-    set target(value) {
-        const node = this.ast();
-        if (node.type === 'wikiLink') {
-            this.update({ target: value });
-        }
-        else if (node.type === 'linkReference') {
-            this.update({ url: value, title: this.json().title ?? null });
-        }
-        else {
-            this.update({ url: value });
-        }
+        const result = metadata(super.json(options), this.node, ['value']);
+        return result ? Object.assign(result, properties(this.node.value)) : null;
     }
     text(options = {}) {
         options = { ...defaults, ...options };
@@ -30302,77 +30945,96 @@ class Link extends Section {
         if (!node) {
             return '';
         }
-        if (node.type !== 'wikiLink') {
-            return super.text(options);
+        return node.value ?? '';
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
         }
-        if (node.alias != null) {
-            return node.alias;
-        }
-        const fragment = node.heading ?? (node.block ? '^' + node.block : '');
-        return node.target + (node.target && fragment ? '#' : '') + fragment;
+        const node = this.node;
+        return element('pre', {}, element('code', { className: 'language-yaml' }, text$1(node.value)));
     }
 }
 
-class Embed extends Section {
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
-        if (!node) {
-            return '';
-        }
-        if (node.type === 'embed') {
-            return node.alias ?? node.target;
-        }
-        return node.alt || '';
-    }
-}
-
-class Callout extends Section {
-    get title() {
-        return this.json()?.title || '';
-    }
-    set title(value) {
-        this.update({ title: value });
-    }
-    body(options = {}) {
-        options = { ...defaults, ...options };
-        return this.text({ ...options, callouts: options.callouts === false ? false : 'body' });
-    }
-    text(options = {}) {
-        options = { ...defaults, ...options };
-        const node = outputTree(this.node, options);
-        if (!node) {
-            return '';
-        }
-        const children = [...node.children];
-        if (options.callouts !== 'body' && node.title?.length) {
-            children.unshift({ type: 'paragraph', children: node.title });
-        }
-        return children.map((child) => text$2(child, options)).join('\n');
-    }
+let Math$1 = class Math extends Section {
     json(options = {}) {
-        options = { ...defaults$4, ...options };
-        const result = super.json(options);
-        if (!result) {
-            return null;
-        }
+        return metadata(super.json(options), this.node, ['value', 'meta']);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
         const node = outputTree(this.node, options);
-        return {
-            ...result,
-            title: jsonText({ type: 'paragraph', children: node.title }, options)
-        };
+        if (!node) {
+            return '';
+        }
+        return node.value ?? '';
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        return element('pre', {}, element('code', { className: 'language-math math-display' }, text$1(node.value)));
+    }
+};
+
+class InlineMath extends Section {
+    json(options = {}) {
+        return metadata(super.json(options), this.node, ['value']);
+    }
+    text(options = {}) {
+        options = { ...defaults, ...options };
+        const node = outputTree(this.node, options);
+        if (!node) {
+            return '';
+        }
+        return node.value ?? '';
+    }
+    html(options = {}, state, parent) {
+        if (!state) {
+            return super.html(options);
+        }
+        const node = this.node;
+        return element('code', { className: 'language-math math-inline' }, text$1(node.value));
     }
 }
 
-// Load the built-in section types once at the API entry point.
 register('*', Section);
-register('wikiLink', Link);
+register('root', Root);
+register('paragraph', Paragraph);
+register('heading', Heading);
+register('text', Text);
+register('html', Html);
+register('emphasis', Emphasis);
+register('strong', Strong);
+register('delete', Strikethrough);
+register('inlineCode', InlineCode);
+register('code', Code);
+register('break', Break);
+register('thematicBreak', ThematicBreak);
+register('blockquote', Quote);
+register('list', List);
+register('listItem', ListItem);
+register('table', Table);
+register('tableRow', TableRow);
+register('tableCell', TableCell);
 register('link', Link);
-register('linkReference', Link);
+register('wikiLink', WikiLink);
+register('linkReference', LinkReference);
 register('embed', Embed);
-register('image', Embed);
-register('imageReference', Embed);
+register('image', Image);
+register('imageReference', ImageReference);
 register('callout', Callout);
+register('definition', Definition);
+register('footnoteDefinition', FootnoteDefinition);
+register('footnoteReference', FootnoteReference);
+register('inlineFootnote', InlineFootnote);
+register('highlight', Highlight);
+register('tag', Tag);
+register('comment', Comment);
+register('blockId', BlockId);
+register('yaml', Frontmatter);
+register('math', Math$1);
+register('inlineMath', InlineMath);
 
 const clearPositions = (tree) => {
     // Source positions no longer describe the document after editing.

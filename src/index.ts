@@ -12,8 +12,6 @@ export type { ParseOptions, EditChanges, NodeJSON, PageJSON } from './types/api.
 export type { TextOptions, JsonOptions, MarkdownOptions, AstOptions, HtmlOptions } from './types/options.ts'
 export type { AstNode, PageNode } from './types/ast.ts'
 export type { default as ItemHandle, default as Section } from './API/Section/Section.ts'
-export type { default as Link } from './API/Section/Link.ts'
-export type { default as Embed } from './API/Section/Embed.ts'
-export type { default as Callout } from './API/Section/Callout.ts'
+export type * from './API/Section/types.ts'
 export type { default as Page } from './API/Page.ts'
 export default parsePage

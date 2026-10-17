@@ -14,7 +14,7 @@ test('HTML renders standard Markdown and respects heading modes', (t) => {
   t.equal(page.headings()[0].html({ headings: false }), '')
   t.notOk(page.html({ headings: false }).includes('Foo'))
   t.notOk(page.html({ headings: 'inline' }).includes('<h2>'))
-  t.equal(page.headings()[0].text(), 'Foo', 'HTML does not mutate text output')
+  t.equal(page.headings()[0].text(), '## Foo', 'HTML does not mutate text output')
   t.end()
 })
 
@@ -84,13 +84,13 @@ test('HTML handles footnotes and keeps renderer source available for math and Me
   t.end()
 })
 
-test('HTML hides comments and frontmatter by default, with explicit inclusion', (t) => {
+test('HTML preserves comments invisibly and hides frontmatter by default', (t) => {
   const page = parsePage('---\ntitle: Secret\n---\n\nVisible %%hidden%%')
   t.notOk(page.html().includes('Secret'))
-  t.notOk(page.html().includes('hidden'))
+  t.ok(page.html().includes('<!-- hidden -->'))
   t.ok(page.html({ frontmatter: true }).includes('Secret'))
-  t.ok(page.html({ comments: true }).includes('hidden'))
-  t.equal(page.comments()[0].html(), '')
+  t.notOk(page.html({ comments: false }).includes('hidden'))
+  t.equal(page.comments()[0].html(), '<!-- hidden -->')
   t.equal(page.markdown(), '---\ntitle: Secret\n---\n\nVisible %%hidden%%')
   t.end()
 })
