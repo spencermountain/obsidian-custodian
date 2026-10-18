@@ -24,73 +24,80 @@
 <!-- spacer -->
 <img height="20px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
-Everything is always more complicated than you think,
+Everything is always more complicated than you think—
 
-—but I'll admit, I did shake my head in sanctimonious disbelief, when I found out that **obsidian** does not release or even share details about their markdown parser—
+—but I'll admit, I did shake my head sanctimoniously when I found out **obsidian** will not release any code or details about parsing their markdown syntax.
 
-They have everyone writing notes in their syntax, and it's not currently possible or easy to _get the information back out_ - it's stuck in their ad-hoc markup language.
+Everyone is writing notes in their syntax - and it's not possible to _get the information back out?_ - it's stuck in this ad-hoc markup syntax -
 
-...which means that people have to write endless half-baked parsers - and all the plugins that inspect this markdown are slightly buggy and in their own unique ways.
+...which means that people have to write endless half-baked parsers - and all the plugins are slightly buggy in their own unique ways.
 
 This drives me crazy.
 
-What's worse is that it's a JavaScript application, which means they almost-certainly have scratched-together some regexes on [remark](https://github.com/remarkjs/remark), and are shy about it, or moating it intentionally.
+...and what's worse is that it's a javaScript application! - which means they have almost-certainly scratched-together some regexes on [remark](https://github.com/remarkjs/remark), and are shy about it, or are moating it intentionally.
 
 <!-- spacer -->
 <img height="20px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 <img height="50px" src="https://user-images.githubusercontent.com/399657/68221824-09809d80-ffb8-11e9-9ef0-6ed3574b0ce8.png"/>
 
-Sorry, I know how I sound. I do think details like these are important, and neglecting them is bad-form, and shows up all the time in our craft.
+Sorry, I know how I sound.
 <!-- spacer -->
 <img height="20px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
 All that being said, I decided to do a good job with this parser, aimed at getting structured JSON out of your notes - with a secondary goal to support safe machine-editing.
 
-I'm going spec-safe with [remark plugins](https://github.com/remarkjs/remark/blob/main/doc/plugins.md#list-of-plugins) and dropping custom regex only when necessary.
+It is spec-safe, using these [fantastic remark plugins](https://github.com/remarkjs/remark/blob/main/doc/plugins.md#list-of-plugins):
+
+- [remark-parse](https://github.com/remarkjs/remark/tree/main/packages/remark-parse) - parses CommonMark into the internal syntax tree.
+- [remark-gfm](https://github.com/remarkjs/remark-gfm) - adds tables, task lists, strikethrough, footnotes, and autolinks.
+- [remark-math](https://github.com/remarkjs/remark-math/tree/main/packages/remark-math) - adds inline and block math syntax.
+- [remark-frontmatter](https://github.com/remarkjs/remark-frontmatter) - recognizes and preserves YAML frontmatter without parsing its contents.
+- [remark-stringify](https://github.com/remarkjs/remark/tree/main/packages/remark-stringify) - serializes the tree back to Markdown after edits.
+
+it drops to custom regexes only when necessary, for supporting novel [syntax additions](https://obsidian.md/help/obsidian-flavored-markdown).
+
 <!-- spacer -->
 <img height="20px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
 ## Usage
 
-The library supports Node.js 18+ and browsers. The CLI requires Node.js 22+ for native glob support.
-
 ```js
 import custodian from 'obsidian-custodian'
 
-const str = `hello [[world]]`
-const page = custodian(str)
+const text = `hello [[world]]`
+const page = custodian(text)
 
 // clean plaintext
-console.log(page.text()) // 'hello world'
+page.text() // 'hello world'
 
 // get everything
-console.log(page.json())
-/*{
-  ... 
+page.json()
+/* ...
   links: [{
     text: 'world',
     type: 'wikiLink',
     target: 'world',
   }]
-}*/
-
-// grab that link and change it
-const link = page.links()[0]
-link.title = 'cruel ' + link.title
-console.log(page.html())
-// '<p>hello <a href="world" class="internal-link" data-href="world">cruel world</a></p>'
+*/
 ```
 
 we also support a fair-amount of safe document editing, like:
 
 ```js
+// grab that link and change it
+const page = custodian('hello [[world]]')
+const link = page.links()[0]
+link.title = 'cruel ' + link.title
+page.html()
+// '<p>hello <a href="world" class="internal-link" data-href="world">cruel world</a></p>'
+
 const md = `
 - [x] brush teeth
 - [ ] go to work
 `
 const page = custodian(md)
 page.tasks()[1].checked = true
-console.log(page.markdown())
+page.markdown()
 // - [x] brush teeth
 // - [x] go to work
 ```
@@ -98,21 +105,23 @@ console.log(page.markdown())
 #### CLI
 
 ```bash
-npx obsidian-custodian path/to/file.md # JSON output
+# get JSON output
+npx obsidian-custodian /path/to/file.md
+npx obsidian-custodian /my/dir/**/*.md
 
-# non-json outputs
+# text/html outputs
 npx obsidian-custodian --text path/to/file.md
 npx obsidian-custodian --html path/to/file.md
 ```
 
-Pipe the JSON into `jq` to list unfinished tasks grouped by file, omitting files with none:
+Pipe the JSON into `jq` for handy parsing:
 
 ```bash
 # get all todo lists in a directory
-npx obsidian-custodian 'notes/**/*.md' | jq '[.[] | select(.tasks | length > 0)]'
+npx obsidian-custodian 'notes/**/*.md' | jq '.[].tasks''
 ```
 
-Quote the glob so Node expands it. The CLI returns an array of pages, each with a `file` field.
+The CLI requires >=Node22 for native glob support.
 
 <!-- spacer -->
 <img height="20px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
@@ -127,70 +136,76 @@ Quote the glob so Node expands it. The CLI returns an array of pages, each with 
 ```ts
 import custodian, { type Page, type TextOptions, type Task } from 'obsidian-custodian'
 
-const md = `'## Shopping
+const md = `
+## Shopping
 -[ ] Buy coffee
 `
 const page: Page = custodian(md)
 const options: TextOptions = { headings: 'inline', embeds: false }
 
-console.log(page.text(options))
+const str: string = page.text(options)
+console.log(str)
 // Shopping
 // Buy coffee
-
-const tasks: Task[] = page.tasks()
-for (const task of tasks) {
-  task.checked = true
-}
-
-// Individual sections take their own setting, rather than an options object.
-console.log(page.headings()[0]?.text('inline')) // Shopping
-console.log(page.markdown())
-// ## Shopping
-//
-// - [x] Buy coffee
 ```
 
 ## API
 
-`parsePage(markdown, options?)` synchronously returns a page.
+```js
+import custodian from 'obsidian-custodian'
+const options = {
+  gfm: {} //remark-gfm options
+  math: {}, //remark-math options
+  markdown:{} //remark-stringify options
+}
+const page = custodian(markdown, options) // (sync)
 
-Options can contain `gfm` and `math` settings for the corresponding remark plugins, and `markdown` settings for remark-stringify.
+// output formats:
+const json = page.json() // full page details
+const md = page.markdown() // rebuild obsidian syntax
+const html = page.html() // html with unstyled classes
+const tree = page.ast() // get the abstract-syntax-tree (in unist fmt)
 
-| Method                   | Returns                                                                                                   |
-| ------------------------ | --------------------------------------------------------------------------------------------------------- |
-| `page.json()`            | Structured JSON with document text, blocks, and the collections below.                                    |
-| `page.markdown()`        | The original Markdown until an edit is made; after edits, serialized Markdown with normalized formatting. |
-| `page.ast()`             | A detached copy of the internal remark syntax tree.                                                       |
-| `page.append(markdown)`  | The page, after adding parsed blocks at the end.                                                          |
-| `page.prepend(markdown)` | The page, after adding parsed blocks at the beginning.                                                    |
+// modifications
+page.prepend('It was the best of times..\n')
+page.append('\nThe End')
 
-These selection methods return arrays of item handles, in document order:
+// specific page-elements
+page.headings() // ### Foo
+heading.depth // get/set
 
-- `page.headings()` - Headings, with their text and depth.
-  - `heading.depth` - getter/setter
-- `page.paragraphs()` - Paragraphs, including those inside lists and quotes.
-- `page.links()` - Wikilinks, Markdown links, and reference links.
-  - `link.title` - getter/setter
-  - `link.target` - getter/setter
-- `page.embeds()` - Obsidian embeds, Markdown images, and reference images.
-- `page.tasks()` - List items with a checkbox.
-  - `task.checked` - getter/setter
-  - `task.toggle()` - change checked or not
-- `page.lists()` - Ordered and unordered lists.
-- `page.callouts()` - Callouts, including their title, type, and fold state.
-- `page.highlights()` - Highlighted spans.
-  - `highlight.color` - getter/setter for highlighted color
-- `page.comments()` - Obsidian comments.
-  - `comment.text` - getter/setter
-- `page.code()` - Code blocks, including Mermaid blocks; excludes inline code.
-  - `code.language` - getter/setter
-- `page.math()` - Inline and block math.
-- `page.tables()` - Tables, with rows and column alignment.
-- `page.frontmatter()` - YAML frontmatter as raw text.
-  - `frontmatter.json()` - parse YAML
-- `page.footnotes()` - Footnote definitions.
+page.highlights() // ==foo==
+highlight.color // get/set
 
-Each selected item offers these methods:
+page.links() // [[foo]]
+link.title // get/set
+link.target // get/set
+
+page.tasks() // - [ ] foo
+task.checked // get/set
+task.toggle() //change checked or not
+
+page.comments() //Obsidian comments.
+comment.text // get/set
+
+page.code() //Code blocks, including Mermaid blocks; excludes inline code.
+code.language // get/set
+
+page.frontmatter() //YAML frontmatter as raw text.
+frontmatter.json() //parse YAML
+
+page.lists() // * foo
+page.embeds() // ![[Foo.jpg]]
+page.callouts() // > [!foo]
+page.footnotes() // [^id]
+page.paragraphs() // text blocks including inside lists and quotes.
+page.math() // Inline and block math.
+page.tables() // Tables, with rows and columns
+```
+
+for examples, see the obsidian [syntax documentation](https://obsidian.md/help/obsidian-flavored-markdown)
+
+Each of these page selections offers these methods:
 
 | Method                 | Returns                                                          |
 | ---------------------- | ---------------------------------------------------------------- |
@@ -199,18 +214,34 @@ Each selected item offers these methods:
 | `item.update(changes)` | The item handle, after validating and applying supported fields. |
 | `item.remove()`        | The page, after removing the item.                               |
 
+### Editing
+
 Editing the JSON or AST copies does not modify the page. Use `update()` to make changes. Updating or removing a detached item throws an error.
 
 ```js
-const page = parsePage('# Old title\n\n[[Note|Label]]\n\n- [ ] Write a draft')
+const input = `# Old title
+
+[[Note|Label]]
+
+- [ ] Write a draft
+`
+const page = custodian(input)
 
 page.headings()[0].update({ text: 'New title', depth: 2 })
 page.links()[0].update({ target: 'Another note', alias: 'Read more' })
 page.tasks()[0].update({ checked: true })
 page.append('\nA final paragraph.')
 
-console.log(page.json())
 console.log(page.markdown())
+/*
+## New title
+
+[[Another note|Read more]]
+
+- [x] Write a draft
+
+A final paragraph.
+*/
 ```
 
 Supported update fields depend on the item:
@@ -263,38 +294,13 @@ Call `runSync()` after `parse()` to apply the Obsidian transforms, such as callo
 <!-- spacer -->
 <img height="20px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
-### Features
-
-We're using these Remark plugins, which are fantastic:
-
-- [remark-parse](https://github.com/remarkjs/remark/tree/main/packages/remark-parse) - parses CommonMark into the internal syntax tree.
-- [remark-stringify](https://github.com/remarkjs/remark/tree/main/packages/remark-stringify) - serializes the tree back to Markdown after edits.
-- [remark-gfm](https://github.com/remarkjs/remark-gfm) - adds tables, task lists, strikethrough, footnotes, and autolinks.
-- [remark-math](https://github.com/remarkjs/remark-math/tree/main/packages/remark-math) - adds inline and block math syntax.
-- [remark-frontmatter](https://github.com/remarkjs/remark-frontmatter) - recognizes and preserves YAML frontmatter without parsing its contents.
-
 ---
-
-[spec documentation](https://obsidian.md/help/obsidian-flavored-markdown)
-
-- `[[Link]]` Internal links
-- `![[Link]]` Embed files
-- `![[Link#^id]]` Block references
-- `^id1` Defining a block
-- `[^id]` Footnotes
-- `%%Text%%` Comments
-- `~~Text~~` Strikethroughs
-- `==Text==` Highlights
-- `\`\`\`` Code blocks
-- `- [ ]` Incomplete task
-- `- [x]` Completed task
-- `> [!note]` Callouts
-- ... Tables
 
 ### See also
 
-- [flowershow/remark-wiki-link](https://github.com/flowershow/remark-wiki-link) - unmaintained build is broken _[as of 4.0.0](https://github.com/flowershow/remark-wiki-link/issues/28)_
+- [flowershow/remark-wiki-link](https://github.com/flowershow/remark-wiki-link) - [unmaintained build](https://github.com/flowershow/remark-wiki-link/issues/28)
 - [johackim/remark-obsidian](https://github.com/johackim/remark-obsidian) - HTML output only
 - [zoni/obsidian-export](https://github.com/zoni/obsidian-export) - Rust CLI
 
-MIT, PRs welcome
+PRs welcome
+MIT
