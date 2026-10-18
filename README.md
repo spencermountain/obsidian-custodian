@@ -32,7 +32,7 @@ Everyone is writing notes in this syntax - and it's not possible to _get the inf
 
 ... which means that everyone has to write their own parsers - and all the plugins are slightly buggy in different ways...
 
-...and this is a web application! - they've almost certainly just thrown regexes on [remark](https://github.com/remarkjs/remark), and are shy about it, or are moating it intentionally.
+— and this is a web application! - they've almost certainly thrown regexes on [remark](https://github.com/remarkjs/remark), and are shy about it, or are moating it intentionally.
 
 This drives me crazy.
 
@@ -48,18 +48,18 @@ All that being said, I decided to do a good job with this parser, aimed at getti
 
 It's spec-safe, using these _([fantastic](https://github.com/remarkjs/remark/blob/main/doc/plugins.md#list-of-plugins))_ remark plugins:
 
-- _[remark-parse](https://github.com/remarkjs/remark/tree/main/packages/remark-parse)_ - _commonmark → AST_.
+- _[remark-parse](https://github.com/remarkjs/remark/tree/main/packages/remark-parse)_ - _common-md to AST_.
 - _[remark-gfm](https://github.com/remarkjs/remark-gfm)_ - _tables, tasks, strikethrough, footnotes, and autolinks_
 - _[remark-math](https://github.com/remarkjs/remark-math/tree/main/packages/remark-math)_ - _inline and block math syntax_
 - _[remark-frontmatter](https://github.com/remarkjs/remark-frontmatter)_ - _preserves frontmatter sections_
 - _[remark-stringify](https://github.com/remarkjs/remark/tree/main/packages/remark-stringify)_ - _serializes AST back to md_
 
-it drops to custom regexes for novel [syntax additions](https://obsidian.md/help/obsidian-flavored-markdown), and edits the [unist AST](https://github.com/syntax-tree/unist) for clean reproductions of obsidian-style markdown.
+it drops to custom regexes for the novel [syntax additions](https://obsidian.md/help/obsidian-flavored-markdown), and edits the [unist tree](https://github.com/syntax-tree/unist) for clean reproductions of markdown in obsidian-style.
 
 <!-- spacer -->
 <img height="20px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
-## Usage
+### Usage:
 
 ```js
 import custodian from 'obsidian-custodian'
@@ -148,7 +148,7 @@ console.log(str)
 <!-- spacer -->
 <img height="20px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
-## API
+### API
 
 ```js
 import custodian from 'obsidian-custodian'
@@ -235,7 +235,7 @@ item.remove()
 
 for details on syntax, see the [obsidian docs](https://obsidian.md/help/obsidian-flavored-markdown)
 
-### Editing
+### Page Editing:
 
 ```js
 const input = `
@@ -267,9 +267,12 @@ A final paragraph.
 <!-- spacer -->
 <img height="20px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
-### Remark usage
+---
 
-Use `obsidian-custodian/remark` to add obsidian-syntax support to a unified/remark pipeline.
+### Remark usage:
+
+You can import `obsidian-custodian/remark` to add obsidian-syntax support to your unified/remark pipeline.
+
 It includes the GFM, math, and frontmatter plugins.
 
 ```js
@@ -285,22 +288,16 @@ const processor = unified()
 
 const input = `
 > [!note] Example
-> Hello [[world]] and ==highlights==
 `
 
 const tree = processor.runSync(processor.parse(input), { value: input })
-console.log(tree)
+// use the tree, or convert back to markdown:
 console.log(processor.stringify(tree))
-
-// Or parse, transform, and serialize in one synchronous call:
-const output = processor.processSync(input)
-console.log(String(output))
+// '> [!note] Example'
 ```
 
 <!-- spacer -->
 <img height="20px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
-
----
 
 ### See also
 
