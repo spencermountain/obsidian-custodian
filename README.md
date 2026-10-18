@@ -122,14 +122,6 @@ npx obsidian-custodian 'notes/**/*.md' | jq '.[].tasks''
 
 The CLI requires >=Node22 for native glob support.
 
-<!-- spacer -->
-<img height="20px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
-
-<img height="50px" src="https://user-images.githubusercontent.com/399657/68221824-09809d80-ffb8-11e9-9ef0-6ed3574b0ce8.png"/>
-
-<!-- spacer -->
-<img height="20px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
-
 #### TypeScript
 
 ```ts
@@ -148,76 +140,102 @@ console.log(str)
 // Buy coffee
 ```
 
+<!-- spacer -->
+<img height="20px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
+
+<img height="50px" src="https://user-images.githubusercontent.com/399657/68221824-09809d80-ffb8-11e9-9ef0-6ed3574b0ce8.png"/>
+
+<!-- spacer -->
+<img height="20px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
+
 ## API
 
 ```js
 import custodian from 'obsidian-custodian'
+
 const options = {
   gfm: {} // remark-gfm options
   math: {}, // remark-math options
   markdown:{} // remark-stringify options
 }
-const page = custodian(markdown, options) // (sync)
 
-// output formats:
-const json = page.json() // full page details
-const md = page.markdown() // rebuild obsidian syntax
-const html = page.html() // html with unstyled classes
-const tree = page.ast() // get the abstract-syntax-tree (in unist fmt)
+const page = custodian(markdown, options)
+
+// full page details
+const json = page.json()
+// rebuild obsidian syntax
+const md = page.markdown()
+// get html with unstyled classes
+const html = page.html()
+// get the internal abstract-syntax-tree (in unist fmt)
+const tree = page.ast()
 
 // modifications
 page.prepend('It was the best of times..\n')
 page.append('\nThe End')
 ```
 
-You can also grab specific page-elements, which have some handy methods:
+Grab specific page-elements, which sometimes have handy methods:
 
 ```js
-page.headings() // ### Foo
+// ### Foo
+page.headings()
 heading.depth // get/set
 
-page.highlights() // ==foo==
+// ==foo==
+page.highlights()
 highlight.color // get/set
 
-page.links() // [[foo]]
+// [[foo]]
+page.links()
 link.title // get/set
 link.target // get/set
 
-page.tasks() // - [ ] foo
+// - [ ] foo
+page.tasks()
 task.checked // get/set
 task.toggle() //change checked or not
 
-page.comments() //Obsidian comments.
+// %%foo%%
+page.comments()
 comment.text // get/set
 
-page.code() //Code blocks, including Mermaid blocks; excludes inline code.
+// inline + block code, Mermaid blocks
+page.code()
 code.language // get/set
 
-page.frontmatter() //YAML frontmatter as raw text.
-frontmatter.json() //parse YAML
+// YAML frontmatter as raw text.
+page.frontmatter()
+frontmatter.json() // parsed
 
-page.lists() // * foo
-page.embeds() // ![[Foo.jpg]]
-page.callouts() // > [!foo]
-page.footnotes() // [^id]
-page.paragraphs() // text blocks including inside lists and quotes.
-page.math() // Inline and block math.
-page.tables() // Tables, with rows and columns
+// '* foo'
+page.lists()
+// '![[Foo.jpg]]'
+page.embeds()
+// '> [!foo]'
+page.callouts()
+// '[^id]'
+page.footnotes()
+// text blocks including inside lists and quotes.
+page.paragraphs()
+// Inline and block math.
+page.math()
+// Tables, with rows and columns
+page.tables()
 ```
 
 Each of these page selections offers these methods:
 
-| ---------------------- | ---------------------------------------------------------------- |
-| `item.json()` | A detached structured description of the item. |
-| `item.ast()` | A detached copy of its syntax node. |
-| `item.update(changes)` | The item handle, after validating and applying supported fields. |
-| `item.remove()` | The page, after removing the item. |
+```js
+item.json()
+item.ast()
+item.update(changes)
+item.remove()
+```
 
 for details on syntax, see the [obsidian docs](https://obsidian.md/help/obsidian-flavored-markdown)
 
 ### Editing
-
-Editing the JSON or AST copies does not modify the page. Use `update()` to make changes. Updating or removing a detached item throws an error.
 
 ```js
 const input = `
@@ -265,7 +283,10 @@ const processor = unified()
   .use(remarkObsidian)
   .use(remarkStringify, { bullet: '-' })
 
-const input = '> [!note] Example\n> Hello [[world]] and ==highlights==.'
+const input = `
+> [!note] Example
+> Hello [[world]] and ==highlights==
+`
 
 const tree = processor.runSync(processor.parse(input), { value: input })
 console.log(tree)
@@ -283,10 +304,10 @@ console.log(String(output))
 
 ### See also
 
-- [flowershow/remark-wiki-link](https://github.com/flowershow/remark-wiki-link) - [unmaintained build](https://github.com/flowershow/remark-wiki-link/issues/28)
+- [flowershow/remark-wiki-link](https://github.com/flowershow/remark-wiki-link) - _[unmaintained](https://github.com/flowershow/remark-wiki-link/issues/28)_
 - [johackim/remark-obsidian](https://github.com/johackim/remark-obsidian) - HTML-only output
 - [zoni/obsidian-export](https://github.com/zoni/obsidian-export) - Rust CLI
 
-PRs welcome!
+Issues, requests and PRs welcome
 
 MIT
