@@ -24,15 +24,15 @@
 <!-- spacer -->
 <img height="20px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
-Everything is always more complicated than you think—
+Everything is always more complicated than you think —
 
-—but I'll admit, I did sanctimoniously shake my head when I found out _**obsidian**_ will not release any code or details for parsing their markdown syntax.
+— but I'll admit, I did sanctimoniously shake my head when I found out _**obsidian**_ will not release any code, or details for parsing their markdown syntax.
 
-Everyone is writing notes in this syntax - and it's not possible to _get the information back out?_ - it's stuck in this ad-hoc format -
+Everyone is writing notes in this syntax - and it's not possible to _get the information back out?_ - it's stuck in this ad-hoc markup format -
 
-... which means that everyone has to write their own half-baked parsers - and all the plugins are slightly buggy.
+... which means that everyone has to write their own parsers - and all the plugins are slightly buggy in different ways...
 
-...and it's just a JS application! - which means they've almost certainly just thrown regexes on [remark](https://github.com/remarkjs/remark), and are shy about it, or are moating it intentionally.
+...and this is a web application! - they've almost certainly just thrown regexes on [remark](https://github.com/remarkjs/remark), and are shy about it, or are moating it intentionally.
 
 This drives me crazy.
 
@@ -44,15 +44,15 @@ Sorry, I know how I sound.
 <!-- spacer -->
 <img height="20px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
 
-All that being said, I decided to do a good job with this parser, aimed at getting structured JSON out of your notes - with a secondary goal to support safe machine-editing on them.
+All that being said, I decided to do a good job with this parser, aimed at getting structured JSON out of your notes - with a secondary goal to support safe machine-editing of them.
 
 It's spec-safe, using these _([fantastic](https://github.com/remarkjs/remark/blob/main/doc/plugins.md#list-of-plugins))_ remark plugins:
 
-- [remark-parse](https://github.com/remarkjs/remark/tree/main/packages/remark-parse) - parses CommonMark into the internal syntax tree.
-- [remark-gfm](https://github.com/remarkjs/remark-gfm) - adds tables, task lists, strikethrough, footnotes, and autolinks.
-- [remark-math](https://github.com/remarkjs/remark-math/tree/main/packages/remark-math) - adds inline and block math syntax.
-- [remark-frontmatter](https://github.com/remarkjs/remark-frontmatter) - recognizes and preserves YAML frontmatter without parsing its contents.
-- [remark-stringify](https://github.com/remarkjs/remark/tree/main/packages/remark-stringify) - serializes the tree back to Markdown after edits.
+- _[remark-parse](https://github.com/remarkjs/remark/tree/main/packages/remark-parse)_ - _commonmark → AST_.
+- _[remark-gfm](https://github.com/remarkjs/remark-gfm)_ - _tables, tasks, strikethrough, footnotes, and autolinks_
+- _[remark-math](https://github.com/remarkjs/remark-math/tree/main/packages/remark-math)_ - _inline and block math syntax_
+- _[remark-frontmatter](https://github.com/remarkjs/remark-frontmatter)_ - _preserves frontmatter sections_
+- _[remark-stringify](https://github.com/remarkjs/remark/tree/main/packages/remark-stringify)_ - _serializes AST back to md_
 
 it drops to custom regexes for novel [syntax additions](https://obsidian.md/help/obsidian-flavored-markdown), and edits the [unist AST](https://github.com/syntax-tree/unist) for clean reproductions of obsidian-style markdown.
 
