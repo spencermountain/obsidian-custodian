@@ -30,9 +30,9 @@ Everything is always more complicated than you think—
 
 Everyone is writing notes in this syntax - and it's not possible to _get the information back out?_ - it's stuck in this ad-hoc format -
 
-... which means that everyone has to write their own half-baked parsers - and all the plugins are slightly buggy in unique ways.
+... which means that everyone has to write their own half-baked parsers - and all the plugins are slightly buggy.
 
-...and what's worse is that it's a js application! - which means they've almost certainly thrown some regexes on [remark](https://github.com/remarkjs/remark), and are shy about it, or are moating it intentionally.
+...and it's just a JS application! - which means they've almost certainly just thrown regexes on [remark](https://github.com/remarkjs/remark), and are shy about it, or are moating it intentionally.
 
 This drives me crazy.
 
@@ -46,7 +46,7 @@ Sorry, I know how I sound.
 
 All that being said, I decided to do a good job with this parser, aimed at getting structured JSON out of your notes - with a secondary goal to support safe machine-editing on them.
 
-It is spec-safe, using these _[fantastic](https://github.com/remarkjs/remark/blob/main/doc/plugins.md#list-of-plugins)_ remark plugins:
+It's spec-safe, using these _([fantastic](https://github.com/remarkjs/remark/blob/main/doc/plugins.md#list-of-plugins))_ remark plugins:
 
 - [remark-parse](https://github.com/remarkjs/remark/tree/main/packages/remark-parse) - parses CommonMark into the internal syntax tree.
 - [remark-gfm](https://github.com/remarkjs/remark-gfm) - adds tables, task lists, strikethrough, footnotes, and autolinks.
@@ -54,7 +54,7 @@ It is spec-safe, using these _[fantastic](https://github.com/remarkjs/remark/blo
 - [remark-frontmatter](https://github.com/remarkjs/remark-frontmatter) - recognizes and preserves YAML frontmatter without parsing its contents.
 - [remark-stringify](https://github.com/remarkjs/remark/tree/main/packages/remark-stringify) - serializes the tree back to Markdown after edits.
 
-it drops to custom regexes only for novel [syntax additions](https://obsidian.md/help/obsidian-flavored-markdown), and edits the [unist](https://github.com/syntax-tree/unist) AST for clean reproductions of obsidian markdown.
+it drops to custom regexes for novel [syntax additions](https://obsidian.md/help/obsidian-flavored-markdown), and edits the [unist AST](https://github.com/syntax-tree/unist) for clean reproductions of obsidian-style markdown.
 
 <!-- spacer -->
 <img height="20px" src="https://user-images.githubusercontent.com/399657/68221862-17ceb980-ffb8-11e9-87d4-7b30b6488f16.png"/>
